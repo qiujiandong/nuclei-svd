@@ -1,0 +1,23 @@
+device:
+  name: OverlappingFieldChip
+  version: "0.1.0"
+  description: Overlapping field target
+  addressUnitBits: 8
+  width: 32
+  peripherals:
+    - name: GPIOA
+      description: GPIO bank A
+      baseAddress: "0x40000000"
+      registers:
+        - name: CTRL
+          description: Control register
+          addressOffset: "0x0"
+          fields:
+            - name: ENABLE
+              description: First bit
+              bitOffset: 0
+              bitWidth: 2
+            - name: MODE
+              description: Overlaps previous bits
+              bitOffset: 1
+              bitWidth: 2

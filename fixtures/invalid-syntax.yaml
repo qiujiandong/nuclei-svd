@@ -1,0 +1,14 @@
+device:
+  name: BrokenChip
+  version: "0.1"
+  description: bad indentation example
+  addressUnitBits: 8
+  width: 32
+  peripherals:
+    - name: GPIOA
+      description: bank
+      baseAddress: "0x40000000"
+      registers:
+        - name: CTRL
+          description: Control register
+         addressOffset: "0x0"

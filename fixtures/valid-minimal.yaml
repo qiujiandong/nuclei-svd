@@ -1,0 +1,14 @@
+device:
+  name: MinimalSoC
+  version: "1.0.0"
+  description: Minimal device
+  addressUnitBits: 8
+  width: 32
+  peripherals:
+    - name: UART0
+      description: UART peripheral
+      baseAddress: 0x40001000
+      registers:
+        - name: DATA
+          description: Data register
+          addressOffset: 0x0

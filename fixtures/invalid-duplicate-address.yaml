@@ -1,0 +1,17 @@
+device:
+  name: DuplicateAddressChip
+  version: "0.1.0"
+  description: Duplicate address target
+  addressUnitBits: 8
+  width: 32
+  peripherals:
+    - name: GPIOA
+      description: GPIO bank A
+      baseAddress: "0x40000000"
+      registers:
+        - name: CTRL
+          description: Control register
+          addressOffset: "0x0"
+        - name: STATUS
+          description: Status register
+          addressOffset: 0
