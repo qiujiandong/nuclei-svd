@@ -11,7 +11,8 @@ describe('App', () => {
     expect(screen.getByDisplayValue('NucleiIREGION')).toBeInTheDocument()
     expect(screen.getByLabelText('默认 size')).toHaveValue('32')
     expect(screen.getByText('7 个 IREGION 寄存器组')).toBeInTheDocument()
-    expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('GROUP0')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.getByText('寄存器配置说明')).toBeInTheDocument()
   })
@@ -30,13 +31,15 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
-    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
 
     fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' }).at(-1) as HTMLElement)
 
-    fireEvent.change(screen.getAllByLabelText('寄存器名称')[1], { target: { value: 'STATUS' } })
+    fireEvent.change(screen.getAllByLabelText('寄存器名称').at(-1) as HTMLElement, {
+      target: { value: 'STATUS' },
+    })
     fireEvent.click(screen.getAllByRole('button', { name: '新增位域' })[1])
-    expect(screen.getAllByLabelText(/位域名称 \d+/)).toHaveLength(3)
+    expect(screen.getAllByLabelText(/位域名称 \d+/)).toHaveLength(4)
 
     fireEvent.click(screen.getByRole('button', { name: '折叠寄存器 STATUS' }))
     expect(screen.queryByDisplayValue('STATUS')).not.toBeInTheDocument()
@@ -47,28 +50,37 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
     fireEvent.change(screen.getByLabelText('设备名称'), { target: { value: 'CustomDevice' } })
-    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '重置设置' }))
 
     expect(screen.getByDisplayValue('NucleiIREGION')).toBeInTheDocument()
     expect(screen.getByText('7 个 IREGION 寄存器组')).toBeInTheDocument()
-    expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
     expect(screen.queryByDisplayValue('GROUP1')).not.toBeInTheDocument()
   })
 
   it('updates readonly IREGION groups from the IREGION base address', () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: '展开 IREGION' }))
     expect(screen.getByLabelText('IREGION 基地址')).toHaveValue('0x18000000')
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 IINFO' }))
-    expect(screen.getByText('实际基地址：0x18000000')).toBeInTheDocument()
-
     fireEvent.change(screen.getByLabelText('IREGION 基地址'), { target: { value: '0x19000000' } })
-
+    fireEvent.click(screen.getByRole('button', { name: '展开 IREGION' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 IINFO' }))
     expect(screen.getByText('实际基地址：0x19000000')).toBeInTheDocument()
+  })
+
+  it('keeps the IREGION base address editable while the panel is collapsed', () => {
+    render(<App />)
+
+    fireEvent.change(screen.getByLabelText('IREGION 基地址'), { target: { value: '0x1A000000' } })
+    expect(screen.getByLabelText('IREGION 基地址')).toHaveValue('0x1A000000')
+
+    fireEvent.click(screen.getByRole('button', { name: '展开 IREGION' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 IINFO' }))
+    expect(screen.getByText('实际基地址：0x1A000000')).toBeInTheDocument()
   })
 
   it('clears stale successful output when the configuration changes', async () => {
@@ -90,7 +102,9 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
     fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' }).at(-1) as HTMLElement)
-    fireEvent.change(screen.getAllByLabelText('addressOffset')[1], { target: { value: '0x0' } })
+    fireEvent.change(screen.getAllByLabelText('addressOffset').at(-1) as HTMLElement, {
+      target: { value: '0x0' },
+    })
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
 
     expect(await screen.findByText('校验失败')).toBeInTheDocument()

@@ -6,9 +6,9 @@ import { XmlPreview } from './components/XmlPreview'
 import { ConversionError } from './lib/errors'
 import {
   buildSvdInputFromEditor,
+  createDefaultCustomPeripheral,
   createDefaultEditorDevice,
   createEmptyField,
-  createEmptyPeripheral,
   createEmptyRegister,
   resolveIRegionPeripherals,
   type EditorAccess,
@@ -274,12 +274,7 @@ function App() {
       ...current,
       peripherals: [
         ...current.peripherals,
-        createEmptyPeripheral({
-          name: `GROUP${current.peripherals.length + 1}`,
-          description: 'New register group',
-          baseAddress: '0x40001000',
-          groupName: 'PERIPHERAL',
-        }),
+        createDefaultCustomPeripheral(current.peripherals.length),
       ],
     }))
   }
@@ -392,13 +387,12 @@ function App() {
         <div className="hero-brand">
           <img src="/nuclei.svg" alt="Nuclei" className="hero-logo" />
           <div>
-            <p className="eyebrow">Pure frontend · GitHub Pages ready</p>
+            <p className="eyebrow">A tool to generate CMSIS-SVD for SoC based on Nuclei CPU</p>
             <div className="hero-title">
-              <h1>nuclei-svd</h1>
+              <h1>Nuclei SVD</h1>
             </div>
             <p className="hero-copy">
-              面向 Nuclei CPU 平台生成 CMSIS-SVD 文件的纯前端工具。使用交互式寄存器设置界面创建寄存器组、
-              寄存器和位域，在浏览器内完成校验、转换、预览与下载。
+              为基于 Nuclei CPU 的 SoC 平台快速生成 CMSIS-SVD 文件，便于研发人员进行系统调试。
             </p>
           </div>
         </div>
@@ -428,7 +422,7 @@ function App() {
           <div className="panel-heading">
             <div>
               <p className="eyebrow">Interactive register designer</p>
-              <h2>交互式寄存器设置界面</h2>
+              <h2>寄存器设置界面</h2>
             </div>
             <div className="card-actions">
               <button type="button" className="secondary" onClick={handleAddPeripheral}>
@@ -537,24 +531,25 @@ function App() {
                   <span>{device.iregionExpanded ? '▾' : '▸'}</span>
                   <span>IREGION</span>
                 </button>
-                <div className="readonly-meta">
-                  <span>基地址：{device.iregionBaseAddress}</span>
-                  <span>寄存器组：{stats.iregionGroupCount}</span>
+                <div className="readonly-header-controls">
+                  <label className="inline-field inline-medium">
+                    <span>IREGION 基地址</span>
+                    <input
+                      aria-label="IREGION 基地址"
+                      value={device.iregionBaseAddress}
+                      onChange={(event) => handleIRegionBaseAddressChange(event.target.value)}
+                      placeholder="0x18000000"
+                    />
+                  </label>
+                  <div className="readonly-meta">
+                    <span>寄存器组：{stats.iregionGroupCount}</span>
+                  </div>
                 </div>
               </div>
 
               {device.iregionExpanded ? (
                 <div className="card-body">
                   <div className="readonly-toolbar">
-                    <label className="inline-field inline-medium">
-                      <span>IREGION 基地址</span>
-                      <input
-                        aria-label="IREGION 基地址"
-                        value={device.iregionBaseAddress}
-                        onChange={(event) => handleIRegionBaseAddressChange(event.target.value)}
-                        placeholder="0x18000000"
-                      />
-                    </label>
                     <span className="readonly-note">
                       IREGION 中的寄存器组来自 `IREGION.pdf`，只读展示，实际地址 = 基地址 + 组偏移。
                     </span>

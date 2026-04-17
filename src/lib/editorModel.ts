@@ -179,6 +179,16 @@ export function createEmptyPeripheral(
   }
 }
 
+export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
+  return createEmptyPeripheral({
+    name: `GROUP${index}`,
+    description: 'New register group',
+    baseAddress: '0x40001000',
+    groupName: 'PERIPHERAL',
+    expanded: true,
+  })
+}
+
 function createIInfoRegisters() {
   return [
     createPresetRegister({
@@ -955,7 +965,7 @@ export function createDefaultEditorDevice(): EditorDevice {
     iregionExpanded: false,
     iregionBaseAddress: '0x18000000',
     iregionPeripherals: createIRegionPeripherals(),
-    peripherals: [],
+    peripherals: [createDefaultCustomPeripheral(0)],
   }
 }
 

@@ -271,9 +271,17 @@ label span {
   flex-wrap: nowrap;
 }
 
+.readonly-header-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .readonly-toolbar {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   align-items: center;
   margin-bottom: 1rem;
@@ -514,6 +522,11 @@ label span {
   }
 
   .readonly-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .readonly-header-controls {
     flex-direction: column;
     align-items: stretch;
   }

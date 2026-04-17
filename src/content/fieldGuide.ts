@@ -34,7 +34,7 @@ export const fieldGuide: FieldGuideItem[] = [
   },
   {
     title: '位域',
-    summary: '位域描述寄存器内 bit 区间，适合在 Nuclei 调试器或 IDE 中展示字段含义。',
+    summary: '位域描述寄存器内 bit 区间，适合在 Nuclei Studio IDE 中展示字段含义。',
     bullets: [
       '字段名称在单个寄存器内必须唯一。',
       'bitOffset + bitWidth 不能越界，也不能与其他字段重叠。',
