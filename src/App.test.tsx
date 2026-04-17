@@ -1,71 +1,69 @@
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 
-const loadFixture = (name: string) => readFileSync(join(process.cwd(), 'fixtures', name), 'utf8')
-
 describe('App', () => {
-  it('shows the template and field guide on first render', () => {
+  it('shows the interactive register editor on first render', () => {
     render(<App />)
 
-    expect((screen.getByLabelText('YAML editor') as HTMLTextAreaElement).value).toContain('device:')
-    expect(screen.getByText('Nuclei SVD 填写说明')).toBeInTheDocument()
-    expect(screen.getByText('device')).toBeInTheDocument()
+    expect(screen.queryByLabelText('YAML editor')).not.toBeInTheDocument()
+    expect(screen.getByText('交互式寄存器设置界面')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('NucleiDemoRV32')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('32')).toBeInTheDocument()
+    expect(screen.getByText('寄存器配置说明')).toBeInTheDocument()
   })
 
-  it('converts valid YAML and enables download', async () => {
+  it('converts the current register configuration and enables download', async () => {
     render(<App />)
 
-    fireEvent.change(screen.getByLabelText('YAML editor'), { target: { value: loadFixture('valid-minimal.yaml') } })
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
 
     expect(await screen.findByText('转换成功')).toBeInTheDocument()
-    expect(screen.getByTestId('xml-preview')).toHaveTextContent('<device')
+    expect(screen.getByTestId('xml-preview')).toHaveTextContent('<name>NucleiDemoRV32</name>')
     expect(screen.getByRole('button', { name: '下载 .svd' })).toBeEnabled()
   })
 
-  it('clears stale successful output when the YAML changes', async () => {
+  it('allows creating groups/registers/fields and collapsing registers', () => {
     render(<App />)
 
-    const editor = screen.getByLabelText('YAML editor')
-    fireEvent.change(editor, { target: { value: loadFixture('valid-minimal.yaml') } })
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+    expect(screen.getByText('2 个寄存器组')).toBeInTheDocument()
+
+    fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' })[1])
+    expect(screen.getByText('3 个寄存器')).toBeInTheDocument()
+
+    fireEvent.change(screen.getAllByLabelText('寄存器名称')[2], { target: { value: 'STATUS' } })
+    fireEvent.click(screen.getAllByRole('button', { name: '新增位域' })[2])
+    expect(screen.getByText('4 个位域')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '折叠寄存器 STATUS' }))
+    expect(screen.queryByDisplayValue('STATUS')).not.toBeInTheDocument()
+  })
+
+  it('clears stale successful output when the configuration changes', async () => {
+    render(<App />)
+
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
     expect(await screen.findByText('转换成功')).toBeInTheDocument()
 
-    fireEvent.change(editor, { target: { value: loadFixture('invalid-duplicate-address.yaml') } })
+    fireEvent.change(screen.getByLabelText('设备名称'), { target: { value: 'UpdatedDevice' } })
 
     expect(screen.getByText('等待转换')).toBeInTheDocument()
-    expect(screen.getByText('输入已变更，请重新执行校验与转换。')).toBeInTheDocument()
+    expect(screen.getByText('配置已变更，请重新执行校验与转换。')).toBeInTheDocument()
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('转换成功后将在这里显示 XML 内容。')
     expect(screen.getByRole('button', { name: '下载 .svd' })).toBeDisabled()
   })
 
-  it('blocks conversion and shows readable validation errors for invalid YAML', async () => {
+  it('blocks conversion and shows readable validation errors for invalid register data', async () => {
     render(<App />)
 
-    fireEvent.change(screen.getByLabelText('YAML editor'), {
-      target: { value: loadFixture('invalid-duplicate-address.yaml') },
-    })
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器' }))
+    fireEvent.change(screen.getAllByLabelText('addressOffset')[1], { target: { value: '0x0' } })
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
 
     expect(await screen.findByText('校验失败')).toBeInTheDocument()
     expect(screen.getByText(/register absolute address/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '下载 .svd' })).toBeDisabled()
-  })
-
-  it('loads a YAML file from upload input', async () => {
-    render(<App />)
-
-    const file = new File([loadFixture('valid-minimal.yaml')], 'sample.yaml', { type: 'text/yaml' })
-    const input = document.querySelector('input[type="file"]') as HTMLInputElement
-
-    fireEvent.change(input, { target: { files: [file] } })
-
-    await waitFor(() => {
-      expect(screen.getByText(/已加载 sample.yaml/)).toBeInTheDocument()
-    })
   })
 
   it('downloads generated xml when clicking the button', async () => {
@@ -75,7 +73,6 @@ describe('App', () => {
 
     render(<App />)
 
-    fireEvent.change(screen.getByLabelText('YAML editor'), { target: { value: loadFixture('valid-minimal.yaml') } })
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
     fireEvent.click(await screen.findByRole('button', { name: '下载 .svd' }))
 
