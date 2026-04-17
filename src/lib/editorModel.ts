@@ -952,10 +952,9 @@ function createIRegionPeripherals() {
 
 export function createDefaultEditorDevice(): EditorDevice {
   return {
-    name: 'NucleiIREGION',
+    name: 'NucleiDemo',
     version: '1.0.0',
-    description:
-      'Default IREGION register map derived from IREGION.pdf. Group base addresses correspond to IREGION offsets with an assumed base of 0x0.',
+    description: 'Nuclei demo device',
     addressUnitBits: '8',
     width: '32',
     size: '32',

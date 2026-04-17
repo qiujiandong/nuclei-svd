@@ -400,9 +400,6 @@ function App() {
           <button type="button" className="primary" onClick={handleConvert}>
             校验并转换
           </button>
-          <button type="button" className="secondary" onClick={handleReset}>
-            恢复默认结构
-          </button>
           <button type="button" className="secondary" onClick={handleDownload} disabled={!canDownload}>
             下载 .svd
           </button>
