@@ -385,7 +385,7 @@ function App() {
     <main className="app-shell">
       <header className="hero-panel">
         <div className="hero-brand">
-          <img src="/nuclei.svg" alt="Nuclei" className="hero-logo" />
+          <img src={`${import.meta.env.BASE_URL}nuclei.svg`} alt="Nuclei" className="hero-logo" />
           <div>
             <p className="eyebrow">A tool to generate CMSIS-SVD for SoC based on Nuclei CPU</p>
             <div className="hero-title">
