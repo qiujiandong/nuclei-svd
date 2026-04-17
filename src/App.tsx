@@ -38,6 +38,17 @@ const initialState: ConversionState = {
   downloadName: 'nuclei-device.svd',
 }
 
+function createCollapsedDefaultDevice() {
+  const nextDevice = createDefaultEditorDevice()
+  return {
+    ...nextDevice,
+    peripherals: nextDevice.peripherals.map((peripheral) => ({
+      ...peripheral,
+      expanded: false,
+    })),
+  }
+}
+
 function summarizeName(value: string, fallback: string) {
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : fallback
@@ -313,7 +324,7 @@ function App() {
   }
 
   const handleReset = () => {
-    setDevice(createDefaultEditorDevice())
+    setDevice(createCollapsedDefaultDevice())
     setState(initialState)
   }
 

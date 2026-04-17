@@ -8,8 +8,10 @@ describe('App', () => {
 
     expect(screen.queryByLabelText('YAML editor')).not.toBeInTheDocument()
     expect(screen.getByText('交互式寄存器设置界面')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('NucleiDemoRV32')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('32')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('NucleiIREGION')).toBeInTheDocument()
+    expect(screen.getByLabelText('默认 size')).toHaveValue('32')
+    expect(screen.getByText('7 个寄存器组')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开寄存器组 IINFO' })).toBeInTheDocument()
     expect(screen.getByText('寄存器配置说明')).toBeInTheDocument()
   })
 
@@ -19,7 +21,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
 
     expect(await screen.findByText('转换成功')).toBeInTheDocument()
-    expect(screen.getByTestId('xml-preview')).toHaveTextContent('<name>NucleiDemoRV32</name>')
+    expect(screen.getByTestId('xml-preview')).toHaveTextContent('<name>NucleiIREGION</name>')
     expect(screen.getByRole('button', { name: '下载 .svd' })).toBeEnabled()
   })
 
@@ -27,14 +29,13 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
-    expect(screen.getByText('2 个寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('8 个寄存器组')).toBeInTheDocument()
 
-    fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' })[1])
-    expect(screen.getByText('3 个寄存器')).toBeInTheDocument()
+    fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' }).at(-1) as HTMLElement)
 
-    fireEvent.change(screen.getAllByLabelText('寄存器名称')[2], { target: { value: 'STATUS' } })
-    fireEvent.click(screen.getAllByRole('button', { name: '新增位域' })[2])
-    expect(screen.getByText('4 个位域')).toBeInTheDocument()
+    fireEvent.change(screen.getAllByLabelText('寄存器名称')[1], { target: { value: 'STATUS' } })
+    fireEvent.click(screen.getAllByRole('button', { name: '新增位域' })[1])
+    expect(screen.getAllByLabelText(/位域名称 \d+/)).toHaveLength(3)
 
     fireEvent.click(screen.getByRole('button', { name: '折叠寄存器 STATUS' }))
     expect(screen.queryByDisplayValue('STATUS')).not.toBeInTheDocument()
@@ -45,12 +46,14 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
     fireEvent.change(screen.getByLabelText('设备名称'), { target: { value: 'CustomDevice' } })
-    expect(screen.getByText('2 个寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('8 个寄存器组')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '重置设置' }))
 
-    expect(screen.getByDisplayValue('NucleiDemoRV32')).toBeInTheDocument()
-    expect(screen.getByText('1 个寄存器组')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('NucleiIREGION')).toBeInTheDocument()
+    expect(screen.getByText('7 个寄存器组')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开寄存器组 IINFO' })).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('0x40000000')).not.toBeInTheDocument()
   })
 
   it('clears stale successful output when the configuration changes', async () => {
@@ -70,7 +73,8 @@ describe('App', () => {
   it('blocks conversion and shows readable validation errors for invalid register data', async () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: '新增寄存器' }))
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+    fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' }).at(-1) as HTMLElement)
     fireEvent.change(screen.getAllByLabelText('addressOffset')[1], { target: { value: '0x0' } })
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
 
