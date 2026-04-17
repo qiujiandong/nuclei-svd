@@ -332,13 +332,18 @@ function App() {
   return (
     <main className="app-shell">
       <header className="hero-panel">
-        <div>
-          <p className="eyebrow">Pure frontend · GitHub Pages ready</p>
-          <h1>nuclei-svd</h1>
-          <p className="hero-copy">
-            面向 Nuclei CPU 平台生成 CMSIS-SVD 文件的纯前端工具。使用交互式寄存器设置界面创建寄存器组、
-            寄存器和位域，在浏览器内完成校验、转换、预览与下载。
-          </p>
+        <div className="hero-brand">
+          <img src="/nuclei.svg" alt="Nuclei" className="hero-logo" />
+          <div>
+            <p className="eyebrow">Pure frontend · GitHub Pages ready</p>
+            <div className="hero-title">
+              <h1>nuclei-svd</h1>
+            </div>
+            <p className="hero-copy">
+              面向 Nuclei CPU 平台生成 CMSIS-SVD 文件的纯前端工具。使用交互式寄存器设置界面创建寄存器组、
+              寄存器和位域，在浏览器内完成校验、转换、预览与下载。
+            </p>
+          </div>
         </div>
         <div className="hero-actions">
           <button type="button" className="primary" onClick={handleConvert}>

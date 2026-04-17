@@ -36,6 +36,25 @@ body {
   line-height: 1.7;
 }
 
+.hero-brand {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.hero-title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.hero-logo {
+  width: 5.25rem;
+  height: 5.25rem;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
 .hero-actions {
   display: flex;
   flex-direction: column;
@@ -410,6 +429,7 @@ label span {
     min-width: unset;
     grid-auto-flow: row;
   }
+
 }
 
 @media (max-width: 720px) {
@@ -434,6 +454,16 @@ label span {
 
   .xml-preview {
     min-height: 24rem;
+  }
+
+  .hero-brand {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hero-logo {
+    width: 4.25rem;
+    height: 4.25rem;
   }
 
   .collapse-toggle {
