@@ -1,5 +1,6 @@
 {
-  "name": "yml2svd",
+  "name": "nuclei-svd",
+  "description": "Generate CMSIS-SVD files for Nuclei CPU platforms from YAML",
   "private": true,
   "version": "0.1.0",
   "type": "module",

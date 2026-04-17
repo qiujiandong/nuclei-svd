@@ -15,10 +15,10 @@ describe('convertYamlToSvd', () => {
   it('converts the minimal fixture into XML', () => {
     const { xml, normalized } = convertYamlToSvd(validMinimalFixture)
 
-    expect(normalized.device.name).toBe('MinimalSoC')
+    expect(normalized.device.name).toBe('NucleiMinimalSoC')
     expect(normalized.device.peripherals[0].registers[0].absoluteAddress).toBe(0x40001000)
     expect(xml).toContain('<device')
-    expect(xml).toContain('<name>MinimalSoC</name>')
+    expect(xml).toContain('<name>NucleiMinimalSoC</name>')
     expect(xml).toContain('<baseAddress>0x40001000</baseAddress>')
     expect(xml).toContain('<addressOffset>0x0</addressOffset>')
   })

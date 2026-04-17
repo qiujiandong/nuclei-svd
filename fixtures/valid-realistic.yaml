@@ -1,7 +1,7 @@
 device:
-  name: DemoChip
+  name: NucleiDemoRV32
   version: "1.0.0"
-  description: Demo <chip> & debug target
+  description: Nuclei CPU reference <device> & debug target
   addressUnitBits: 8
   width: 32
   size: 32
@@ -9,44 +9,44 @@ device:
   resetValue: "0x00000000"
   resetMask: "0xFFFFFFFF"
   peripherals:
-    - name: GPIOA
-      description: GPIO bank A
+    - name: ECLIC
+      description: Enhanced Core-Local Interrupt Controller
       baseAddress: "0x40000000"
-      groupName: GPIO
+      groupName: CPU
       registers:
-        - name: CTRL
-          description: Control <main> & mode
+        - name: CFG
+          description: Core interrupt control <main> & mode
           addressOffset: "0x0"
           fields:
             - name: ENABLE
-              description: Enables block
+              description: Enables interrupt handling
               bitOffset: 0
               bitWidth: 1
             - name: MODE
-              description: Selects mode
+              description: Selects trigger mode
               bitOffset: 1
               bitWidth: 2
               access: read-only
         - name: STATUS
-          description: Status register
+          description: Interrupt status register
           addressOffset: 4
           access: read-only
           resetValue: "0x00000001"
           fields:
             - name: READY
-              description: Ready flag
+              description: Interrupt logic ready flag
               bitOffset: 0
               bitWidth: 1
-    - name: TIMER0
-      description: Timer block
+    - name: MTIMER
+      description: Machine timer block
       baseAddress: 1073745920
       registers:
         - name: COUNT
-          description: Current count
+          description: Current machine timer count
           addressOffset: "0x10"
           size: 16
           fields:
             - name: VALUE
-              description: Counter value
+              description: Machine timer counter value
               bitOffset: 0
               bitWidth: 16

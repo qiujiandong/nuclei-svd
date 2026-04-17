@@ -23,12 +23,12 @@ const initialState: ConversionState = {
   detail: '上传 YAML 文件或直接在编辑区修改模板，然后点击“校验并转换”。',
   issues: [],
   xml: '',
-  downloadName: 'device.svd',
+  downloadName: 'nuclei-device.svd',
 }
 
 function App() {
   const [yamlInput, setYamlInput] = useState(svdYamlTemplate)
-  const [sourceName, setSourceName] = useState('default-template.yaml')
+  const [sourceName, setSourceName] = useState('nuclei-svd-template.yaml')
   const [state, setState] = useState<ConversionState>(initialState)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -73,14 +73,14 @@ function App() {
         detail: '请先修复以下错误，转换被阻止。',
         issues,
         xml: '',
-        downloadName: 'device.svd',
+        downloadName: 'nuclei-device.svd',
       })
     }
   }
 
   const handleReset = () => {
     setYamlInput(svdYamlTemplate)
-    setSourceName('default-template.yaml')
+    setSourceName('nuclei-svd-template.yaml')
     setState(initialState)
     inputRef.current?.focus()
   }
@@ -124,10 +124,10 @@ function App() {
       <header className="hero-panel">
         <div>
           <p className="eyebrow">Pure frontend · GitHub Pages ready</p>
-          <h1>YAML to CMSIS-SVD Converter</h1>
+          <h1>nuclei-svd</h1>
           <p className="hero-copy">
-            为 SoC 软件调试人员提供更易填写的 YAML 模板，浏览器内完成校验、转换、预览与下载，
-            优先避免寄存器地址类错误。
+            面向 Nuclei CPU 平台生成 CMSIS-SVD 文件的纯前端工具。使用更易维护的 YAML 模板，在浏览器内完成校验、
+            转换、预览与下载，优先避免寄存器地址类错误。
           </p>
         </div>
         <div className="hero-actions">
@@ -153,8 +153,8 @@ function App() {
         <section className="panel template-panel">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Authoring template</p>
-              <h2>默认 YAML 模板</h2>
+              <p className="eyebrow">Nuclei target template</p>
+              <h2>Nuclei CPU YAML 模板</h2>
             </div>
             <label className="upload-button">
               上传 YAML
@@ -175,8 +175,8 @@ function App() {
           <section className="panel guide-panel">
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">Field guide</p>
-                <h2>填写说明</h2>
+                <p className="eyebrow">Nuclei field guide</p>
+                <h2>Nuclei SVD 填写说明</h2>
               </div>
             </div>
             <FieldGuide />

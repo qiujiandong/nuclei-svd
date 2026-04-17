@@ -12,7 +12,7 @@ describe('parseYaml', () => {
       device: { name: string; peripherals: unknown[] }
     }
 
-    expect(parsed.device.name).toBe('DemoChip')
+    expect(parsed.device.name).toBe('NucleiDemoRV32')
     expect(parsed.device.peripherals).toHaveLength(2)
   })
 

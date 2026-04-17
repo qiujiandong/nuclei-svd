@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 
-const repositoryName = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'yml2svd'
+const repositoryName = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'nuclei-svd'
 
 export default defineConfig({
   base: process.env.GITHUB_ACTIONS ? `/${repositoryName}/` : '/',

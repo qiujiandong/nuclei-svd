@@ -1,13 +1,14 @@
-# YAML to SVD
+# nuclei-svd
 
-纯前端 YAML → CMSIS-SVD 转换工具，面向 SoC 软件调试人员，帮助减少手写 XML 的时间成本与寄存器地址类错误。
+`nuclei-svd` 是一个纯前端 YAML → CMSIS-SVD 生成工具，后续将主要用于生成适用于 Nuclei CPU 的 SVD 文件，帮助 SoC 软件、调试与工具链维护人员减少手写 XML 的时间成本与寄存器地址类错误。
 
 ## 在线能力
 
 - 默认 YAML 模板展示
+- 默认提供 Nuclei CPU 场景模板
 - 页面内字段填写说明
 - 浏览器内 YAML 语法 / schema / 语义校验
-- 合法 YAML 转换为 CMSIS-SVD XML
+- 合法 YAML 转换为适用于 Nuclei CPU 平台的 CMSIS-SVD XML
 - 长 XML 滚动预览
 - 下载 `.svd` 文件
 - GitHub Pages 自动部署
@@ -31,7 +32,7 @@ npm run lint
 
 ## YAML 模型说明（v1）
 
-当前版本支持高价值、常用的 CMSIS-SVD 子集：
+当前版本支持高价值、常用的 CMSIS-SVD 子集，重点服务于 Nuclei CPU 相关寄存器描述生成：
 
 - `device`
   - `name`
@@ -87,7 +88,7 @@ npm run lint
 
 ## 示例模板
 
-页面加载后会自动展示默认模板；你也可以直接参考 `src/domain/template.ts` 中的样例。
+页面加载后会自动展示一个 Nuclei CPU 场景的默认模板；你也可以直接参考 `src/domain/template.ts` 中的样例。
 
 ## GitHub Pages 部署
 

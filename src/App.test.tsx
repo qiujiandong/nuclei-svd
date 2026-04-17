@@ -11,7 +11,7 @@ describe('App', () => {
     render(<App />)
 
     expect((screen.getByLabelText('YAML editor') as HTMLTextAreaElement).value).toContain('device:')
-    expect(screen.getByText('填写说明')).toBeInTheDocument()
+    expect(screen.getByText('Nuclei SVD 填写说明')).toBeInTheDocument()
     expect(screen.getByText('device')).toBeInTheDocument()
   })
 

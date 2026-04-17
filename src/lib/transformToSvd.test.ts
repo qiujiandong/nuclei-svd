@@ -21,13 +21,13 @@ describe('convertYamlToSvd', () => {
     expect(first.xml).toContain('<registers>')
     expect(first.xml).toContain('<fields>')
     expect(first.xml).toContain(
-      '<description>Demo &lt;chip&gt; &amp; debug target</description>',
+      '<description>Nuclei CPU reference &lt;device&gt; &amp; debug target</description>',
     )
     expect(first.xml).toContain('<baseAddress>0x40000000</baseAddress>')
     expect(first.xml).toContain('<addressOffset>0x10</addressOffset>')
     expect(first.xml).toContain('<resetValue>0x1</resetValue>')
     expect(first.xml).toContain('<bitWidth>16</bitWidth>')
-    expect(first.normalized.metadata.downloadFileName).toBe('DemoChip.svd')
+    expect(first.normalized.metadata.downloadFileName).toBe('NucleiDemoRV32.svd')
   })
 
   it('omits optional nodes cleanly for the minimal fixture', () => {
@@ -41,8 +41,8 @@ describe('convertYamlToSvd', () => {
   it('keeps the shipped template conversion-ready', () => {
     const { xml } = convertYamlToSvd(svdYamlTemplate)
 
-    expect(xml).toContain('<name>DemoChip</name>')
-    expect(xml).toContain('<name>GPIOA</name>')
+    expect(xml).toContain('<name>NucleiDemoRV32</name>')
+    expect(xml).toContain('<name>ECLIC</name>')
   })
 
   it('throws typed conversion issues on invalid input', () => {
