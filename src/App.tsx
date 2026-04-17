@@ -372,9 +372,14 @@ function App() {
               <p className="eyebrow">Interactive register designer</p>
               <h2>交互式寄存器设置界面</h2>
             </div>
-            <button type="button" className="secondary" onClick={handleAddPeripheral}>
-              新增寄存器组
-            </button>
+            <div className="card-actions">
+              <button type="button" className="secondary" onClick={handleAddPeripheral}>
+                新增寄存器组
+              </button>
+              <button type="button" className="secondary" onClick={handleReset}>
+                重置设置
+              </button>
+            </div>
           </div>
 
           <section className="editor-section">

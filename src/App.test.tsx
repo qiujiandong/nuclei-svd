@@ -40,6 +40,19 @@ describe('App', () => {
     expect(screen.queryByDisplayValue('STATUS')).not.toBeInTheDocument()
   })
 
+  it('resets the interactive configuration from the editor toolbar', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+    fireEvent.change(screen.getByLabelText('设备名称'), { target: { value: 'CustomDevice' } })
+    expect(screen.getByText('2 个寄存器组')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '重置设置' }))
+
+    expect(screen.getByDisplayValue('NucleiDemoRV32')).toBeInTheDocument()
+    expect(screen.getByText('1 个寄存器组')).toBeInTheDocument()
+  })
+
   it('clears stale successful output when the configuration changes', async () => {
     render(<App />)
 
