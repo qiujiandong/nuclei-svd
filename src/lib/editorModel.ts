@@ -45,6 +45,9 @@ export interface EditorDevice {
   access: EditorAccess
   resetValue: string
   resetMask: string
+  iregionExpanded: boolean
+  iregionBaseAddress: string
+  iregionPeripherals: EditorPeripheral[]
   peripherals: EditorPeripheral[]
 }
 
@@ -57,6 +60,16 @@ function createEditorId(prefix: string) {
 
 function formatHex(value: number) {
   return `0x${value.toString(16).toUpperCase()}`
+}
+
+function parseIntegerInput(value: string) {
+  const trimmed = value.trim()
+  if (trimmed.length === 0) {
+    return Number.NaN
+  }
+
+  const parsed = Number(trimmed)
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : Number.NaN
 }
 
 export function createEmptyField(overrides: Partial<Omit<EditorField, 'id'>> = {}): EditorField {
@@ -939,18 +952,11 @@ export function createDefaultEditorDevice(): EditorDevice {
     access: 'read-write',
     resetValue: '0x00000000',
     resetMask: '0xFFFFFFFF',
-    peripherals: createIRegionPeripherals(),
+    iregionExpanded: false,
+    iregionBaseAddress: '0x18000000',
+    iregionPeripherals: createIRegionPeripherals(),
+    peripherals: [],
   }
-}
-
-function parseIntegerInput(value: string) {
-  const trimmed = value.trim()
-  if (trimmed.length === 0) {
-    return Number.NaN
-  }
-
-  const parsed = Number(trimmed)
-  return Number.isInteger(parsed) ? parsed : Number.NaN
 }
 
 function optionalIntegerProperty(name: string, value: string) {
@@ -994,7 +1000,37 @@ function buildPeripheral(peripheral: EditorPeripheral): SvdPeripheralInput {
   }
 }
 
+function resolveIRegionPeripheral(
+  baseAddress: string,
+  peripheral: EditorPeripheral,
+): EditorPeripheral {
+  const parsedBaseAddress = parseIntegerInput(baseAddress)
+  const parsedOffset = parseIntegerInput(peripheral.baseAddress)
+
+  const nextBaseAddress =
+    !Number.isNaN(parsedBaseAddress) && !Number.isNaN(parsedOffset)
+      ? formatHex(parsedBaseAddress + parsedOffset)
+      : baseAddress.trim()
+
+  return {
+    ...peripheral,
+    baseAddress: nextBaseAddress,
+  }
+}
+
+export function resolveIRegionPeripherals(
+  baseAddress: string,
+  peripherals: EditorPeripheral[],
+): EditorPeripheral[] {
+  return peripherals.map((peripheral) => resolveIRegionPeripheral(baseAddress, peripheral))
+}
+
 export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
+  const resolvedIRegionPeripherals = resolveIRegionPeripherals(
+    device.iregionBaseAddress,
+    device.iregionPeripherals,
+  )
+
   return {
     device: {
       name: device.name.trim(),
@@ -1006,7 +1042,10 @@ export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
       ...optionalStringProperty('access', device.access),
       ...optionalStringProperty('resetValue', device.resetValue),
       ...optionalStringProperty('resetMask', device.resetMask),
-      peripherals: device.peripherals.map((peripheral) => buildPeripheral(peripheral)),
+      peripherals: [
+        ...resolvedIRegionPeripherals.map((peripheral) => buildPeripheral(peripheral)),
+        ...device.peripherals.map((peripheral) => buildPeripheral(peripheral)),
+      ],
     },
   }
 }

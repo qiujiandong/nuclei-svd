@@ -259,6 +259,47 @@ label span {
   flex-wrap: nowrap;
 }
 
+.readonly-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.readonly-note {
+  color: #5f6f87;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.readonly-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: #5f6f87;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.readonly-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.readonly-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #5f6f87;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.readonly-wide {
+  grid-column: 1 / -1;
+}
+
 .collapse-toggle {
   display: inline-flex;
   align-items: center;
@@ -365,6 +406,11 @@ label span {
   white-space: nowrap;
 }
 
+.readonly-table td {
+  font-size: 0.84rem;
+  color: #32465f;
+}
+
 .guide-list {
   display: grid;
   gap: 0.85rem;
@@ -444,6 +490,15 @@ label span {
 
   .form-grid,
   .compact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .readonly-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .readonly-grid {
     grid-template-columns: 1fr;
   }
 

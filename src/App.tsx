@@ -10,6 +10,7 @@ import {
   createEmptyField,
   createEmptyPeripheral,
   createEmptyRegister,
+  resolveIRegionPeripherals,
   type EditorAccess,
   type EditorDevice,
   type EditorField,
@@ -42,6 +43,11 @@ function createCollapsedDefaultDevice() {
   const nextDevice = createDefaultEditorDevice()
   return {
     ...nextDevice,
+    iregionExpanded: false,
+    iregionPeripherals: nextDevice.iregionPeripherals.map((peripheral) => ({
+      ...peripheral,
+      expanded: false,
+    })),
     peripherals: nextDevice.peripherals.map((peripheral) => ({
       ...peripheral,
       expanded: false,
@@ -52,6 +58,17 @@ function createCollapsedDefaultDevice() {
 function summarizeName(value: string, fallback: string) {
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : fallback
+}
+
+function formatResolvedAddress(baseAddress: string, offset: string) {
+  const parsedBase = Number(baseAddress)
+  const parsedOffset = Number(offset)
+
+  if (!Number.isInteger(parsedBase) || !Number.isInteger(parsedOffset)) {
+    return '--'
+  }
+
+  return `0x${(parsedBase + parsedOffset).toString(16).toUpperCase()}`
 }
 
 function AccessSelect({
@@ -84,20 +101,26 @@ function App() {
   const [device, setDevice] = useState<EditorDevice>(() => createDefaultEditorDevice())
   const [state, setState] = useState<ConversionState>(initialState)
 
+  const resolvedIRegionPeripherals = useMemo(
+    () => resolveIRegionPeripherals(device.iregionBaseAddress, device.iregionPeripherals),
+    [device.iregionBaseAddress, device.iregionPeripherals],
+  )
+
   const canDownload = state.tone === 'success' && state.xml.length > 0
   const stats = useMemo(() => {
-    const groupCount = device.peripherals.length
-    const registerCount = device.peripherals.reduce(
+    const iregionGroupCount = device.iregionPeripherals.length
+    const customGroupCount = device.peripherals.length
+    const registerCount = [...device.iregionPeripherals, ...device.peripherals].reduce(
       (total, peripheral) => total + peripheral.registers.length,
       0,
     )
-    const fieldCount = device.peripherals.reduce(
+    const fieldCount = [...device.iregionPeripherals, ...device.peripherals].reduce(
       (total, peripheral) =>
         total +
         peripheral.registers.reduce((registerTotal, register) => registerTotal + register.fields.length, 0),
       0,
     )
-    return { groupCount, registerCount, fieldCount }
+    return { iregionGroupCount, customGroupCount, registerCount, fieldCount }
   }, [device])
 
   const invalidateResult = (detail = '配置已变更，请重新执行校验与转换。') => {
@@ -127,6 +150,22 @@ function App() {
       peripherals: current.peripherals.map((peripheral) =>
         peripheral.id === peripheralId ? updater(peripheral) : peripheral,
       ),
+    }))
+  }
+
+  const toggleIRegionPeripheral = (peripheralId: string) => {
+    setDevice((current) => ({
+      ...current,
+      iregionPeripherals: current.iregionPeripherals.map((peripheral) =>
+        peripheral.id === peripheralId ? { ...peripheral, expanded: !peripheral.expanded } : peripheral,
+      ),
+    }))
+  }
+
+  const toggleIRegionCard = () => {
+    setDevice((current) => ({
+      ...current,
+      iregionExpanded: !current.iregionExpanded,
     }))
   }
 
@@ -184,6 +223,13 @@ function App() {
     updateDevice((current) => ({
       ...current,
       [field]: value,
+    }))
+  }
+
+  const handleIRegionBaseAddressChange = (value: string) => {
+    updateDevice((current) => ({
+      ...current,
+      iregionBaseAddress: value,
     }))
   }
 
@@ -371,7 +417,8 @@ function App() {
 
       <section className="metrics-bar" aria-label="当前寄存器配置统计">
         <span>设备：{summarizeName(device.name, '未命名设备')}</span>
-        <span>{stats.groupCount} 个寄存器组</span>
+        <span>{stats.iregionGroupCount} 个 IREGION 寄存器组</span>
+        <span>{stats.customGroupCount} 个自定义寄存器组</span>
         <span>{stats.registerCount} 个寄存器</span>
         <span>{stats.fieldCount} 个位域</span>
       </section>
@@ -473,8 +520,124 @@ function App() {
           <section className="editor-section">
             <div className="section-heading">
               <div>
-                <p className="eyebrow">Register groups</p>
-                <h3>寄存器组</h3>
+                <p className="eyebrow">IREGION map</p>
+                <h3>IREGION</h3>
+              </div>
+            </div>
+
+            <article className="editor-card readonly-card">
+              <div className="card-header">
+                <button
+                  type="button"
+                  className="collapse-toggle"
+                  aria-expanded={device.iregionExpanded}
+                  aria-label={device.iregionExpanded ? '折叠 IREGION' : '展开 IREGION'}
+                  onClick={toggleIRegionCard}
+                >
+                  <span>{device.iregionExpanded ? '▾' : '▸'}</span>
+                  <span>IREGION</span>
+                </button>
+                <div className="readonly-meta">
+                  <span>基地址：{device.iregionBaseAddress}</span>
+                  <span>寄存器组：{stats.iregionGroupCount}</span>
+                </div>
+              </div>
+
+              {device.iregionExpanded ? (
+                <div className="card-body">
+                  <div className="readonly-toolbar">
+                    <label className="inline-field inline-medium">
+                      <span>IREGION 基地址</span>
+                      <input
+                        aria-label="IREGION 基地址"
+                        value={device.iregionBaseAddress}
+                        onChange={(event) => handleIRegionBaseAddressChange(event.target.value)}
+                        placeholder="0x18000000"
+                      />
+                    </label>
+                    <span className="readonly-note">
+                      IREGION 中的寄存器组来自 `IREGION.pdf`，只读展示，实际地址 = 基地址 + 组偏移。
+                    </span>
+                  </div>
+
+                  <div className="card-stack">
+                    {resolvedIRegionPeripherals.map((peripheral, peripheralIndex) => (
+                      <article className="editor-card group-card readonly-card" key={peripheral.id}>
+                        <div className="card-header">
+                          <button
+                            type="button"
+                            className="collapse-toggle"
+                            aria-expanded={peripheral.expanded}
+                            aria-label={`${peripheral.expanded ? '折叠' : '展开'}寄存器组 ${summarizeName(peripheral.name, `IREGION 组 ${peripheralIndex + 1}`)}`}
+                            onClick={() => toggleIRegionPeripheral(peripheral.id)}
+                          >
+                            <span>{peripheral.expanded ? '▾' : '▸'}</span>
+                            <span>{summarizeName(peripheral.name, `IREGION 组 ${peripheralIndex + 1}`)}</span>
+                          </button>
+                          <div className="readonly-meta">
+                            <span>实际基地址：{peripheral.baseAddress}</span>
+                            <span>寄存器数：{peripheral.registers.length}</span>
+                          </div>
+                        </div>
+
+                        {peripheral.expanded ? (
+                          <div className="card-body">
+                            <div className="readonly-grid">
+                              <div>
+                                <span className="readonly-label">groupName</span>
+                                <strong>{peripheral.groupName || '-'}</strong>
+                              </div>
+                              <div>
+                                <span className="readonly-label">实际基地址</span>
+                                <strong>{peripheral.baseAddress}</strong>
+                              </div>
+                              <div className="readonly-wide">
+                                <span className="readonly-label">说明</span>
+                                <strong>{peripheral.description}</strong>
+                              </div>
+                            </div>
+
+                            <div className="field-table-wrap">
+                              <table className="field-table readonly-table">
+                                <thead>
+                                  <tr>
+                                    <th scope="col">寄存器名称</th>
+                                    <th scope="col">addressOffset</th>
+                                    <th scope="col">实际地址</th>
+                                    <th scope="col">size</th>
+                                    <th scope="col">access</th>
+                                    <th scope="col">说明</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {peripheral.registers.map((register) => (
+                                    <tr key={register.id}>
+                                      <td>{register.name}</td>
+                                      <td>{register.addressOffset}</td>
+                                      <td>{formatResolvedAddress(peripheral.baseAddress, register.addressOffset)}</td>
+                                      <td>{register.size || device.size}</td>
+                                      <td>{register.access || device.access || 'inherit'}</td>
+                                      <td>{register.description}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        ) : null}
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </article>
+          </section>
+
+          <section className="editor-section">
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Custom register groups</p>
+                <h3>自定义寄存器组</h3>
               </div>
             </div>
 

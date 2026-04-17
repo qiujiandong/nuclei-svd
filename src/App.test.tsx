@@ -10,8 +10,9 @@ describe('App', () => {
     expect(screen.getByText('交互式寄存器设置界面')).toBeInTheDocument()
     expect(screen.getByDisplayValue('NucleiIREGION')).toBeInTheDocument()
     expect(screen.getByLabelText('默认 size')).toHaveValue('32')
-    expect(screen.getByText('7 个寄存器组')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '展开寄存器组 IINFO' })).toBeInTheDocument()
+    expect(screen.getByText('7 个 IREGION 寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.getByText('寄存器配置说明')).toBeInTheDocument()
   })
 
@@ -29,7 +30,7 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
-    expect(screen.getByText('8 个寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
 
     fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' }).at(-1) as HTMLElement)
 
@@ -46,14 +47,28 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
     fireEvent.change(screen.getByLabelText('设备名称'), { target: { value: 'CustomDevice' } })
-    expect(screen.getByText('8 个寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '重置设置' }))
 
     expect(screen.getByDisplayValue('NucleiIREGION')).toBeInTheDocument()
-    expect(screen.getByText('7 个寄存器组')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '展开寄存器组 IINFO' })).toBeInTheDocument()
-    expect(screen.queryByDisplayValue('0x40000000')).not.toBeInTheDocument()
+    expect(screen.getByText('7 个 IREGION 寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('GROUP1')).not.toBeInTheDocument()
+  })
+
+  it('updates readonly IREGION groups from the IREGION base address', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '展开 IREGION' }))
+    expect(screen.getByLabelText('IREGION 基地址')).toHaveValue('0x18000000')
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 IINFO' }))
+    expect(screen.getByText('实际基地址：0x18000000')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('IREGION 基地址'), { target: { value: '0x19000000' } })
+
+    expect(screen.getByText('实际基地址：0x19000000')).toBeInTheDocument()
   })
 
   it('clears stale successful output when the configuration changes', async () => {
