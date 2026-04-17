@@ -447,7 +447,7 @@ function App() {
                 <h3>设备基础信息</h3>
               </div>
             </div>
-            <div className="form-grid">
+            <div className="form-grid device-form-grid">
               <label>
                 <span>设备名称</span>
                 <input
@@ -460,13 +460,6 @@ function App() {
                 <input
                   value={device.version}
                   onChange={(event) => handleDeviceChange('version', event.target.value)}
-                />
-              </label>
-              <label className="full-width">
-                <span>设备描述</span>
-                <input
-                  value={device.description}
-                  onChange={(event) => handleDeviceChange('description', event.target.value)}
                 />
               </label>
               <label>
@@ -512,6 +505,13 @@ function App() {
                   value={device.resetMask}
                   onChange={(event) => handleDeviceChange('resetMask', event.target.value)}
                   placeholder="0xFFFFFFFF"
+                />
+              </label>
+              <label className="device-span-full">
+                <span>设备描述</span>
+                <input
+                  value={device.description}
+                  onChange={(event) => handleDeviceChange('description', event.target.value)}
                 />
               </label>
             </div>

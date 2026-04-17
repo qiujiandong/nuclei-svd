@@ -220,6 +220,18 @@ label span {
   gap: 0.9rem;
 }
 
+.device-form-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.device-span-2 {
+  grid-column: span 2;
+}
+
+.device-span-full {
+  grid-column: 1 / -1;
+}
+
 .compact-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -491,6 +503,14 @@ label span {
   .form-grid,
   .compact-grid {
     grid-template-columns: 1fr;
+  }
+
+  .device-span-2 {
+    grid-column: auto;
+  }
+
+  .device-span-full {
+    grid-column: auto;
   }
 
   .readonly-toolbar {
