@@ -246,6 +246,36 @@ label span {
   gap: 0.9rem;
 }
 
+.custom-group-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.column-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.column-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.column-header h4 {
+  margin: 0;
+}
+
+.column-hint {
+  color: #5f6f87;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  text-align: right;
+}
+
 .editor-card {
   border: 1px solid #dbe5f5;
   border-radius: 18px;

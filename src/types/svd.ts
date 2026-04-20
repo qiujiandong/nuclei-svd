@@ -32,8 +32,9 @@ export interface SvdPeripheralInput {
   name: string
   description: string
   baseAddress: NumericInput
+  derivedFrom?: string
   groupName?: string
-  registers: SvdRegisterInput[]
+  registers?: SvdRegisterInput[]
 }
 
 export interface SvdDeviceInput {
@@ -77,6 +78,7 @@ export interface NormalizedSvdPeripheral {
   name: string
   description: string
   baseAddress: number
+  derivedFrom?: string
   groupName?: string
   registers: NormalizedSvdRegister[]
 }

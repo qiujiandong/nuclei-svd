@@ -20,6 +20,15 @@ function textNode(name: string, value: number | string | undefined, indent: stri
   return `${indent}<${name}>${escapeXml(String(value))}</${name}>`
 }
 
+function openNode(name: string, attrs: Record<string, string | undefined>, indent: string) {
+  const renderedAttrs = Object.entries(attrs)
+    .filter((entry): entry is [string, string] => entry[1] !== undefined)
+    .map(([attrName, value]) => ` ${attrName}="${escapeXml(value)}"`)
+    .join('')
+
+  return `${indent}<${name}${renderedAttrs}>`
+}
+
 function fieldToXml(field: NormalizedSvdField, level: number) {
   const indent = '  '.repeat(level)
   const inner = '  '.repeat(level + 1)
@@ -80,16 +89,18 @@ export function transformToSvd(model: NormalizedSvdModel): string {
   ].filter(Boolean)
 
   device.peripherals.forEach((peripheral) => {
-    lines.push('    <peripheral>')
+    lines.push(openNode('peripheral', { derivedFrom: peripheral.derivedFrom }, '    '))
     lines.push(textNode('name', peripheral.name, '      '))
     lines.push(textNode('description', peripheral.description, '      '))
     lines.push(textNode('groupName', peripheral.groupName, '      '))
     lines.push(textNode('baseAddress', formatHexValue(peripheral.baseAddress), '      '))
-    lines.push('      <registers>')
-    peripheral.registers.forEach((register) => {
-      lines.push(registerToXml(register, 4))
-    })
-    lines.push('      </registers>')
+    if (peripheral.registers.length > 0) {
+      lines.push('      <registers>')
+      peripheral.registers.forEach((register) => {
+        lines.push(registerToXml(register, 4))
+      })
+      lines.push('      </registers>')
+    }
     lines.push('    </peripheral>')
   })
 

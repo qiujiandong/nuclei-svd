@@ -47,11 +47,12 @@ export const svdYamlSchema = {
           items: {
             type: 'object',
             additionalProperties: false,
-            required: ['name', 'description', 'baseAddress', 'registers'],
+            required: ['name', 'description', 'baseAddress'],
             properties: {
               name: { type: 'string', minLength: 1 },
               description: { type: 'string', minLength: 1 },
               baseAddress: scalarAddressSchema,
+              derivedFrom: { type: 'string', minLength: 1 },
               groupName: { type: 'string', minLength: 1 },
               registers: {
                 type: 'array',

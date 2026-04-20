@@ -30,6 +30,7 @@ export interface EditorPeripheral {
   name: string
   description: string
   baseAddress: string
+  derivedFrom?: string
   groupName: string
   expanded: boolean
   registers: EditorRegister[]
@@ -48,6 +49,7 @@ export interface EditorDevice {
   iregionExpanded: boolean
   iregionBaseAddress: string
   iregionPeripherals: EditorPeripheral[]
+  peripheralTemplates: EditorPeripheral[]
   peripherals: EditorPeripheral[]
 }
 
@@ -101,6 +103,39 @@ export function createEmptyRegister(
     fields: [createEmptyField()],
     ...overrides,
   }
+}
+
+export function cloneEditorField(
+  field: EditorField,
+  overrides: Partial<Omit<EditorField, 'id'>> = {},
+): EditorField {
+  return createEmptyField({
+    name: field.name,
+    description: field.description,
+    bitOffset: field.bitOffset,
+    bitWidth: field.bitWidth,
+    access: field.access,
+    expanded: field.expanded,
+    ...overrides,
+  })
+}
+
+export function cloneEditorRegister(
+  register: EditorRegister,
+  overrides: Partial<Omit<EditorRegister, 'id'>> = {},
+): EditorRegister {
+  return createEmptyRegister({
+    name: register.name,
+    description: register.description,
+    addressOffset: register.addressOffset,
+    size: register.size,
+    access: register.access,
+    resetValue: register.resetValue,
+    resetMask: register.resetMask,
+    expanded: register.expanded,
+    fields: register.fields.map((field) => cloneEditorField(field)),
+    ...overrides,
+  })
 }
 
 function createPresetRegister({
@@ -186,6 +221,31 @@ export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
     baseAddress: '0x40001000',
     groupName: 'PERIPHERAL',
     expanded: true,
+  })
+}
+
+export function createDefaultPeripheralTemplate(index = 0): EditorPeripheral {
+  return createEmptyPeripheral({
+    name: `GROUP_TEMPLATE${index}`,
+    description: 'Register group template',
+    baseAddress: '0x0',
+    groupName: 'PERIPHERAL_TEMPLATE',
+    expanded: false,
+  })
+}
+
+export function createPeripheralInstanceFromTemplate(
+  template: EditorPeripheral,
+  index: number,
+): EditorPeripheral {
+  return createEmptyPeripheral({
+    name: `${template.name}_INST${index}`,
+    description: template.description,
+    baseAddress: '0x40001000',
+    derivedFrom: template.name,
+    groupName: template.groupName,
+    expanded: true,
+    registers: [],
   })
 }
 
@@ -951,6 +1011,8 @@ function createIRegionPeripherals() {
 }
 
 export function createDefaultEditorDevice(): EditorDevice {
+  const defaultTemplate = createDefaultPeripheralTemplate(0)
+
   return {
     name: 'NucleiDemo',
     version: '1.0.0',
@@ -964,7 +1026,14 @@ export function createDefaultEditorDevice(): EditorDevice {
     iregionExpanded: false,
     iregionBaseAddress: '0x18000000',
     iregionPeripherals: createIRegionPeripherals(),
-    peripherals: [{ ...createDefaultCustomPeripheral(0), expanded: false }],
+    peripheralTemplates: [defaultTemplate],
+    peripherals: [
+      {
+        ...createPeripheralInstanceFromTemplate(defaultTemplate, 0),
+        name: 'GROUP0',
+        expanded: false,
+      },
+    ],
   }
 }
 
@@ -1004,8 +1073,11 @@ function buildPeripheral(peripheral: EditorPeripheral): SvdPeripheralInput {
     name: peripheral.name.trim(),
     description: peripheral.description.trim(),
     baseAddress: peripheral.baseAddress.trim(),
+    ...optionalStringProperty('derivedFrom', peripheral.derivedFrom ?? ''),
     ...optionalStringProperty('groupName', peripheral.groupName),
-    registers: peripheral.registers.map((register) => buildRegister(register)),
+    ...(peripheral.registers.length > 0
+      ? { registers: peripheral.registers.map((register) => buildRegister(register)) }
+      : {}),
   }
 }
 
@@ -1053,6 +1125,7 @@ export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
       ...optionalStringProperty('resetMask', device.resetMask),
       peripherals: [
         ...resolvedIRegionPeripherals.map((peripheral) => buildPeripheral(peripheral)),
+        ...device.peripheralTemplates.map((peripheral) => buildPeripheral(peripheral)),
         ...device.peripherals.map((peripheral) => buildPeripheral(peripheral)),
       ],
     },

@@ -13,6 +13,11 @@ describe('App', () => {
     expect(screen.getByText('7 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 GROUP0' }))
+    expect(screen.getByText('derivedFrom：GROUP_TEMPLATE0')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '折叠寄存器组 GROUP0' }))
+    expect(screen.getByRole('button', { name: '新增寄存器组模板' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.getByText('寄存器配置说明')).toBeInTheDocument()
   })
@@ -27,28 +32,30 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: '下载 .svd' })).toBeEnabled()
   })
 
-  it('allows creating groups/registers/fields and collapsing registers', () => {
+  it('creates peripheral templates and derives concrete peripheral instances', async () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
-    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
-
-    fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' }).at(-1) as HTMLElement)
-
-    fireEvent.change(screen.getAllByLabelText('寄存器名称').at(-1) as HTMLElement, {
-      target: { value: 'STATUS' },
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE1' }))
+    fireEvent.change(screen.getAllByLabelText('寄存器组模板名称').at(-1) as HTMLElement, {
+      target: { value: 'GPIO_TEMPLATE' },
     })
-    fireEvent.click(screen.getAllByRole('button', { name: '新增位域' })[1])
-    expect(screen.getAllByLabelText(/位域名称 \d+/)).toHaveLength(3)
+    fireEvent.click(screen.getAllByRole('button', { name: '生成实例' }).at(-1) as HTMLElement)
 
-    fireEvent.click(screen.getByRole('button', { name: '折叠寄存器 STATUS' }))
-    expect(screen.queryByDisplayValue('STATUS')).not.toBeInTheDocument()
+    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('GPIO_TEMPLATE_INST1')).toBeInTheDocument()
+    expect(screen.getByText('derivedFrom：GPIO_TEMPLATE')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
+
+    expect(await screen.findByText('转换成功')).toBeInTheDocument()
+    expect(screen.getByTestId('xml-preview')).toHaveTextContent('<peripheral derivedFrom="GPIO_TEMPLATE">')
   })
 
   it('resets the interactive configuration from the editor toolbar', () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+    fireEvent.click(screen.getByRole('button', { name: '生成实例' }))
     fireEvent.change(screen.getByLabelText('设备名称'), { target: { value: 'CustomDevice' } })
     expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
 
@@ -59,6 +66,9 @@ describe('App', () => {
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 GROUP0' }))
+    expect(screen.getByText('derivedFrom：GROUP_TEMPLATE0')).toBeInTheDocument()
     expect(screen.queryByDisplayValue('GROUP1')).not.toBeInTheDocument()
   })
 
@@ -100,15 +110,12 @@ describe('App', () => {
   it('blocks conversion and shows readable validation errors for invalid register data', async () => {
     render(<App />)
 
-    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
-    fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' }).at(-1) as HTMLElement)
-    fireEvent.change(screen.getAllByLabelText('addressOffset').at(-1) as HTMLElement, {
-      target: { value: '0x0' },
-    })
+    fireEvent.click(screen.getByRole('button', { name: '生成实例' }))
+    fireEvent.change(screen.getByDisplayValue('GROUP_TEMPLATE0_INST1'), { target: { value: 'GROUP0' } })
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
 
     expect(await screen.findByText('校验失败')).toBeInTheDocument()
-    expect(screen.getByText(/register absolute address/i)).toBeInTheDocument()
+    expect(screen.getByText('semantic.duplicate-peripheral-name')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '下载 .svd' })).toBeDisabled()
   })
 

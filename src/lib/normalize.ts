@@ -234,7 +234,7 @@ function normalizePeripheral(
   const seenRegisterNames = new Map<string, string>()
   const seenAbsoluteAddresses = new Map<number, string>()
 
-  const registers = peripheral.registers.map((register, registerIndex) => {
+  const registers = (peripheral.registers ?? []).map((register, registerIndex) => {
     const registerPath = `${path}.registers[${registerIndex}]`
 
     registerUnique(
@@ -280,6 +280,7 @@ function normalizePeripheral(
     name: peripheral.name,
     description: peripheral.description,
     baseAddress: baseAddress ?? Number.NaN,
+    derivedFrom: peripheral.derivedFrom,
     groupName: peripheral.groupName,
     registers,
   }
