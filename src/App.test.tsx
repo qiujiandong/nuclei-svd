@@ -2,6 +2,15 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 
+function closestCard(element: HTMLElement) {
+  const card = element.closest('.group-card')
+  if (!(card instanceof HTMLElement)) {
+    throw new Error('Expected element to be inside a group card')
+  }
+
+  return card
+}
+
 describe('App', () => {
   it('shows the interactive register editor on first render', () => {
     render(<App />)
@@ -14,6 +23,8 @@ describe('App', () => {
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).toBeInTheDocument()
+    expect(closestCard(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))).toHaveClass('template-color-1')
+    expect(closestCard(screen.getByRole('button', { name: '展开寄存器组 GROUP0' }))).toHaveClass('template-color-1')
     fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 GROUP0' }))
     expect(screen.getByText('derivedFrom：GROUP_TEMPLATE0')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: '折叠寄存器组 GROUP0' }))

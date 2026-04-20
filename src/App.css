@@ -283,6 +283,40 @@ label span {
   padding: 0.8rem 0.95rem;
 }
 
+.template-linked-card {
+  border-left-width: 0.45rem;
+}
+
+.template-color-1 {
+  border-left-color: #2f80ed;
+  background: #f4f8ff;
+}
+
+.template-color-2 {
+  border-left-color: #219653;
+  background: #f3fbf6;
+}
+
+.template-color-3 {
+  border-left-color: #b7791f;
+  background: #fff8ec;
+}
+
+.template-color-4 {
+  border-left-color: #d64550;
+  background: #fff5f5;
+}
+
+.template-color-5 {
+  border-left-color: #6c5ce7;
+  background: #f7f5ff;
+}
+
+.template-color-6 {
+  border-left-color: #008c95;
+  background: #f0fbfc;
+}
+
 .register-card {
   background: #f5f9ff;
 }

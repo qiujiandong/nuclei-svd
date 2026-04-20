@@ -92,6 +92,17 @@ function formatResolvedAddress(baseAddress: string, offset: string) {
   return `0x${(parsedBase + parsedOffset).toString(16).toUpperCase()}`
 }
 
+function templateColorClass(index: number) {
+  return `template-color-${(index % 6) + 1}`
+}
+
+function derivedColorClass(derivedFrom: string | undefined, templates: EditorPeripheral[]) {
+  if (!derivedFrom) return ''
+
+  const templateIndex = templates.findIndex((template) => template.name === derivedFrom)
+  return templateIndex >= 0 ? templateColorClass(templateIndex) : ''
+}
+
 function AccessSelect({
   value,
   onChange,
@@ -864,7 +875,7 @@ function App() {
                 </div>
                 <div className="nested-stack">
                   {device.peripheralTemplates.map((template, templateIndex) => (
-                    <article className="editor-card group-card" key={template.id}>
+                    <article className={`editor-card group-card template-linked-card ${templateColorClass(templateIndex)}`} key={template.id}>
                       <div className="card-header">
                         <button
                           type="button"
@@ -1123,7 +1134,10 @@ function App() {
                 </div>
                 <div className="nested-stack">
                   {device.peripherals.map((peripheral, peripheralIndex) => (
-                    <article className="editor-card group-card" key={peripheral.id}>
+                    <article
+                      className={`editor-card group-card ${peripheral.derivedFrom ? `template-linked-card ${derivedColorClass(peripheral.derivedFrom, device.peripheralTemplates)}` : ''}`}
+                      key={peripheral.id}
+                    >
                       <div className="card-header">
                         <button
                           type="button"
