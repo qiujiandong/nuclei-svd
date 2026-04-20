@@ -7,12 +7,12 @@ describe('App', () => {
     render(<App />)
 
     expect(screen.queryByLabelText('YAML editor')).not.toBeInTheDocument()
-    expect(screen.getByText('交互式寄存器设置界面')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('NucleiIREGION')).toBeInTheDocument()
+    expect(screen.getByText('寄存器设置界面')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
     expect(screen.getByLabelText('默认 size')).toHaveValue('32')
     expect(screen.getByText('7 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('GROUP0')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.getByText('寄存器配置说明')).toBeInTheDocument()
   })
@@ -23,7 +23,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
 
     expect(await screen.findByText('转换成功')).toBeInTheDocument()
-    expect(screen.getByTestId('xml-preview')).toHaveTextContent('<name>NucleiIREGION</name>')
+    expect(screen.getByTestId('xml-preview')).toHaveTextContent('<name>NucleiDemo</name>')
     expect(screen.getByRole('button', { name: '下载 .svd' })).toBeEnabled()
   })
 
@@ -39,7 +39,7 @@ describe('App', () => {
       target: { value: 'STATUS' },
     })
     fireEvent.click(screen.getAllByRole('button', { name: '新增位域' })[1])
-    expect(screen.getAllByLabelText(/位域名称 \d+/)).toHaveLength(4)
+    expect(screen.getAllByLabelText(/位域名称 \d+/)).toHaveLength(3)
 
     fireEvent.click(screen.getByRole('button', { name: '折叠寄存器 STATUS' }))
     expect(screen.queryByDisplayValue('STATUS')).not.toBeInTheDocument()
@@ -54,7 +54,7 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '重置设置' }))
 
-    expect(screen.getByDisplayValue('NucleiIREGION')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
     expect(screen.getByText('7 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()

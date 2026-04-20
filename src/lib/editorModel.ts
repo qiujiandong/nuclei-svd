@@ -964,7 +964,7 @@ export function createDefaultEditorDevice(): EditorDevice {
     iregionExpanded: false,
     iregionBaseAddress: '0x18000000',
     iregionPeripherals: createIRegionPeripherals(),
-    peripherals: [createDefaultCustomPeripheral(0)],
+    peripherals: [{ ...createDefaultCustomPeripheral(0), expanded: false }],
   }
 }
 
