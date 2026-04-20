@@ -98,11 +98,22 @@ function templateColorClass(index: number) {
   return `template-color-${(index % 6) + 1}`
 }
 
-function derivedColorClass(derivedFrom: string | undefined, templates: EditorPeripheral[]) {
+function registerTemplateColorClass(index: number) {
+  return `register-color-${(index % 6) + 1}`
+}
+
+function derivedColorClass(derivedFrom: string | undefined, templates: Array<{ name: string }>) {
   if (!derivedFrom) return ''
 
   const templateIndex = templates.findIndex((template) => template.name === derivedFrom)
   return templateIndex >= 0 ? templateColorClass(templateIndex) : ''
+}
+
+function derivedRegisterColorClass(derivedFrom: string | undefined, templates: Array<{ name: string }>) {
+  if (!derivedFrom) return ''
+
+  const templateIndex = templates.findIndex((template) => template.name === derivedFrom)
+  return templateIndex >= 0 ? registerTemplateColorClass(templateIndex) : ''
 }
 
 function AccessSelect({
@@ -1376,7 +1387,7 @@ function App() {
                                 </div>
                                 <div className="nested-stack">
                                   {peripheral.registerTemplates.map((template, templateIndex) => (
-                                    <article className="editor-card register-card" key={template.id}>
+                                    <article className={`editor-card register-card register-linked-card ${registerTemplateColorClass(templateIndex)}`} key={template.id}>
                                       <div className="card-header">
                                         <button
                                           type="button"
@@ -1571,7 +1582,10 @@ function App() {
                                   <span className="column-hint">实例通过 derivedFrom 继承上方模板。</span>
                                 </div>
                               {peripheral.registers.map((register, registerIndex) => (
-                                <article className="editor-card register-card" key={register.id}>
+                                <article
+                                  className={`editor-card register-card ${register.derivedFrom ? `register-linked-card ${derivedRegisterColorClass(register.derivedFrom, peripheral.registerTemplates)}` : ''}`}
+                                  key={register.id}
+                                >
                                   <div className="card-header">
                                     <button
                                       type="button"

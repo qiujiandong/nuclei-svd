@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 
 function closestCard(element: HTMLElement) {
-  const card = element.closest('.group-card')
+  const card = element.closest('.editor-card')
   if (!(card instanceof HTMLElement)) {
-    throw new Error('Expected element to be inside a group card')
+    throw new Error('Expected element to be inside a card')
   }
 
   return card
@@ -83,6 +83,9 @@ describe('App', () => {
 
     expect(screen.getByDisplayValue('STATUS_TEMPLATE_INST0')).toBeInTheDocument()
     expect(screen.getByText('derivedFrom：STATUS_TEMPLATE')).toBeInTheDocument()
+    expect(closestCard(screen.getByRole('button', { name: '折叠寄存器模板 STATUS_TEMPLATE' }))).toHaveClass('register-color-1')
+    expect(closestCard(screen.getByRole('button', { name: '折叠寄存器 STATUS_TEMPLATE_INST0' }))).toHaveClass('register-color-1')
+    expect(closestCard(screen.getByRole('button', { name: '折叠寄存器模板 STATUS_TEMPLATE' }))).not.toHaveClass('template-color-1')
 
     fireEvent.change(screen.getByDisplayValue('STATUS_TEMPLATE_INST0'), { target: { value: 'STATUS0' } })
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))

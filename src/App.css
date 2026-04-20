@@ -287,6 +287,10 @@ label span {
   border-left-width: 0.45rem;
 }
 
+.register-linked-card {
+  border-top-width: 0.35rem;
+}
+
 .template-color-1 {
   border-left-color: #2f80ed;
   background: #f4f8ff;
@@ -315,6 +319,36 @@ label span {
 .template-color-6 {
   border-left-color: #008c95;
   background: #f0fbfc;
+}
+
+.register-color-1 {
+  border-top-color: #5f8fd9;
+  background: #f7faff;
+}
+
+.register-color-2 {
+  border-top-color: #56a978;
+  background: #f7fcf9;
+}
+
+.register-color-3 {
+  border-top-color: #c99a45;
+  background: #fffaf1;
+}
+
+.register-color-4 {
+  border-top-color: #de6b74;
+  background: #fff8f8;
+}
+
+.register-color-5 {
+  border-top-color: #8a7cf0;
+  background: #faf8ff;
+}
+
+.register-color-6 {
+  border-top-color: #33a4ab;
+  background: #f4fcfd;
 }
 
 .register-card {
