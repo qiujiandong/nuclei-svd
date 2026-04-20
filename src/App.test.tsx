@@ -52,6 +52,17 @@ describe('App', () => {
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<peripheral derivedFrom="GPIO_TEMPLATE">')
   })
 
+  it('keeps standalone custom groups available in the instance area', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+
+    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('GROUP1')).toBeInTheDocument()
+    expect(screen.getByText('derivedFrom：-')).toBeInTheDocument()
+    expect(screen.getByLabelText('寄存器名称')).toHaveValue('CTRL')
+  })
+
   it('resets the interactive configuration from the editor toolbar', () => {
     render(<App />)
 
