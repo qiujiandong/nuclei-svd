@@ -10,8 +10,10 @@ import {
   createDefaultCustomPeripheral,
   createDefaultEditorDevice,
   createDefaultPeripheralTemplate,
+  createDefaultRegisterTemplate,
   createEmptyField,
   createPeripheralInstanceFromTemplate,
+  createRegisterInstanceFromTemplate,
   resolveIRegionPeripherals,
   type EditorAccess,
   type EditorDevice,
@@ -439,6 +441,139 @@ function App() {
         ],
       }
     })
+  }
+
+  const updateRegisterTemplate = (
+    peripheralId: string,
+    templateId: string,
+    updater: (current: EditorRegister) => EditorRegister,
+  ) => {
+    updatePeripheral(peripheralId, (peripheral) => ({
+      ...peripheral,
+      registerTemplates: peripheral.registerTemplates.map((template) =>
+        template.id === templateId ? updater(template) : template,
+      ),
+    }))
+  }
+
+  const updateRegisterTemplateField = (
+    peripheralId: string,
+    templateId: string,
+    fieldId: string,
+    updater: (current: EditorField) => EditorField,
+  ) => {
+    updateRegisterTemplate(peripheralId, templateId, (template) => ({
+      ...template,
+      fields: template.fields.map((field) => (field.id === fieldId ? updater(field) : field)),
+    }))
+  }
+
+  const toggleRegisterTemplate = (peripheralId: string, templateId: string) => {
+    setDevice((current) => ({
+      ...current,
+      peripherals: current.peripherals.map((peripheral) =>
+        peripheral.id === peripheralId
+          ? {
+              ...peripheral,
+              registerTemplates: peripheral.registerTemplates.map((template) =>
+                template.id === templateId ? { ...template, expanded: !template.expanded } : template,
+              ),
+            }
+          : peripheral,
+      ),
+    }))
+  }
+
+  const handleRegisterTemplateChange = (
+    peripheralId: string,
+    templateId: string,
+    field: keyof Omit<EditorRegister, 'id' | 'expanded' | 'fields'>,
+    value: string,
+  ) => {
+    updateRegisterTemplate(peripheralId, templateId, (template) => ({
+      ...template,
+      [field]: value,
+    }))
+  }
+
+  const handleRegisterTemplateFieldChange = (
+    peripheralId: string,
+    templateId: string,
+    fieldId: string,
+    field: keyof Omit<EditorField, 'id' | 'expanded'>,
+    value: string,
+  ) => {
+    updateRegisterTemplateField(peripheralId, templateId, fieldId, (current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  const handleAddRegisterTemplate = (peripheralId: string, templateCount: number) => {
+    updatePeripheral(peripheralId, (peripheral) => ({
+      ...peripheral,
+      expanded: true,
+      registerTemplates: [
+        ...peripheral.registerTemplates,
+        createDefaultRegisterTemplate(templateCount),
+      ],
+    }))
+  }
+
+  const handleRemoveRegisterTemplate = (peripheralId: string, templateId: string) => {
+    updatePeripheral(peripheralId, (peripheral) => ({
+      ...peripheral,
+      registerTemplates: peripheral.registerTemplates.filter((template) => template.id !== templateId),
+    }))
+  }
+
+  const handleGenerateRegisterFromTemplate = (peripheralId: string, templateId: string) => {
+    updatePeripheral(peripheralId, (peripheral) => {
+      const sourceTemplate = peripheral.registerTemplates.find((template) => template.id === templateId)
+      if (!sourceTemplate) return peripheral
+
+      return {
+        ...peripheral,
+        registers: [
+          ...peripheral.registers,
+          createRegisterInstanceFromTemplate(
+            sourceTemplate,
+            formatNextOffset([...peripheral.registerTemplates, ...peripheral.registers]),
+            peripheral.registers.length,
+          ),
+        ],
+      }
+    })
+  }
+
+  const handleAddRegisterTemplateField = (
+    peripheralId: string,
+    templateId: string,
+    fieldCount: number,
+  ) => {
+    updateRegisterTemplate(peripheralId, templateId, (template) => ({
+      ...template,
+      expanded: true,
+      fields: [
+        ...template.fields,
+        createEmptyField({
+          name: `FIELD${fieldCount}`,
+          description: 'New bit field',
+          bitOffset: String(fieldCount),
+        }),
+      ],
+    }))
+  }
+
+  const handleRemoveRegisterTemplateField = (
+    peripheralId: string,
+    templateId: string,
+    fieldId: string,
+  ) => {
+    updateRegisterTemplate(peripheralId, templateId, (template) => ({
+      ...template,
+      fields: template.fields.filter((field) => field.id !== fieldId),
+    }))
   }
 
   const handleRemovePeripheral = (peripheralId: string) => {
@@ -1211,6 +1346,230 @@ function App() {
                           </div>
                           {!peripheral.derivedFrom ? (
                             <div className="nested-stack">
+                              <section className="editor-card column-panel">
+                                <div className="column-header">
+                                  <div>
+                                    <p className="eyebrow">Register templates</p>
+                                    <h4>寄存器模板</h4>
+                                  </div>
+                                  <div className="card-actions">
+                                    <button
+                                      type="button"
+                                      className="secondary"
+                                      onClick={() =>
+                                        handleAddRegisterTemplate(
+                                          peripheral.id,
+                                          peripheral.registerTemplates.length,
+                                        )
+                                      }
+                                    >
+                                      新增寄存器模板
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="secondary"
+                                      onClick={() => handleAddRegister(peripheral.id, peripheral.registers.length + 1)}
+                                    >
+                                      新增寄存器
+                                    </button>
+                                  </div>
+                                </div>
+                                <div className="nested-stack">
+                                  {peripheral.registerTemplates.map((template, templateIndex) => (
+                                    <article className="editor-card register-card" key={template.id}>
+                                      <div className="card-header">
+                                        <button
+                                          type="button"
+                                          className="collapse-toggle"
+                                          aria-expanded={template.expanded}
+                                          aria-label={`${template.expanded ? '折叠' : '展开'}寄存器模板 ${summarizeName(template.name, `寄存器模板 ${templateIndex + 1}`)}`}
+                                          onClick={() => toggleRegisterTemplate(peripheral.id, template.id)}
+                                        >
+                                          <span>{template.expanded ? '▾' : '▸'}</span>
+                                          <span>{summarizeName(template.name, `寄存器模板 ${templateIndex + 1}`)}</span>
+                                        </button>
+                                        <div className="card-actions">
+                                          <button
+                                            type="button"
+                                            className="secondary"
+                                            onClick={() =>
+                                              handleAddRegisterTemplateField(
+                                                peripheral.id,
+                                                template.id,
+                                                template.fields.length + 1,
+                                              )
+                                            }
+                                          >
+                                            新增位域
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="secondary"
+                                            onClick={() => handleGenerateRegisterFromTemplate(peripheral.id, template.id)}
+                                          >
+                                            生成实例
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="ghost-button"
+                                            onClick={() => handleRemoveRegisterTemplate(peripheral.id, template.id)}
+                                          >
+                                            删除模板
+                                          </button>
+                                        </div>
+                                      </div>
+                                      {template.expanded ? (
+                                        <div className="card-body">
+                                          <div className="inline-field-row">
+                                            <label className="inline-field inline-medium">
+                                              <span>模板名称</span>
+                                              <input
+                                                aria-label="寄存器模板名称"
+                                                value={template.name}
+                                                onChange={(event) =>
+                                                  handleRegisterTemplateChange(
+                                                    peripheral.id,
+                                                    template.id,
+                                                    'name',
+                                                    event.target.value,
+                                                  )
+                                                }
+                                              />
+                                            </label>
+                                            <label className="inline-field inline-small">
+                                              <span>addressOffset</span>
+                                              <input
+                                                value={template.addressOffset}
+                                                onChange={(event) =>
+                                                  handleRegisterTemplateChange(
+                                                    peripheral.id,
+                                                    template.id,
+                                                    'addressOffset',
+                                                    event.target.value,
+                                                  )
+                                                }
+                                              />
+                                            </label>
+                                            <label className="inline-field inline-wide">
+                                              <span>模板描述</span>
+                                              <input
+                                                value={template.description}
+                                                onChange={(event) =>
+                                                  handleRegisterTemplateChange(
+                                                    peripheral.id,
+                                                    template.id,
+                                                    'description',
+                                                    event.target.value,
+                                                  )
+                                                }
+                                              />
+                                            </label>
+                                          </div>
+                                          <div className="field-table-wrap">
+                                            <table className="field-table">
+                                              <thead>
+                                                <tr>
+                                                  <th scope="col">位域名称</th>
+                                                  <th scope="col">bitOffset</th>
+                                                  <th scope="col">bitWidth</th>
+                                                  <th scope="col">位域描述</th>
+                                                  <th scope="col">操作</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody>
+                                                {template.fields.map((field, fieldIndex) => (
+                                                  <tr key={field.id}>
+                                                    <td>
+                                                      <input
+                                                        aria-label={`寄存器模板位域名称 ${fieldIndex + 1}`}
+                                                        value={field.name}
+                                                        onChange={(event) =>
+                                                          handleRegisterTemplateFieldChange(
+                                                            peripheral.id,
+                                                            template.id,
+                                                            field.id,
+                                                            'name',
+                                                            event.target.value,
+                                                          )
+                                                        }
+                                                      />
+                                                    </td>
+                                                    <td>
+                                                      <input
+                                                        value={field.bitOffset}
+                                                        onChange={(event) =>
+                                                          handleRegisterTemplateFieldChange(
+                                                            peripheral.id,
+                                                            template.id,
+                                                            field.id,
+                                                            'bitOffset',
+                                                            event.target.value,
+                                                          )
+                                                        }
+                                                      />
+                                                    </td>
+                                                    <td>
+                                                      <input
+                                                        value={field.bitWidth}
+                                                        onChange={(event) =>
+                                                          handleRegisterTemplateFieldChange(
+                                                            peripheral.id,
+                                                            template.id,
+                                                            field.id,
+                                                            'bitWidth',
+                                                            event.target.value,
+                                                          )
+                                                        }
+                                                      />
+                                                    </td>
+                                                    <td>
+                                                      <input
+                                                        value={field.description}
+                                                        onChange={(event) =>
+                                                          handleRegisterTemplateFieldChange(
+                                                            peripheral.id,
+                                                            template.id,
+                                                            field.id,
+                                                            'description',
+                                                            event.target.value,
+                                                          )
+                                                        }
+                                                      />
+                                                    </td>
+                                                    <td>
+                                                      <button
+                                                        type="button"
+                                                        className="ghost-button table-action"
+                                                        onClick={() =>
+                                                          handleRemoveRegisterTemplateField(
+                                                            peripheral.id,
+                                                            template.id,
+                                                            field.id,
+                                                          )
+                                                        }
+                                                      >
+                                                        删除
+                                                      </button>
+                                                    </td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                            </table>
+                                          </div>
+                                        </div>
+                                      ) : null}
+                                    </article>
+                                  ))}
+                                </div>
+                              </section>
+                              <section className="editor-card column-panel">
+                                <div className="column-header">
+                                  <div>
+                                    <p className="eyebrow">Register instances</p>
+                                    <h4>寄存器实例</h4>
+                                  </div>
+                                  <span className="column-hint">实例通过 derivedFrom 继承上方模板。</span>
+                                </div>
                               {peripheral.registers.map((register, registerIndex) => (
                                 <article className="editor-card register-card" key={register.id}>
                                   <div className="card-header">
@@ -1231,6 +1590,7 @@ function App() {
                                         onClick={() =>
                                           handleAddField(peripheral.id, register.id, register.fields.length + 1)
                                         }
+                                        disabled={Boolean(register.derivedFrom)}
                                       >
                                         新增位域
                                       </button>
@@ -1292,6 +1652,10 @@ function App() {
                                           />
                                         </label>
                                       </div>
+                                      <div className="readonly-meta">
+                                        <span>derivedFrom：{register.derivedFrom || '-'}</span>
+                                      </div>
+                                      {!register.derivedFrom ? (
                                       <div className="field-table-wrap">
                                         <table className="field-table">
                                           <thead>
@@ -1379,10 +1743,12 @@ function App() {
                                           </tbody>
                                         </table>
                                       </div>
+                                      ) : null}
                                     </div>
                                   ) : null}
                                 </article>
                               ))}
+                              </section>
                             </div>
                           ) : null}
                         </div>

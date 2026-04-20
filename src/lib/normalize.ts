@@ -133,18 +133,18 @@ function normalizeRegister(
     issues,
   )
 
-  const effectiveSize = register.size ?? device.size
-  const effectiveAccess = register.access ?? device.access
+  const effectiveSize = register.derivedFrom ? register.size : register.size ?? device.size
+  const effectiveAccess = register.derivedFrom ? register.access : register.access ?? device.access
   const effectiveResetValue =
     parseNumericInput(
-      register.resetValue ?? device.resetValue,
+      register.derivedFrom ? register.resetValue : register.resetValue ?? device.resetValue,
       `${path}.resetValue`,
       'resetValue',
       issues,
     )
   const effectiveResetMask =
     parseNumericInput(
-      register.resetMask ?? device.resetMask,
+      register.derivedFrom ? register.resetMask : register.resetMask ?? device.resetMask,
       `${path}.resetMask`,
       'resetMask',
       issues,
@@ -209,6 +209,7 @@ function normalizeRegister(
     description: register.description,
     addressOffset: addressOffset ?? Number.NaN,
     absoluteAddress,
+    derivedFrom: register.derivedFrom,
     size: effectiveSize,
     access: effectiveAccess,
     resetValue: effectiveResetValue,

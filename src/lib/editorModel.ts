@@ -17,6 +17,7 @@ export interface EditorRegister {
   name: string
   description: string
   addressOffset: string
+  derivedFrom?: string
   size: string
   access: EditorAccess
   resetValue: string
@@ -33,6 +34,7 @@ export interface EditorPeripheral {
   derivedFrom?: string
   groupName: string
   expanded: boolean
+  registerTemplates: EditorRegister[]
   registers: EditorRegister[]
 }
 
@@ -95,6 +97,7 @@ export function createEmptyRegister(
     name: 'CTRL',
     description: 'Control register',
     addressOffset: '0x0',
+    derivedFrom: undefined,
     size: '',
     access: '',
     resetValue: '',
@@ -128,6 +131,7 @@ export function cloneEditorRegister(
     name: register.name,
     description: register.description,
     addressOffset: register.addressOffset,
+    derivedFrom: register.derivedFrom,
     size: register.size,
     access: register.access,
     resetValue: register.resetValue,
@@ -209,9 +213,34 @@ export function createEmptyPeripheral(
     baseAddress: '0x0',
     groupName: 'IREGION',
     expanded: true,
+    registerTemplates: [],
     registers: [createEmptyRegister()],
     ...overrides,
   }
+}
+
+export function createDefaultRegisterTemplate(index = 0): EditorRegister {
+  return createEmptyRegister({
+    name: `REG_TEMPLATE${index}`,
+    description: 'Register template',
+    addressOffset: '0x0',
+    fields: [createEmptyField()],
+  })
+}
+
+export function createRegisterInstanceFromTemplate(
+  template: EditorRegister,
+  addressOffset: string,
+  index: number,
+): EditorRegister {
+  return createEmptyRegister({
+    name: `${template.name}_INST${index}`,
+    description: template.description,
+    addressOffset,
+    derivedFrom: template.name,
+    expanded: true,
+    fields: [],
+  })
 }
 
 export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
@@ -221,6 +250,8 @@ export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
     baseAddress: '0x40001000',
     groupName: 'PERIPHERAL',
     expanded: true,
+    registerTemplates: [createDefaultRegisterTemplate(0)],
+    registers: [],
   })
 }
 
@@ -1060,6 +1091,7 @@ function buildRegister(register: EditorRegister): SvdRegisterInput {
     name: register.name.trim(),
     description: register.description.trim(),
     addressOffset: register.addressOffset.trim(),
+    ...optionalStringProperty('derivedFrom', register.derivedFrom ?? ''),
     ...optionalIntegerProperty('size', register.size),
     ...optionalStringProperty('access', register.access),
     ...optionalStringProperty('resetValue', register.resetValue),
@@ -1075,8 +1107,8 @@ function buildPeripheral(peripheral: EditorPeripheral): SvdPeripheralInput {
     baseAddress: peripheral.baseAddress.trim(),
     ...optionalStringProperty('derivedFrom', peripheral.derivedFrom ?? ''),
     ...optionalStringProperty('groupName', peripheral.groupName),
-    ...(peripheral.registers.length > 0
-      ? { registers: peripheral.registers.map((register) => buildRegister(register)) }
+    ...(peripheral.registerTemplates.length + peripheral.registers.length > 0
+      ? { registers: [...peripheral.registerTemplates, ...peripheral.registers].map((register) => buildRegister(register)) }
       : {}),
   }
 }

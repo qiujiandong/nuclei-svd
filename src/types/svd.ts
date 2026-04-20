@@ -21,6 +21,7 @@ export interface SvdRegisterInput {
   name: string
   description: string
   addressOffset: NumericInput
+  derivedFrom?: string
   size?: number
   access?: Access
   resetValue?: NumericInput
@@ -67,6 +68,7 @@ export interface NormalizedSvdRegister {
   description: string
   addressOffset: number
   absoluteAddress: number
+  derivedFrom?: string
   size?: number
   access?: Access
   resetValue?: number

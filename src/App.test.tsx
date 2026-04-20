@@ -71,7 +71,35 @@ describe('App', () => {
     expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByDisplayValue('GROUP1')).toBeInTheDocument()
     expect(screen.getByText('derivedFrom：-')).toBeInTheDocument()
-    expect(screen.getByLabelText('寄存器名称')).toHaveValue('CTRL')
+    expect(screen.getByRole('button', { name: '折叠寄存器模板 REG_TEMPLATE0' })).toBeInTheDocument()
+  })
+
+  it('creates register templates and derives concrete register instances', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+    fireEvent.change(screen.getByLabelText('寄存器模板名称'), { target: { value: 'STATUS_TEMPLATE' } })
+    fireEvent.click(screen.getAllByRole('button', { name: '生成实例' }).at(-1) as HTMLElement)
+
+    expect(screen.getByDisplayValue('STATUS_TEMPLATE_INST0')).toBeInTheDocument()
+    expect(screen.getByText('derivedFrom：STATUS_TEMPLATE')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByDisplayValue('STATUS_TEMPLATE_INST0'), { target: { value: 'STATUS0' } })
+    fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
+
+    expect(await screen.findByText('转换成功')).toBeInTheDocument()
+    expect(screen.getByTestId('xml-preview')).toHaveTextContent('<register derivedFrom="STATUS_TEMPLATE">')
+  })
+
+  it('keeps standalone registers available inside custom groups', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+    fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' }).at(-1) as HTMLElement)
+
+    expect(screen.getByDisplayValue('REG1')).toBeInTheDocument()
+    expect(screen.getAllByText('derivedFrom：-')).toHaveLength(2)
+    expect(screen.getAllByLabelText('寄存器名称').at(-1)).toHaveValue('REG1')
   })
 
   it('resets the interactive configuration from the editor toolbar', () => {

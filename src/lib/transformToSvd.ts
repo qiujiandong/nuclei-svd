@@ -49,7 +49,7 @@ function registerToXml(register: NormalizedSvdRegister, level: number) {
   const indent = '  '.repeat(level)
   const inner = '  '.repeat(level + 1)
   const lines = [
-    `${indent}<register>`,
+    openNode('register', { derivedFrom: register.derivedFrom }, indent),
     textNode('name', register.name, inner),
     textNode('description', register.description, inner),
     textNode('addressOffset', formatHexValue(register.addressOffset), inner),
