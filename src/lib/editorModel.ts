@@ -76,6 +76,31 @@ function parseIntegerInput(value: string) {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : Number.NaN
 }
 
+type PresetFieldDefinition = {
+  name: string
+  description: string
+  bitOffset: string
+  bitWidth: string
+  access?: EditorAccess
+}
+
+function createPresetField({
+  name,
+  description,
+  bitOffset,
+  bitWidth,
+  access = '',
+}: PresetFieldDefinition): EditorField {
+  return createEmptyField({
+    name,
+    description,
+    bitOffset,
+    bitWidth,
+    access,
+    expanded: false,
+  })
+}
+
 export function createEmptyField(overrides: Partial<Omit<EditorField, 'id'>> = {}): EditorField {
   return {
     id: createEditorId('field'),
@@ -148,12 +173,14 @@ function createPresetRegister({
   addressOffset,
   size = '32',
   access = '',
+  fields = [],
 }: {
   name: string
   description: string
   addressOffset: string
   size?: string
   access?: EditorAccess
+  fields?: PresetFieldDefinition[]
 }): EditorRegister {
   return createEmptyRegister({
     name,
@@ -164,7 +191,7 @@ function createPresetRegister({
     resetValue: '',
     resetMask: '',
     expanded: false,
-    fields: [],
+    fields: fields.map((field) => createPresetField(field)),
   })
 }
 
@@ -295,6 +322,12 @@ function createIInfoRegisters() {
       addressOffset: '0x4',
       description: 'RISC-V CMO implementation information register.',
       access: 'read-only',
+      fields: [
+        { name: 'cmo_cfg', bitOffset: '0', bitWidth: '1', description: 'CMO exists.' },
+        { name: 'cmo_pft', bitOffset: '1', bitWidth: '1', description: 'CMO has prefetch.' },
+        { name: 'cmo_size', bitOffset: '2', bitWidth: '4', description: 'Cache block size.' },
+        { name: 'cbozero_size', bitOffset: '6', bitWidth: '4', description: 'Cache block size of cbo.zero.' },
+      ],
     }),
     createPresetRegister({
       name: 'sec_base_addr_lo',
@@ -313,12 +346,39 @@ function createIInfoRegisters() {
       addressOffset: '0x10',
       description: 'Security configuration information register.',
       access: 'read-only',
+      fields: [
+        { name: 'security', bitOffset: '0', bitWidth: '1', description: 'Security feature support.' },
+        { name: 'sec_debug', bitOffset: '1', bitWidth: '1', description: 'Secure debug feature support.' },
+        { name: 'arcg', bitOffset: '2', bitWidth: '1', description: 'Architecture random clock gate feature support.' },
+        { name: 'remap', bitOffset: '3', bitWidth: '1', description: 'Vector table remap feature support.' },
+        { name: 'parity_protection', bitOffset: '4', bitWidth: '1', description: 'Register parity protection feature support.' },
+        { name: 'trwb', bitOffset: '5', bitWidth: '1', description: 'Garbage register write-back feature support.' },
+        { name: 'ppi_lock', bitOffset: '6', bitWidth: '1', description: 'PPI lock feature support.' },
+        { name: 'cct', bitOffset: '7', bitWidth: '1', description: 'Instruction execution time consistency feature support.' },
+        { name: 'cache_froze', bitOffset: '8', bitWidth: '1', description: 'Cache frozen feature support.' },
+        { name: 'sec_mon_bus', bitOffset: '9', bitWidth: '1', description: 'Security monitor bus feature support.' },
+        { name: 'exe_monitor', bitOffset: '10', bitWidth: '1', description: 'Execution monitor feature support.' },
+        { name: 'key_state_clear', bitOffset: '11', bitWidth: '1', description: 'Key state clear feature support.' },
+        { name: 'data_polarity', bitOffset: '12', bitWidth: '1', description: 'Data polarity feature support.' },
+        { name: 'random_ins_insert', bitOffset: '13', bitWidth: '1', description: 'Random instruction insert feature support.' },
+        { name: 'power_disturb', bitOffset: '14', bitWidth: '1', description: 'Power scrambling feature support.' },
+        { name: 'stack_check', bitOffset: '15', bitWidth: '1', description: 'Stack check feature support.' },
+        { name: 'bjp_random_flush', bitOffset: '16', bitWidth: '1', description: 'BJP instruction random flush feature support.' },
+        { name: 'parity_mode', bitOffset: '17', bitWidth: '1', description: 'Parity mode when parity_protection is enabled.' },
+        { name: 'mpu_num', bitOffset: '22', bitWidth: '5', description: 'Number of MPU entries.' },
+        { name: 'bbox_num', bitOffset: '27', bitWidth: '5', description: 'Number of BBOX entries.' },
+      ],
     }),
     createPresetRegister({
       name: 'mvlm_cfg_lo',
       addressOffset: '0x24',
       description: 'VLM base address low configuration register.',
       access: 'read-only',
+      fields: [
+        { name: 'vlm', bitOffset: '0', bitWidth: '1', description: 'VLM configuration exists.' },
+        { name: 'vlm_size', bitOffset: '1', bitWidth: '5', description: 'VLM size.' },
+        { name: 'vlm_base_lo', bitOffset: '10', bitWidth: '22', description: 'VLM base address low bits.' },
+      ],
     }),
     createPresetRegister({
       name: 'mvlm_cfg_hi',
@@ -331,6 +391,11 @@ function createIInfoRegisters() {
       addressOffset: '0x2C',
       description: 'Flash bus base address low register.',
       access: 'read-only',
+      fields: [
+        { name: 'flash', bitOffset: '0', bitWidth: '1', description: 'Flash bus configuration exists.' },
+        { name: 'flash_size', bitOffset: '1', bitWidth: '5', description: 'Flash size.' },
+        { name: 'flash_base_lo', bitOffset: '10', bitWidth: '22', description: 'Flash base address low bits.' },
+      ],
     }),
     createPresetRegister({
       name: 'flash_base_addr_hi',
@@ -348,6 +413,12 @@ function createIInfoRegisters() {
       name: 'mem_region0_cfg_lo',
       addressOffset: '0x54',
       description: 'Hardware memory-region0 low configuration register.',
+      fields: [
+        { name: 'exist', bitOffset: '0', bitWidth: '1', description: 'Memory region configuration exists.' },
+        { name: 'mem_region_size', bitOffset: '1', bitWidth: '5', description: 'Memory region size.' },
+        { name: 'mem_region_ena', bitOffset: '9', bitWidth: '1', description: 'Enable memory region.' },
+        { name: 'mem_region_base_lo', bitOffset: '10', bitWidth: '22', description: 'Memory region base address low bits.' },
+      ],
     }),
     createPresetRegister({
       name: 'mem_region0_cfg_hi',
@@ -359,6 +430,12 @@ function createIInfoRegisters() {
       name: 'mem_region1_cfg_lo',
       addressOffset: '0x5C',
       description: 'Hardware memory-region1 low configuration register.',
+      fields: [
+        { name: 'exist', bitOffset: '0', bitWidth: '1', description: 'Memory region configuration exists.' },
+        { name: 'mem_region_size', bitOffset: '1', bitWidth: '5', description: 'Memory region size.' },
+        { name: 'mem_region_ena', bitOffset: '9', bitWidth: '1', description: 'Enable memory region.' },
+        { name: 'mem_region_base_lo', bitOffset: '10', bitWidth: '22', description: 'Memory region base address low bits.' },
+      ],
     }),
     createPresetRegister({
       name: 'mem_region1_cfg_hi',
@@ -519,62 +596,70 @@ function createIInfoRegisters() {
 function createTimerRegisters() {
   return [
     createPresetRegister({
-      name: 'mtime_lo',
+      name: 'MTIMER',
       addressOffset: '0x0',
-      description: 'Lower 32-bit value of mtime.',
+      description: 'System Timer current value 64-bit register.',
+      size: '64',
     }),
     createPresetRegister({
-      name: 'mtime_hi',
-      addressOffset: '0x4',
-      description: 'Upper 32-bit value of mtime.',
-    }),
-    createPresetRegister({
-      name: 'mtimecmp_lo',
+      name: 'MTIMERCMP',
       addressOffset: '0x8',
-      description: 'Lower 32-bit value of mtimecmp.',
+      description: 'System Timer compare value 64-bit register.',
+      size: '64',
     }),
     createPresetRegister({
-      name: 'mtimecmp_hi',
-      addressOffset: '0xC',
-      description: 'Upper 32-bit value of mtimecmp.',
-    }),
-    createPresetRegister({
-      name: 'mtime_srw_ctrl',
+      name: 'MTIME_SRW_CTRL',
       addressOffset: '0xFEC',
       description: 'Control whether S-mode can access timer registers.',
+      fields: [
+        { name: 'SRW', bitOffset: '0', bitWidth: '1', description: 'Control S-mode read/write access.' },
+      ],
     }),
     createPresetRegister({
-      name: 'msftrst',
+      name: 'MSFTRST',
       addressOffset: '0xFF0',
       description: 'Generate soft-reset request.',
     }),
     createPresetRegister({
-      name: 'setssip',
+      name: 'SSIP',
       addressOffset: '0xFF4',
-      description: 'Generate the S-mode software interrupt.',
+      description: 'S-mode System Timer software interrupt register.',
+      fields: [
+        { name: 'SSIP', bitOffset: '0', bitWidth: '1', description: 'S-mode software interrupt pending bit.' },
+      ],
     }),
     createPresetRegister({
-      name: 'mtimectl',
+      name: 'MTIMECTL',
       addressOffset: '0xFF8',
-      description: 'Control time counter features.',
+      description: 'System Timer control register, previously MSTOP register.',
+      fields: [
+        { name: 'TIMESTOP', bitOffset: '0', bitWidth: '1', description: 'Stop the timer.' },
+        { name: 'CMPCLREN', bitOffset: '1', bitWidth: '1', description: 'Clear timer interrupt when compare value is updated.' },
+        { name: 'CLKSRC', bitOffset: '2', bitWidth: '1', description: 'Timer clock source select.' },
+        { name: 'HDBG', bitOffset: '3', bitWidth: '1', description: 'Timer behavior in halt debug mode.' },
+        { name: 'MTIME_SRC', bitOffset: '4', bitWidth: '1', description: 'MTIME source select.' },
+      ],
     }),
     createPresetRegister({
-      name: 'msip',
+      name: 'MSIP',
       addressOffset: '0xFFC',
       description: 'Generate the M-mode software interrupt.',
+      fields: [
+        { name: 'MSIP', bitOffset: '0', bitWidth: '1', description: 'M-mode software interrupt pending bit.' },
+      ],
     }),
     ...createRangeRegisters({
       count: 4,
       startOffset: 0x1000,
       stride: 4,
-      nameAt: (index) => `MSIPforHart-${index}`,
+      nameAt: (index) => `CLINT_MSIP_HART${index}`,
       descriptionAt: (index) => `Software interrupt register for hart ${index}.`,
     }),
     ...createRangeRegisters({
       count: 4,
       startOffset: 0x5000,
       stride: 8,
-      nameAt: (index) => `MTIMECMPforHart-${index}`,
+      nameAt: (index) => `CLINT_MTIMECMP_HART${index}`,
       descriptionAt: (index) => `M-mode timer compare register for hart ${index}.`,
       size: '64',
     }),
@@ -588,7 +673,7 @@ function createTimerRegisters() {
       count: 4,
       startOffset: 0xD000,
       stride: 4,
-      nameAt: (index) => `SETSSIP${index}`,
+      nameAt: (index) => `CLINT_SSIP_HART${index}`,
       descriptionAt: (index) => `Set supervisor software interrupt request for hart ${index}.`,
     }),
   ]
@@ -597,26 +682,38 @@ function createTimerRegisters() {
 function createEclicRegisters() {
   return [
     createPresetRegister({
-      name: 'cliccfg',
+      name: 'CFG',
       addressOffset: '0x0',
-      description: 'Global ECLIC configuration register.',
+      description: 'CLIC configuration register.',
+      size: '8',
+      fields: [
+        { name: 'nlbits', bitOffset: '1', bitWidth: '4', description: 'Bit-width of level and priority in CLICINTCTL.' },
+        { name: 'nmbits', bitOffset: '5', bitWidth: '2', description: 'Supervisor-level interrupt support indicator.' },
+      ],
     }),
     createPresetRegister({
-      name: 'clicinfo',
+      name: 'INFO',
       addressOffset: '0x4',
-      description: 'Global ECLIC information register.',
+      description: 'CLIC information register.',
       access: 'read-only',
+      fields: [
+        { name: 'numint', bitOffset: '0', bitWidth: '13', description: 'Maximum interrupt inputs supported.' },
+        { name: 'version', bitOffset: '13', bitWidth: '8', description: 'Hardware implementation version number.' },
+        { name: 'intctlbits', bitOffset: '21', bitWidth: '4', description: 'Implemented hardware bits in CLICINTCTL.' },
+        { name: 'shd_num', bitOffset: '25', bitWidth: '4', description: 'Number of shadow register groups.' },
+      ],
     }),
     createPresetRegister({
-      name: 'mth',
+      name: 'MTH',
       addressOffset: '0xB',
-      description: 'Target interrupt threshold level register.',
+      description: 'CLIC machine mode interrupt-level threshold.',
+      size: '8',
     }),
     ...createRangeRegisters({
       count: 4096,
       startOffset: 0x1000,
       stride: 4,
-      nameAt: (index) => `clicintip${index}`,
+      nameAt: (index) => `CTRL${index}_INTIP`,
       descriptionAt: (index) => `Interrupt source ${index} pending flag register.`,
       size: '8',
     }),
@@ -624,7 +721,7 @@ function createEclicRegisters() {
       count: 4096,
       startOffset: 0x1001,
       stride: 4,
-      nameAt: (index) => `clicintie${index}`,
+      nameAt: (index) => `CTRL${index}_INTIE`,
       descriptionAt: (index) => `Interrupt source ${index} enable register.`,
       size: '8',
     }),
@@ -632,7 +729,7 @@ function createEclicRegisters() {
       count: 4096,
       startOffset: 0x1002,
       stride: 4,
-      nameAt: (index) => `clicintattr${index}`,
+      nameAt: (index) => `CTRL${index}_INTATTR`,
       descriptionAt: (index) => `Interrupt source ${index} attribute register.`,
       size: '8',
     }),
@@ -640,7 +737,7 @@ function createEclicRegisters() {
       count: 4096,
       startOffset: 0x1003,
       stride: 4,
-      nameAt: (index) => `clicintctl${index}`,
+      nameAt: (index) => `CTRL${index}_INTCTRL`,
       descriptionAt: (index) => `Interrupt source ${index} level/priority control register.`,
       size: '8',
     }),
@@ -754,11 +851,6 @@ function createCiduRegisters() {
       addressOffset: '0xC090',
       description: 'Indicates the static interrupt count in the cluster.',
       access: 'read-only',
-    }),
-    createPresetRegister({
-      name: 'CIDU_SRW_CTRL',
-      addressOffset: '0xC09C',
-      description: 'Controls S-mode access to CIDU registers.',
     }),
   ]
 }
@@ -937,41 +1029,6 @@ function createSmpCcRegisters() {
       nameAt: (index) => `CLIENT${index}_WAY_MASK`,
       descriptionAt: (index) => `Cluster cache client ${index} way mask register.`,
     }),
-    createPresetRegister({
-      name: 'CC_INV_RANGE',
-      addressOffset: '0x720',
-      description: 'Cluster invalidate range control and status register.',
-    }),
-    createPresetRegister({
-      name: 'CC_INV_RANGE_START',
-      addressOffset: '0x724',
-      description: 'Cluster invalidate range start address register.',
-    }),
-    createPresetRegister({
-      name: 'CC_INV_RANGE_END',
-      addressOffset: '0x72C',
-      description: 'Cluster invalidate range end address register.',
-    }),
-    createPresetRegister({
-      name: 'CC_ECC_INJ_WAY',
-      addressOffset: '0x740',
-      description: 'Cluster precise ECC injection way register.',
-    }),
-    createPresetRegister({
-      name: 'CC_ECC_INJ_ADDR',
-      addressOffset: '0x744',
-      description: 'Cluster precise ECC injection address register.',
-    }),
-    createPresetRegister({
-      name: 'CC_ECC_INJ_DATA',
-      addressOffset: '0x74C',
-      description: 'Cluster precise ECC injection data register.',
-    }),
-    createPresetRegister({
-      name: 'IOCP_ATTR_RMP',
-      addressOffset: '0x750',
-      description: 'IOCP attribute remap register.',
-    }),
   ]
 }
 
@@ -984,21 +1041,6 @@ function createIRegionPeripherals() {
       groupName: 'IREGION',
       expanded: false,
       registers: createIInfoRegisters(),
-    }),
-    createEmptyPeripheral({
-      name: 'DEBUG',
-      description:
-        'IREGION DEBUG address space. IREGION.pdf enumerates the unit but does not provide an internal register list.',
-      baseAddress: '0x00010000',
-      groupName: 'IREGION',
-      expanded: false,
-      registers: [
-        createPresetRegister({
-          name: 'DEBUG_WINDOW',
-          addressOffset: '0x0',
-          description: 'DEBUG unit register window placeholder derived from the IREGION top-level table.',
-        }),
-      ],
     }),
     createEmptyPeripheral({
       name: 'ECLIC',

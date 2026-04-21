@@ -19,7 +19,7 @@ describe('App', () => {
     expect(screen.getByText('寄存器设置界面')).toBeInTheDocument()
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
     expect(screen.getByLabelText('默认 size')).toHaveValue('32')
-    expect(screen.getByText('7 个 IREGION 寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('9 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).toBeInTheDocument()
@@ -138,7 +138,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '重置设置' }))
 
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
-    expect(screen.getByText('7 个 IREGION 寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('9 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
@@ -156,6 +156,24 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '展开 IREGION' }))
     fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 IINFO' }))
     expect(screen.getByText('实际基地址：0x19000000')).toBeInTheDocument()
+  })
+
+  it('uses IREGION register metadata from the header files', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '展开 IREGION' }))
+
+    expect(screen.getByRole('button', { name: '展开寄存器组 PL2' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开寄存器组 DPREFETCH' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 TIMER' }))
+    expect(screen.getByText('MTIMER')).toBeInTheDocument()
+    expect(screen.getByText('MTIMERCMP')).toBeInTheDocument()
+    expect(screen.queryByText('mtime_lo')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 CIDU' }))
+    expect(screen.getByText('INT_NUM')).toBeInTheDocument()
+    expect(screen.queryByText('CIDU_SRW_CTRL')).not.toBeInTheDocument()
   })
 
   it('keeps the IREGION base address editable while the panel is collapsed', () => {
