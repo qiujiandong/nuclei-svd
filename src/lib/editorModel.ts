@@ -709,38 +709,6 @@ function createEclicRegisters() {
       description: 'CLIC machine mode interrupt-level threshold.',
       size: '8',
     }),
-    ...createRangeRegisters({
-      count: 4096,
-      startOffset: 0x1000,
-      stride: 4,
-      nameAt: (index) => `CTRL${index}_INTIP`,
-      descriptionAt: (index) => `Interrupt source ${index} pending flag register.`,
-      size: '8',
-    }),
-    ...createRangeRegisters({
-      count: 4096,
-      startOffset: 0x1001,
-      stride: 4,
-      nameAt: (index) => `CTRL${index}_INTIE`,
-      descriptionAt: (index) => `Interrupt source ${index} enable register.`,
-      size: '8',
-    }),
-    ...createRangeRegisters({
-      count: 4096,
-      startOffset: 0x1002,
-      stride: 4,
-      nameAt: (index) => `CTRL${index}_INTATTR`,
-      descriptionAt: (index) => `Interrupt source ${index} attribute register.`,
-      size: '8',
-    }),
-    ...createRangeRegisters({
-      count: 4096,
-      startOffset: 0x1003,
-      stride: 4,
-      nameAt: (index) => `CTRL${index}_INTCTRL`,
-      descriptionAt: (index) => `Interrupt source ${index} level/priority control register.`,
-      size: '8',
-    }),
   ]
 }
 
@@ -825,20 +793,6 @@ function createCiduRegisters() {
       name: 'ICI_SHADOW_REG',
       addressOffset: '0x3FFC',
       description: 'Inter-core interrupt source core ID and target core ID register.',
-    }),
-    ...createRangeRegisters({
-      count: 4096,
-      startOffset: 0x4000,
-      stride: 4,
-      nameAt: (index) => `INT${index}_INDICATOR`,
-      descriptionAt: (index) => `Indicator register for external interrupt ${index}.`,
-    }),
-    ...createRangeRegisters({
-      count: 4096,
-      startOffset: 0x8000,
-      stride: 4,
-      nameAt: (index) => `INT${index}_MASK`,
-      descriptionAt: (index) => `Mask register for external interrupt ${index}.`,
     }),
     createPresetRegister({
       name: 'CORE_NUM',
