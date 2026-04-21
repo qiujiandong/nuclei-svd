@@ -262,6 +262,8 @@ export function createDefaultPeripheralTemplate(index = 0): EditorPeripheral {
     baseAddress: '0x0',
     groupName: 'PERIPHERAL_TEMPLATE',
     expanded: false,
+    registerTemplates: [createDefaultRegisterTemplate(0)],
+    registers: [],
   })
 }
 

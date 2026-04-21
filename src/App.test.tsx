@@ -94,6 +94,29 @@ describe('App', () => {
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<register derivedFrom="STATUS_TEMPLATE">')
   })
 
+  it('creates register templates inside peripheral templates and derives register instances', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
+    fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
+      target: { value: 'GROUP_STATUS_TEMPLATE' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '生成寄存器实例' }))
+
+    expect(screen.getByDisplayValue('GROUP_STATUS_TEMPLATE_INST0')).toBeInTheDocument()
+    expect(screen.getByText('derivedFrom：GROUP_STATUS_TEMPLATE')).toBeInTheDocument()
+    expect(closestCard(screen.getByRole('button', { name: '折叠寄存器模板 GROUP_STATUS_TEMPLATE' }))).toHaveClass('register-color-1')
+    expect(closestCard(screen.getByRole('button', { name: '折叠寄存器 GROUP_STATUS_TEMPLATE_INST0' }))).toHaveClass('register-color-1')
+
+    fireEvent.change(screen.getByDisplayValue('GROUP_STATUS_TEMPLATE_INST0'), {
+      target: { value: 'GROUP_STATUS0' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
+
+    expect(await screen.findByText('转换成功')).toBeInTheDocument()
+    expect(screen.getByTestId('xml-preview')).toHaveTextContent('<register derivedFrom="GROUP_STATUS_TEMPLATE">')
+  })
+
   it('keeps standalone registers available inside custom groups', () => {
     render(<App />)
 

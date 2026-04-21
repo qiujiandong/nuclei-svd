@@ -239,6 +239,19 @@ function App() {
     }))
   }
 
+  const updateTemplateRegisterTemplate = (
+    templateId: string,
+    registerTemplateId: string,
+    updater: (current: EditorRegister) => EditorRegister,
+  ) => {
+    updatePeripheralTemplate(templateId, (template) => ({
+      ...template,
+      registerTemplates: template.registerTemplates.map((registerTemplate) =>
+        registerTemplate.id === registerTemplateId ? updater(registerTemplate) : registerTemplate,
+      ),
+    }))
+  }
+
   const updateRegister = (
     peripheralId: string,
     registerId: string,
@@ -261,6 +274,18 @@ function App() {
     updateTemplateRegister(templateId, registerId, (register) => ({
       ...register,
       fields: register.fields.map((field) => (field.id === fieldId ? updater(field) : field)),
+    }))
+  }
+
+  const updateTemplateRegisterTemplateField = (
+    templateId: string,
+    registerTemplateId: string,
+    fieldId: string,
+    updater: (current: EditorField) => EditorField,
+  ) => {
+    updateTemplateRegisterTemplate(templateId, registerTemplateId, (registerTemplate) => ({
+      ...registerTemplate,
+      fields: registerTemplate.fields.map((field) => (field.id === fieldId ? updater(field) : field)),
     }))
   }
 
@@ -303,6 +328,24 @@ function App() {
               ...template,
               registers: template.registers.map((register) =>
                 register.id === registerId ? { ...register, expanded: !register.expanded } : register,
+              ),
+            }
+          : template,
+      ),
+    }))
+  }
+
+  const toggleTemplateRegisterTemplate = (templateId: string, registerTemplateId: string) => {
+    setDevice((current) => ({
+      ...current,
+      peripheralTemplates: current.peripheralTemplates.map((template) =>
+        template.id === templateId
+          ? {
+              ...template,
+              registerTemplates: template.registerTemplates.map((registerTemplate) =>
+                registerTemplate.id === registerTemplateId
+                  ? { ...registerTemplate, expanded: !registerTemplate.expanded }
+                  : registerTemplate,
               ),
             }
           : template,
@@ -374,6 +417,18 @@ function App() {
     }))
   }
 
+  const handleTemplateRegisterTemplateChange = (
+    templateId: string,
+    registerTemplateId: string,
+    field: keyof Omit<EditorRegister, 'id' | 'expanded' | 'fields'>,
+    value: string,
+  ) => {
+    updateTemplateRegisterTemplate(templateId, registerTemplateId, (registerTemplate) => ({
+      ...registerTemplate,
+      [field]: value,
+    }))
+  }
+
   const handleRegisterChange = (
     peripheralId: string,
     registerId: string,
@@ -394,6 +449,19 @@ function App() {
     value: string,
   ) => {
     updateTemplateField(templateId, registerId, fieldId, (current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  const handleTemplateRegisterTemplateFieldChange = (
+    templateId: string,
+    registerTemplateId: string,
+    fieldId: string,
+    field: keyof Omit<EditorField, 'id' | 'expanded'>,
+    value: string,
+  ) => {
+    updateTemplateRegisterTemplateField(templateId, registerTemplateId, fieldId, (current) => ({
       ...current,
       [field]: value,
     }))
@@ -594,13 +662,57 @@ function App() {
     }))
   }
 
+  const handleAddTemplateRegisterTemplate = (templateId: string, templateCount: number) => {
+    updatePeripheralTemplate(templateId, (template) => ({
+      ...template,
+      expanded: true,
+      registerTemplates: [
+        ...template.registerTemplates,
+        createDefaultRegisterTemplate(templateCount),
+      ],
+    }))
+  }
+
+  const handleRemoveTemplateRegisterTemplate = (templateId: string, registerTemplateId: string) => {
+    updatePeripheralTemplate(templateId, (template) => ({
+      ...template,
+      registerTemplates: template.registerTemplates.filter(
+        (registerTemplate) => registerTemplate.id !== registerTemplateId,
+      ),
+    }))
+  }
+
+  const handleGenerateTemplateRegisterFromTemplate = (
+    templateId: string,
+    registerTemplateId: string,
+  ) => {
+    updatePeripheralTemplate(templateId, (template) => {
+      const sourceTemplate = template.registerTemplates.find(
+        (registerTemplate) => registerTemplate.id === registerTemplateId,
+      )
+      if (!sourceTemplate) return template
+
+      return {
+        ...template,
+        registers: [
+          ...template.registers,
+          createRegisterInstanceFromTemplate(
+            sourceTemplate,
+            formatNextOffset([...template.registerTemplates, ...template.registers]),
+            template.registers.length,
+          ),
+        ],
+      }
+    })
+  }
+
   const handleAddTemplateRegister = (templateId: string, registerCount: number) => {
     updatePeripheralTemplate(templateId, (template) => ({
       ...template,
       expanded: true,
       registers: [
         ...template.registers,
-        cloneEditorRegister(template.registers[0] ?? {
+        cloneEditorRegister(template.registers[0] ?? template.registerTemplates[0] ?? {
           id: 'seed',
           name: 'CTRL',
           description: 'Control register',
@@ -612,8 +724,9 @@ function App() {
           expanded: true,
           fields: [createEmptyField()],
         }, {
-          name: `REG_TEMPLATE${registerCount}`,
-          addressOffset: formatNextOffset(template.registers),
+          name: `REG${registerCount}`,
+          addressOffset: formatNextOffset([...template.registerTemplates, ...template.registers]),
+          derivedFrom: undefined,
           expanded: true,
         }),
       ],
@@ -679,6 +792,25 @@ function App() {
     }))
   }
 
+  const handleAddTemplateRegisterTemplateField = (
+    templateId: string,
+    registerTemplateId: string,
+    fieldCount: number,
+  ) => {
+    updateTemplateRegisterTemplate(templateId, registerTemplateId, (registerTemplate) => ({
+      ...registerTemplate,
+      expanded: true,
+      fields: [
+        ...registerTemplate.fields,
+        createEmptyField({
+          name: `FIELD${fieldCount}`,
+          description: 'New bit field',
+          bitOffset: String(fieldCount),
+        }),
+      ],
+    }))
+  }
+
   const handleAddField = (
     peripheralId: string,
     registerId: string,
@@ -702,6 +834,17 @@ function App() {
     updateTemplateRegister(templateId, registerId, (register) => ({
       ...register,
       fields: register.fields.filter((field) => field.id !== fieldId),
+    }))
+  }
+
+  const handleRemoveTemplateRegisterTemplateField = (
+    templateId: string,
+    registerTemplateId: string,
+    fieldId: string,
+  ) => {
+    updateTemplateRegisterTemplate(templateId, registerTemplateId, (registerTemplate) => ({
+      ...registerTemplate,
+      fields: registerTemplate.fields.filter((field) => field.id !== fieldId),
     }))
   }
 
@@ -1037,6 +1180,18 @@ function App() {
                           <button
                             type="button"
                             className="secondary"
+                            onClick={() =>
+                              handleAddTemplateRegisterTemplate(
+                                template.id,
+                                template.registerTemplates.length,
+                              )
+                            }
+                          >
+                            新增寄存器模板
+                          </button>
+                          <button
+                            type="button"
+                            className="secondary"
                             onClick={() => handleAddTemplateRegister(template.id, template.registers.length + 1)}
                           >
                             新增寄存器
@@ -1090,18 +1245,230 @@ function App() {
                             </label>
                           </div>
                           <div className="nested-stack">
-                            {template.registers.map((register, registerIndex) => (
-                              <article className="editor-card register-card" key={register.id}>
+                            <section className="editor-card column-panel">
+                              <div className="column-header">
+                                <div>
+                                  <p className="eyebrow">Register templates</p>
+                                  <h4>寄存器模板</h4>
+                                </div>
+                                <span className="column-hint">模板寄存器可生成 derivedFrom 实例。</span>
+                              </div>
+                              <div className="nested-stack">
+                                {template.registerTemplates.map((registerTemplate, registerTemplateIndex) => (
+                                  <article
+                                    className={`editor-card register-card register-linked-card ${registerTemplateColorClass(registerTemplateIndex)}`}
+                                    key={registerTemplate.id}
+                                  >
+                                    <div className="card-header">
+                                      <button
+                                        type="button"
+                                        className="collapse-toggle"
+                                        aria-expanded={registerTemplate.expanded}
+                                        aria-label={`${registerTemplate.expanded ? '折叠' : '展开'}寄存器模板 ${summarizeName(registerTemplate.name, `寄存器模板 ${registerTemplateIndex + 1}`)}`}
+                                        onClick={() => toggleTemplateRegisterTemplate(template.id, registerTemplate.id)}
+                                      >
+                                        <span>{registerTemplate.expanded ? '▾' : '▸'}</span>
+                                        <span>{summarizeName(registerTemplate.name, `寄存器模板 ${registerTemplateIndex + 1}`)}</span>
+                                      </button>
+                                      <div className="card-actions">
+                                        <button
+                                          type="button"
+                                          className="secondary"
+                                          onClick={() =>
+                                            handleAddTemplateRegisterTemplateField(
+                                              template.id,
+                                              registerTemplate.id,
+                                              registerTemplate.fields.length + 1,
+                                            )
+                                          }
+                                        >
+                                          新增位域
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="secondary"
+                                          onClick={() =>
+                                            handleGenerateTemplateRegisterFromTemplate(template.id, registerTemplate.id)
+                                          }
+                                        >
+                                          生成寄存器实例
+                                        </button>
+                                        <button
+                                          type="button"
+                                          className="ghost-button"
+                                          onClick={() => handleRemoveTemplateRegisterTemplate(template.id, registerTemplate.id)}
+                                        >
+                                          删除模板
+                                        </button>
+                                      </div>
+                                    </div>
+                                    {registerTemplate.expanded ? (
+                                      <div className="card-body">
+                                        <div className="inline-field-row">
+                                          <label className="inline-field inline-medium">
+                                            <span>模板名称</span>
+                                            <input
+                                              aria-label="寄存器模板名称"
+                                              value={registerTemplate.name}
+                                              onChange={(event) =>
+                                                handleTemplateRegisterTemplateChange(
+                                                  template.id,
+                                                  registerTemplate.id,
+                                                  'name',
+                                                  event.target.value,
+                                                )
+                                              }
+                                            />
+                                          </label>
+                                          <label className="inline-field inline-small">
+                                            <span>addressOffset</span>
+                                            <input
+                                              value={registerTemplate.addressOffset}
+                                              onChange={(event) =>
+                                                handleTemplateRegisterTemplateChange(
+                                                  template.id,
+                                                  registerTemplate.id,
+                                                  'addressOffset',
+                                                  event.target.value,
+                                                )
+                                              }
+                                            />
+                                          </label>
+                                          <label className="inline-field inline-wide">
+                                            <span>模板描述</span>
+                                            <input
+                                              value={registerTemplate.description}
+                                              onChange={(event) =>
+                                                handleTemplateRegisterTemplateChange(
+                                                  template.id,
+                                                  registerTemplate.id,
+                                                  'description',
+                                                  event.target.value,
+                                                )
+                                              }
+                                            />
+                                          </label>
+                                        </div>
+                                        <div className="field-table-wrap">
+                                          <table className="field-table">
+                                            <thead>
+                                              <tr>
+                                                <th scope="col">位域名称</th>
+                                                <th scope="col">bitOffset</th>
+                                                <th scope="col">bitWidth</th>
+                                                <th scope="col">位域描述</th>
+                                                <th scope="col">操作</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody>
+                                              {registerTemplate.fields.map((field, fieldIndex) => (
+                                                <tr key={field.id}>
+                                                  <td>
+                                                    <input
+                                                      aria-label={`寄存器模板位域名称 ${fieldIndex + 1}`}
+                                                      value={field.name}
+                                                      onChange={(event) =>
+                                                        handleTemplateRegisterTemplateFieldChange(
+                                                          template.id,
+                                                          registerTemplate.id,
+                                                          field.id,
+                                                          'name',
+                                                          event.target.value,
+                                                        )
+                                                      }
+                                                    />
+                                                  </td>
+                                                  <td>
+                                                    <input
+                                                      value={field.bitOffset}
+                                                      onChange={(event) =>
+                                                        handleTemplateRegisterTemplateFieldChange(
+                                                          template.id,
+                                                          registerTemplate.id,
+                                                          field.id,
+                                                          'bitOffset',
+                                                          event.target.value,
+                                                        )
+                                                      }
+                                                    />
+                                                  </td>
+                                                  <td>
+                                                    <input
+                                                      value={field.bitWidth}
+                                                      onChange={(event) =>
+                                                        handleTemplateRegisterTemplateFieldChange(
+                                                          template.id,
+                                                          registerTemplate.id,
+                                                          field.id,
+                                                          'bitWidth',
+                                                          event.target.value,
+                                                        )
+                                                      }
+                                                    />
+                                                  </td>
+                                                  <td>
+                                                    <input
+                                                      value={field.description}
+                                                      onChange={(event) =>
+                                                        handleTemplateRegisterTemplateFieldChange(
+                                                          template.id,
+                                                          registerTemplate.id,
+                                                          field.id,
+                                                          'description',
+                                                          event.target.value,
+                                                        )
+                                                      }
+                                                    />
+                                                  </td>
+                                                  <td>
+                                                    <button
+                                                      type="button"
+                                                      className="ghost-button table-action"
+                                                      onClick={() =>
+                                                        handleRemoveTemplateRegisterTemplateField(
+                                                          template.id,
+                                                          registerTemplate.id,
+                                                          field.id,
+                                                        )
+                                                      }
+                                                    >
+                                                      删除
+                                                    </button>
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                  </article>
+                                ))}
+                              </div>
+                            </section>
+                            <section className="editor-card column-panel">
+                              <div className="column-header">
+                                <div>
+                                  <p className="eyebrow">Register instances</p>
+                                  <h4>寄存器实例</h4>
+                                </div>
+                                <span className="column-hint">实例可继承模板，也可作为普通寄存器。</span>
+                              </div>
+                              {template.registers.map((register, registerIndex) => (
+                                <article
+                                  className={`editor-card register-card ${register.derivedFrom ? `register-linked-card ${derivedRegisterColorClass(register.derivedFrom, template.registerTemplates)}` : ''}`}
+                                  key={register.id}
+                                >
                                 <div className="card-header">
                                   <button
                                     type="button"
                                     className="collapse-toggle"
                                     aria-expanded={register.expanded}
-                                    aria-label={`${register.expanded ? '折叠' : '展开'}模板寄存器 ${summarizeName(register.name, `模板寄存器 ${registerIndex + 1}`)}`}
+                                    aria-label={`${register.expanded ? '折叠' : '展开'}寄存器 ${summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}`}
                                     onClick={() => toggleTemplateRegister(template.id, register.id)}
                                   >
                                     <span>{register.expanded ? '▾' : '▸'}</span>
-                                    <span>{summarizeName(register.name, `模板寄存器 ${registerIndex + 1}`)}</span>
+                                    <span>{summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}</span>
                                   </button>
                                   <div className="card-actions">
                                     <button
@@ -1110,6 +1477,7 @@ function App() {
                                       onClick={() =>
                                         handleAddTemplateField(template.id, register.id, register.fields.length + 1)
                                       }
+                                      disabled={Boolean(register.derivedFrom)}
                                     >
                                       新增位域
                                     </button>
@@ -1128,6 +1496,7 @@ function App() {
                                       <label className="inline-field inline-medium">
                                         <span>寄存器名称</span>
                                         <input
+                                          aria-label="寄存器名称"
                                           value={register.name}
                                           onChange={(event) =>
                                             handleTemplateRegisterChange(
@@ -1168,6 +1537,10 @@ function App() {
                                         />
                                       </label>
                                     </div>
+                                    <div className="readonly-meta">
+                                      <span>derivedFrom：{register.derivedFrom || '-'}</span>
+                                    </div>
+                                    {!register.derivedFrom ? (
                                     <div className="field-table-wrap">
                                       <table className="field-table">
                                         <thead>
@@ -1253,10 +1626,12 @@ function App() {
                                         </tbody>
                                       </table>
                                     </div>
+                                    ) : null}
                                   </div>
                                 ) : null}
                               </article>
                             ))}
+                            </section>
                           </div>
                         </div>
                       ) : null}
