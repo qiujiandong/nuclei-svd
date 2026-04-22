@@ -248,7 +248,7 @@ export function createEmptyPeripheral(
 
 export function createDefaultRegisterTemplate(index = 0): EditorRegister {
   return createEmptyRegister({
-    name: `REG_TEMPLATE${index}`,
+    name: `REG${index}`,
     description: 'Register template',
     addressOffset: '0x0',
     fields: [createEmptyField()],
@@ -272,7 +272,7 @@ export function createRegisterInstanceFromTemplate(
 
 export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
   return createEmptyPeripheral({
-    name: `GROUP${index}`,
+    name: `PERI${index}`,
     description: 'New register group',
     baseAddress: '0x40001000',
     groupName: 'PERIPHERAL',
@@ -284,7 +284,7 @@ export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
 
 export function createDefaultPeripheralTemplate(index = 0): EditorPeripheral {
   return createEmptyPeripheral({
-    name: `GROUP_TEMPLATE${index}`,
+    name: `GROUP${index}`,
     description: 'Register group template',
     baseAddress: '0x0',
     groupName: 'PERIPHERAL_TEMPLATE',
