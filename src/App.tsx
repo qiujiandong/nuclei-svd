@@ -1134,6 +1134,15 @@ function App() {
                       placeholder="0xFFFFFFFF"
                     />
                   </label>
+                  <label>
+                    <span>IREGION 基地址</span>
+                    <input
+                      aria-label="IREGION 基地址"
+                      value={device.iregionBaseAddress}
+                      onChange={(event) => handleIRegionBaseAddressChange(event.target.value)}
+                      placeholder="0x18000000"
+                    />
+                  </label>
                   <label className="device-span-full">
                     <span>设备描述</span>
                     <input
@@ -1166,15 +1175,6 @@ function App() {
                   <span>IREGION</span>
                 </button>
                 <div className="readonly-header-controls">
-                  <label className="inline-field inline-medium">
-                    <span>IREGION 基地址</span>
-                    <input
-                      aria-label="IREGION 基地址"
-                      value={device.iregionBaseAddress}
-                      onChange={(event) => handleIRegionBaseAddressChange(event.target.value)}
-                      placeholder="0x18000000"
-                    />
-                  </label>
                   <div className="readonly-meta">
                     <span>寄存器组：{stats.iregionGroupCount}</span>
                   </div>

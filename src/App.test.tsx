@@ -20,6 +20,7 @@ describe('App', () => {
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
     expect(screen.getByLabelText('默认 size')).toHaveValue('32')
     expect(screen.getByText('设备名称').closest('label')).toHaveAttribute('data-input-hint', 'true')
+    expect(screen.getByLabelText('IREGION 基地址').closest('.device-info-panel')).toBeInTheDocument()
     expect(screen.getByText('等待转换').closest('.hero-actions')).toBe(
       screen.getByRole('button', { name: '校验并转换' }).closest('.hero-actions'),
     )
