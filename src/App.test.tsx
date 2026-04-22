@@ -23,14 +23,9 @@ describe('App', () => {
       screen.getByRole('button', { name: '校验并转换' }).closest('.hero-actions'),
     )
     expect(screen.getByText('6 个 IREGION 寄存器组')).toBeInTheDocument()
-    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).toBeInTheDocument()
-    expect(closestCard(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))).toHaveClass('template-color-1')
-    expect(closestCard(screen.getByRole('button', { name: '展开寄存器组 GROUP0' }))).toHaveClass('template-color-1')
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 GROUP0' }))
-    expect(screen.getByText('derivedFrom：GROUP_TEMPLATE0')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '折叠寄存器组 GROUP0' }))
+    expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '展开寄存器组 GROUP0' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '新增寄存器组模板' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.queryByText('寄存器配置说明')).not.toBeInTheDocument()
@@ -66,14 +61,14 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE1' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
     fireEvent.change(screen.getAllByLabelText('寄存器组模板名称').at(-1) as HTMLElement, {
       target: { value: 'GPIO_TEMPLATE' },
     })
     fireEvent.click(screen.getAllByRole('button', { name: '生成实例' }).at(-1) as HTMLElement)
 
-    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('GPIO_TEMPLATE_INST1')).toBeInTheDocument()
+    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('GPIO_TEMPLATE_INST0')).toBeInTheDocument()
     expect(screen.getByText('derivedFrom：GPIO_TEMPLATE')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
@@ -88,20 +83,20 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
     fireEvent.click(screen.getAllByRole('button', { name: '生成实例' }).at(-1) as HTMLElement)
 
-    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('GROUP_TEMPLATE1_INST1')).toBeInTheDocument()
+    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('GROUP_TEMPLATE0_INST0')).toBeInTheDocument()
 
     fireEvent.click(screen.getAllByRole('button', { name: '删除模板' }).at(-1) as HTMLElement)
 
-    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
-    expect(screen.queryByDisplayValue('GROUP_TEMPLATE1_INST1')).not.toBeInTheDocument()
+    expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('GROUP_TEMPLATE0_INST0')).not.toBeInTheDocument()
   })
 
   it('omits peripheral templates that have no derived instances from generated XML', async () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE1' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
     fireEvent.change(screen.getAllByLabelText('寄存器组模板名称').at(-1) as HTMLElement, {
       target: { value: 'UNUSED_TEMPLATE' },
     })
@@ -116,8 +111,8 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
 
-    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('GROUP1')).toBeInTheDocument()
+    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('GROUP0')).toBeInTheDocument()
     expect(screen.getByText('derivedFrom：-')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '折叠寄存器模板 REG_TEMPLATE0' })).toBeInTheDocument()
   })
@@ -174,11 +169,13 @@ describe('App', () => {
   it('creates register templates inside peripheral templates and derives register instances', async () => {
     render(<App />)
 
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
     fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
     fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
       target: { value: 'GROUP_STATUS_TEMPLATE' },
     })
     fireEvent.click(screen.getByRole('button', { name: '生成寄存器实例' }))
+    fireEvent.click(screen.getByRole('button', { name: '生成实例' }))
 
     expect(screen.getByDisplayValue('GROUP_STATUS_TEMPLATE_INST0')).toBeInTheDocument()
     expect(screen.getByText('derivedFrom：GROUP_STATUS_TEMPLATE')).toBeInTheDocument()
@@ -197,6 +194,7 @@ describe('App', () => {
   it('omits unused register templates inside group templates from generated XML', async () => {
     render(<App />)
 
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
     fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
     fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
       target: { value: 'UNUSED_GROUP_REGISTER_TEMPLATE' },
@@ -210,6 +208,7 @@ describe('App', () => {
   it('removes derived register instances inside group templates when deleting their register template', () => {
     render(<App />)
 
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
     fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
     fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
       target: { value: 'GROUP_STATUS_TEMPLATE' },
@@ -239,23 +238,22 @@ describe('App', () => {
   it('resets the interactive configuration from the editor toolbar', () => {
     render(<App />)
 
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
     fireEvent.click(screen.getByRole('button', { name: '生成实例' }))
     fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
     fireEvent.change(screen.getByLabelText('设备名称'), { target: { value: 'CustomDevice' } })
-    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '重置设置' }))
 
     fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
     expect(screen.getByText('6 个 IREGION 寄存器组')).toBeInTheDocument()
-    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 GROUP0' }))
-    expect(screen.getByText('derivedFrom：GROUP_TEMPLATE0')).toBeInTheDocument()
-    expect(screen.queryByDisplayValue('GROUP1')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '展开寄存器组 GROUP0' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).not.toBeInTheDocument()
+    expect(screen.queryByDisplayValue('GROUP_TEMPLATE0_INST0')).not.toBeInTheDocument()
   })
 
   it('updates readonly IREGION groups from the IREGION base address', () => {
@@ -314,8 +312,10 @@ describe('App', () => {
   it('blocks conversion and shows readable validation errors for invalid register data', async () => {
     render(<App />)
 
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
     fireEvent.click(screen.getByRole('button', { name: '生成实例' }))
-    fireEvent.change(screen.getByDisplayValue('GROUP_TEMPLATE0_INST1'), { target: { value: 'GROUP0' } })
+    fireEvent.click(screen.getByRole('button', { name: '生成实例' }))
+    fireEvent.change(screen.getByDisplayValue('GROUP_TEMPLATE0_INST1'), { target: { value: 'GROUP_TEMPLATE0_INST0' } })
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
 
     expect(await screen.findByText('校验失败')).toBeInTheDocument()

@@ -1040,8 +1040,6 @@ function createIRegionPeripherals() {
 }
 
 export function createDefaultEditorDevice(): EditorDevice {
-  const defaultTemplate = createDefaultPeripheralTemplate(0)
-
   return {
     name: 'NucleiDemo',
     version: '1.0.0',
@@ -1055,14 +1053,8 @@ export function createDefaultEditorDevice(): EditorDevice {
     iregionExpanded: false,
     iregionBaseAddress: '0x18000000',
     iregionPeripherals: createIRegionPeripherals(),
-    peripheralTemplates: [defaultTemplate],
-    peripherals: [
-      {
-        ...createPeripheralInstanceFromTemplate(defaultTemplate, 0),
-        name: 'GROUP0',
-        expanded: false,
-      },
-    ],
+    peripheralTemplates: [],
+    peripherals: [],
   }
 }
 
