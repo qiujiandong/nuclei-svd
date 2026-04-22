@@ -1198,7 +1198,6 @@ function App() {
                 <div className="card-body">
                   <div className="readonly-toolbar">
                     <span className="readonly-note">
-                      IREGION 中的寄存器组来自 `IREGION.pdf`，只读展示，实际地址 = 基地址 + 组偏移。
                     </span>
                   </div>
 
@@ -1780,7 +1779,6 @@ function App() {
                     <h4>实例寄存器组</h4>
                   </div>
                   <div className="card-actions">
-                    <span className="column-hint">实例通过 derivedFrom 继承上方模板。</span>
                     <button type="button" className="secondary" onClick={handleAddPeripheral}>
                       新增寄存器组
                     </button>
