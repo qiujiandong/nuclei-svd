@@ -63,6 +63,21 @@ describe('App', () => {
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<peripheral derivedFrom="GPIO_TEMPLATE">')
   })
 
+  it('removes derived peripheral instances when deleting their group template', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
+    fireEvent.click(screen.getAllByRole('button', { name: '生成实例' }).at(-1) as HTMLElement)
+
+    expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('GROUP_TEMPLATE1_INST1')).toBeInTheDocument()
+
+    fireEvent.click(screen.getAllByRole('button', { name: '删除模板' }).at(-1) as HTMLElement)
+
+    expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
+    expect(screen.queryByDisplayValue('GROUP_TEMPLATE1_INST1')).not.toBeInTheDocument()
+  })
+
   it('omits peripheral templates that have no derived instances from generated XML', async () => {
     render(<App />)
 

@@ -501,10 +501,18 @@ function App() {
   }
 
   const handleRemovePeripheralTemplate = (templateId: string) => {
-    updateDevice((current) => ({
-      ...current,
-      peripheralTemplates: current.peripheralTemplates.filter((template) => template.id !== templateId),
-    }))
+    updateDevice((current) => {
+      const removedTemplate = current.peripheralTemplates.find((template) => template.id === templateId)
+      const removedTemplateName = removedTemplate?.name.trim()
+
+      return {
+        ...current,
+        peripheralTemplates: current.peripheralTemplates.filter((template) => template.id !== templateId),
+        peripherals: removedTemplateName
+          ? current.peripherals.filter((peripheral) => peripheral.derivedFrom !== removedTemplateName)
+          : current.peripherals,
+      }
+    })
   }
 
   const handleGeneratePeripheralFromTemplate = (templateId: string) => {
