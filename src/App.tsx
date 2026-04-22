@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useState } from 'react'
 import tippy, { type Instance } from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
 import './App.css'
@@ -183,7 +183,7 @@ function AccessSelect({
 function App() {
   const [device, setDevice] = useState<EditorDevice>(() => createDefaultEditorDevice())
   const [state, setState] = useState<ConversionState>(initialState)
-  const [deviceInfoCollapsed, setDeviceInfoCollapsed] = useState(false)
+  const [deviceInfoCollapsed, setDeviceInfoCollapsed] = useState(true)
 
   const resolvedIRegionPeripherals = useMemo(
     () => resolveIRegionPeripherals(device.iregionBaseAddress, device.iregionPeripherals),
@@ -207,34 +207,43 @@ function App() {
     return { iregionGroupCount, customGroupCount, registerCount, fieldCount }
   }, [device])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const instances: Instance[] = []
-    const labels = Array.from(document.querySelectorAll<HTMLLabelElement>('.app-shell label'))
+    const bindInputHints = () => {
+      const labels = Array.from(document.querySelectorAll<HTMLLabelElement>('.app-shell label'))
 
-    labels.forEach((label) => {
-      if (!label.querySelector('input, select')) return
+      labels.forEach((label) => {
+        if (label.dataset.inputHint === 'true') return
+        if (!label.querySelector('input, select')) return
 
-      const content = labelHintFor(label)
-      if (!content) return
+        const content = labelHintFor(label)
+        if (!content) return
 
-      label.classList.add('has-input-hint')
-      label.setAttribute('data-input-hint', 'true')
-      instances.push(
-        tippy(label, {
-          content,
-          delay: [650, 0],
-          duration: [150, 100],
-          placement: 'top',
-          theme: 'nuclei-field',
-          appendTo: () => document.body,
-        }),
-      )
-    })
+        label.classList.add('has-input-hint')
+        label.setAttribute('data-input-hint', 'true')
+        instances.push(
+          tippy(label, {
+            content,
+            delay: [650, 0],
+            duration: [150, 100],
+            placement: 'top',
+            theme: 'nuclei-field',
+            appendTo: () => document.body,
+          }),
+        )
+      })
+    }
+    const observer = new MutationObserver(bindInputHints)
+    const appShell = document.querySelector('.app-shell')
+
+    bindInputHints()
+    observer.observe(appShell ?? document.body, { childList: true, subtree: true })
 
     return () => {
+      observer.disconnect()
       instances.forEach((instance) => instance.destroy())
     }
-  }, [device])
+  }, [])
 
   const invalidateResult = (detail = '配置已变更，请重新执行校验与转换。') => {
     setState((current) => {
@@ -981,6 +990,7 @@ function App() {
 
   const handleReset = () => {
     setDevice(createCollapsedDefaultDevice())
+    setDeviceInfoCollapsed(true)
     setState(initialState)
   }
 

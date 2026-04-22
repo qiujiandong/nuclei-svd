@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 
@@ -17,10 +17,8 @@ describe('App', () => {
 
     expect(screen.queryByLabelText('YAML editor')).not.toBeInTheDocument()
     expect(screen.getByText('寄存器设置界面')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
-    expect(screen.getByLabelText('默认 size')).toHaveValue('32')
-    expect(screen.getByText('设备名称').closest('label')).toHaveAttribute('data-input-hint', 'true')
-    expect(screen.getByLabelText('IREGION 基地址').closest('.device-info-panel')).toBeInTheDocument()
+    expect(screen.queryByLabelText('设备名称')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开设备基础信息' })).toBeInTheDocument()
     expect(screen.getByText('等待转换').closest('.hero-actions')).toBe(
       screen.getByRole('button', { name: '校验并转换' }).closest('.hero-actions'),
     )
@@ -38,10 +36,8 @@ describe('App', () => {
     expect(screen.queryByText('寄存器配置说明')).not.toBeInTheDocument()
   })
 
-  it('collapses the device profile settings to the left side', () => {
+  it('expands the collapsed device profile settings from the left side', async () => {
     render(<App />)
-
-    fireEvent.click(screen.getByRole('button', { name: '向左折叠设备基础信息' }))
 
     expect(screen.queryByLabelText('设备名称')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开设备基础信息' })).toBeInTheDocument()
@@ -49,6 +45,11 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
 
     expect(screen.getByLabelText('设备名称')).toHaveValue('NucleiDemo')
+    expect(screen.getByLabelText('默认 size')).toHaveValue('32')
+    await waitFor(() =>
+      expect(screen.getByText('设备名称').closest('label')).toHaveAttribute('data-input-hint', 'true'),
+    )
+    expect(screen.getByLabelText('IREGION 基地址').closest('.device-info-panel')).toBeInTheDocument()
   })
 
   it('converts the current register configuration and enables download', async () => {
@@ -239,11 +240,13 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '生成实例' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
     fireEvent.change(screen.getByLabelText('设备名称'), { target: { value: 'CustomDevice' } })
     expect(screen.getByText('2 个自定义寄存器组')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '重置设置' }))
 
+    fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
     expect(screen.getByText('6 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
@@ -258,6 +261,7 @@ describe('App', () => {
   it('updates readonly IREGION groups from the IREGION base address', () => {
     render(<App />)
 
+    fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
     expect(screen.getByLabelText('IREGION 基地址')).toHaveValue('0x18000000')
     fireEvent.change(screen.getByLabelText('IREGION 基地址'), { target: { value: '0x19000000' } })
     fireEvent.click(screen.getByRole('button', { name: '展开 IREGION' }))
@@ -283,6 +287,7 @@ describe('App', () => {
   it('keeps the IREGION base address editable while the panel is collapsed', () => {
     render(<App />)
 
+    fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
     fireEvent.change(screen.getByLabelText('IREGION 基地址'), { target: { value: '0x1A000000' } })
     expect(screen.getByLabelText('IREGION 基地址')).toHaveValue('0x1A000000')
 
@@ -297,6 +302,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
     expect(await screen.findByText('转换成功')).toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
     fireEvent.change(screen.getByLabelText('设备名称'), { target: { value: 'UpdatedDevice' } })
 
     expect(screen.getByText('等待转换')).toBeInTheDocument()
