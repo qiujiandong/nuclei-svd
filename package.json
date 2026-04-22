@@ -1,6 +1,6 @@
 {
   "name": "nuclei-svd",
-  "description": "Generate CMSIS-SVD files for Nuclei CPU platforms from YAML",
+  "description": "A tool to generate CMSIS-SVD for SoC based on Nuclei CPU",
   "private": true,
   "version": "0.1.0",
   "type": "module",
