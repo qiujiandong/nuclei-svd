@@ -132,6 +132,24 @@ function formatResolvedAddress(baseAddress: string, offset: string) {
   return `0x${(parsedBase + parsedOffset).toString(16).toUpperCase()}`
 }
 
+function standaloneRegisterSeed(
+  registers: EditorRegister[],
+  registerTemplates: EditorRegister[] = [],
+): EditorRegister {
+  return registers.find((register) => !register.derivedFrom) ?? registerTemplates[0] ?? {
+    id: 'seed',
+    name: 'CTRL',
+    description: 'Control register',
+    addressOffset: '0x0',
+    size: '',
+    access: '',
+    resetValue: '',
+    resetMask: '',
+    expanded: true,
+    fields: [createEmptyField()],
+  }
+}
+
 function templateColorClass(index: number) {
   return `template-color-${(index % 6) + 1}`
 }
@@ -809,25 +827,14 @@ function App() {
     })
   }
 
-  const handleAddTemplateRegister = (templateId: string, registerCount: number) => {
+  const handleAddTemplateRegister = (templateId: string) => {
     updatePeripheralTemplate(templateId, (template) => ({
       ...template,
       expanded: true,
       registers: [
         ...template.registers,
-        cloneEditorRegister(template.registers[0] ?? template.registerTemplates[0] ?? {
-          id: 'seed',
-          name: 'CTRL',
-          description: 'Control register',
-          addressOffset: '0x0',
-          size: '',
-          access: '',
-          resetValue: '',
-          resetMask: '',
-          expanded: true,
-          fields: [createEmptyField()],
-        }, {
-          name: `REG${registerCount}`,
+        cloneEditorRegister(standaloneRegisterSeed(template.registers, template.registerTemplates), {
+          name: `REG${template.registers.filter((register) => !register.derivedFrom).length + 1}`,
           addressOffset: formatNextOffset([...template.registerTemplates, ...template.registers]),
           derivedFrom: undefined,
           expanded: true,
@@ -843,26 +850,16 @@ function App() {
     }))
   }
 
-  const handleAddRegister = (peripheralId: string, registerCount: number) => {
+  const handleAddRegister = (peripheralId: string) => {
     updatePeripheral(peripheralId, (peripheral) => ({
       ...peripheral,
       expanded: true,
       registers: [
         ...peripheral.registers,
-        cloneEditorRegister(peripheral.registers[0] ?? {
-          id: 'seed',
-          name: 'CTRL',
-          description: 'Control register',
-          addressOffset: '0x0',
-          size: '',
-          access: '',
-          resetValue: '',
-          resetMask: '',
-          expanded: true,
-          fields: [createEmptyField()],
-        }, {
-          name: `REG${registerCount}`,
-          addressOffset: formatNextOffset(peripheral.registers),
+        cloneEditorRegister(standaloneRegisterSeed(peripheral.registers, peripheral.registerTemplates), {
+          name: `REG${peripheral.registers.filter((register) => !register.derivedFrom).length + 1}`,
+          addressOffset: formatNextOffset([...peripheral.registerTemplates, ...peripheral.registers]),
+          derivedFrom: undefined,
           expanded: true,
         }),
       ],
@@ -1312,25 +1309,6 @@ function App() {
                           <button
                             type="button"
                             className="secondary"
-                            onClick={() =>
-                              handleAddTemplateRegisterTemplate(
-                                template.id,
-                                template.registerTemplates.length,
-                              )
-                            }
-                          >
-                            新增寄存器模板
-                          </button>
-                          <button
-                            type="button"
-                            className="secondary"
-                            onClick={() => handleAddTemplateRegister(template.id, template.registers.length + 1)}
-                          >
-                            新增寄存器
-                          </button>
-                          <button
-                            type="button"
-                            className="secondary"
                             onClick={() => handleGeneratePeripheralFromTemplate(template.id)}
                           >
                             生成实例
@@ -1383,7 +1361,18 @@ function App() {
                                   <p className="eyebrow">Register templates</p>
                                   <h4>寄存器模板</h4>
                                 </div>
-                                <span className="column-hint">模板寄存器可生成 derivedFrom 实例。</span>
+                                <button
+                                  type="button"
+                                  className="secondary"
+                                  onClick={() =>
+                                    handleAddTemplateRegisterTemplate(
+                                      template.id,
+                                      template.registerTemplates.length,
+                                    )
+                                  }
+                                >
+                                  新增寄存器模板
+                                </button>
                               </div>
                               <div className="nested-stack">
                                 {template.registerTemplates.map((registerTemplate, registerTemplateIndex) => (
@@ -1584,7 +1573,13 @@ function App() {
                                   <p className="eyebrow">Register instances</p>
                                   <h4>寄存器实例</h4>
                                 </div>
-                                <span className="column-hint">实例可继承模板，也可作为普通寄存器。</span>
+                                <button
+                                  type="button"
+                                  className="secondary"
+                                  onClick={() => handleAddTemplateRegister(template.id)}
+                                >
+                                  新增寄存器
+                                </button>
                               </div>
                               {template.registers.map((register, registerIndex) => (
                                 <article
@@ -1802,15 +1797,6 @@ function App() {
                           <span>{summarizeName(peripheral.name, `寄存器组 ${peripheralIndex + 1}`)}</span>
                         </button>
                         <div className="card-actions">
-                          {!peripheral.derivedFrom ? (
-                            <button
-                              type="button"
-                              className="secondary"
-                              onClick={() => handleAddRegister(peripheral.id, peripheral.registers.length + 1)}
-                            >
-                              新增寄存器
-                            </button>
-                          ) : null}
                           <button
                             type="button"
                             className="ghost-button"
@@ -1881,13 +1867,6 @@ function App() {
                                       }
                                     >
                                       新增寄存器模板
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="secondary"
-                                      onClick={() => handleAddRegister(peripheral.id, peripheral.registers.length + 1)}
-                                    >
-                                      新增寄存器
                                     </button>
                                   </div>
                                 </div>
@@ -2085,7 +2064,13 @@ function App() {
                                     <p className="eyebrow">Register instances</p>
                                     <h4>寄存器实例</h4>
                                   </div>
-                                  <span className="column-hint">实例通过 derivedFrom 继承上方模板。</span>
+                                  <button
+                                    type="button"
+                                    className="secondary"
+                                    onClick={() => handleAddRegister(peripheral.id)}
+                                  >
+                                    新增寄存器
+                                  </button>
                                 </div>
                               {peripheral.registers.map((register, registerIndex) => (
                                 <article

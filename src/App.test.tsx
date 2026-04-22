@@ -137,6 +137,19 @@ describe('App', () => {
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<register derivedFrom="STATUS_TEMPLATE">')
   })
 
+  it('keeps new standalone registers independent after generating from a register template', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+    fireEvent.change(screen.getByLabelText('寄存器模板名称'), { target: { value: 'STATUS_TEMPLATE' } })
+    fireEvent.click(screen.getAllByRole('button', { name: '生成实例' }).at(-1) as HTMLElement)
+    fireEvent.click(screen.getAllByRole('button', { name: '新增寄存器' }).at(-1) as HTMLElement)
+
+    expect(screen.getByDisplayValue('STATUS_TEMPLATE_INST0')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('REG1')).toBeInTheDocument()
+    expect(within(closestCard(screen.getByRole('button', { name: '折叠寄存器 REG1' }))).getByText('derivedFrom：-')).toBeInTheDocument()
+  })
+
   it('omits register templates that have no derived register instances from generated XML', async () => {
     render(<App />)
 
@@ -189,6 +202,22 @@ describe('App', () => {
 
     expect(await screen.findByText('转换成功')).toBeInTheDocument()
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<register derivedFrom="GROUP_STATUS_TEMPLATE">')
+  })
+
+  it('keeps standalone registers in group templates independent after generating from a register template', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP0' }))
+    fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
+      target: { value: 'GROUP_STATUS_TEMPLATE' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '生成寄存器实例' }))
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器' }))
+
+    expect(screen.getByDisplayValue('GROUP_STATUS_TEMPLATE_INST0')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('REG1')).toBeInTheDocument()
+    expect(within(closestCard(screen.getByRole('button', { name: '折叠寄存器 REG1' }))).getByText('derivedFrom：-')).toBeInTheDocument()
   })
 
   it('omits unused register templates inside group templates from generated XML', async () => {
