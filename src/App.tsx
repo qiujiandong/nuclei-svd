@@ -44,6 +44,8 @@ const initialState: ConversionState = {
   downloadName: 'nuclei-device.svd',
 }
 
+const showIRegionDebugCard = import.meta.env.DEV || import.meta.env.VITE_DEBUG === 'true'
+
 const FIELD_HINTS: Record<string, string> = {
   设备名称: '生成 <device><name>，也会作为默认下载文件名的一部分。',
   版本: '生成 SVD device.version，用于标识当前设备描述版本。',
@@ -1154,6 +1156,7 @@ function App() {
               )}
             </aside>
             <div className="register-settings-panel">
+          {showIRegionDebugCard ? (
           <section className="editor-section">
             <div className="section-heading">
               <div>
@@ -1261,6 +1264,7 @@ function App() {
               ) : null}
             </article>
           </section>
+          ) : null}
 
           <section className="editor-section">
             <div className="section-heading">
