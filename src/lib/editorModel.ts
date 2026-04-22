@@ -1141,6 +1141,14 @@ export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
     device.iregionBaseAddress,
     device.iregionPeripherals,
   )
+  const instantiatedTemplateNames = new Set(
+    device.peripherals
+      .map((peripheral) => peripheral.derivedFrom?.trim())
+      .filter((derivedFrom): derivedFrom is string => Boolean(derivedFrom)),
+  )
+  const instantiatedPeripheralTemplates = device.peripheralTemplates.filter((template) =>
+    instantiatedTemplateNames.has(template.name.trim()),
+  )
 
   return {
     device: {
@@ -1155,7 +1163,7 @@ export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
       ...optionalStringProperty('resetMask', device.resetMask),
       peripherals: [
         ...resolvedIRegionPeripherals.map((peripheral) => buildPeripheral(peripheral)),
-        ...device.peripheralTemplates.map((peripheral) => buildPeripheral(peripheral)),
+        ...instantiatedPeripheralTemplates.map((peripheral) => buildPeripheral(peripheral)),
         ...device.peripherals.map((peripheral) => buildPeripheral(peripheral)),
       ],
     },

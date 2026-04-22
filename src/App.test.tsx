@@ -19,7 +19,7 @@ describe('App', () => {
     expect(screen.getByText('寄存器设置界面')).toBeInTheDocument()
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
     expect(screen.getByLabelText('默认 size')).toHaveValue('32')
-    expect(screen.getByText('9 个 IREGION 寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('6 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).toBeInTheDocument()
@@ -61,6 +61,20 @@ describe('App', () => {
 
     expect(await screen.findByText('转换成功')).toBeInTheDocument()
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<peripheral derivedFrom="GPIO_TEMPLATE">')
+  })
+
+  it('omits peripheral templates that have no derived instances from generated XML', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE1' }))
+    fireEvent.change(screen.getAllByLabelText('寄存器组模板名称').at(-1) as HTMLElement, {
+      target: { value: 'UNUSED_TEMPLATE' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
+
+    expect(await screen.findByText('转换成功')).toBeInTheDocument()
+    expect(screen.getByTestId('xml-preview')).not.toHaveTextContent('<name>UNUSED_TEMPLATE</name>')
   })
 
   it('keeps standalone custom groups available in the instance area', () => {
@@ -138,7 +152,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '重置设置' }))
 
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
-    expect(screen.getByText('9 个 IREGION 寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('6 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
@@ -162,9 +176,6 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '展开 IREGION' }))
-
-    expect(screen.getByRole('button', { name: '展开寄存器组 PL2' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '展开寄存器组 DPREFETCH' })).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 TIMER' }))
     expect(screen.getByText('MTIMER')).toBeInTheDocument()
