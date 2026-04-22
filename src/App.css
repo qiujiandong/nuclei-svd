@@ -59,7 +59,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  min-width: 12rem;
+  min-width: 22rem;
 }
 
 button,
@@ -158,14 +158,9 @@ label span {
 
 .layout-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(20rem, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
-}
-
-.side-column {
-  display: grid;
-  gap: 1rem;
 }
 
 .panel {
@@ -577,21 +572,56 @@ label span {
   padding-left: 1.2rem;
 }
 
+.hero-actions .status-panel {
+  border-radius: 18px;
+  border: 1px solid #c7d7ff;
+  background: #eef4ff;
+  color: #1849a9;
+  padding: 0.7rem 1rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
 .status-panel.success {
-  border-color: #b7e1c2;
-  background: #f3fbf5;
+  border-color: #a8d9b7;
+  background: #ecfbf1;
+  color: #17693a;
 }
 
 .status-panel.error {
   border-color: #f3c2c2;
   background: #fff8f8;
+  color: #8a2632;
 }
 
-.tone-pill {
-  text-transform: uppercase;
+.status-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.status-dot {
+  width: 0.52rem;
+  height: 0.52rem;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.72;
+}
+
+.status-detail {
+  margin: 0.35rem 0 0;
+  color: currentColor;
   font-size: 0.78rem;
-  font-weight: 700;
-  color: #5f6f87;
+  font-weight: 600;
+  line-height: 1.45;
+  opacity: 0.78;
+}
+
+.status-panel .issue-list {
+  margin-top: 0.45rem;
+  color: currentColor;
+  font-size: 0.76rem;
+  opacity: 0.86;
 }
 
 .issue-list li {
@@ -603,6 +633,10 @@ label span {
 .issue-list code {
   font-size: 0.78rem;
   color: #7b2444;
+}
+
+.status-panel .issue-list code {
+  color: currentColor;
 }
 
 @media (max-width: 1080px) {

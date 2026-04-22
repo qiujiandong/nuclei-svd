@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import tippy, { type Instance } from 'tippy.js'
 import 'tippy.js/dist/tippy.css'
 import './App.css'
-import { FieldGuide } from './components/FieldGuide'
 import { StatusPanel, type StatusIssue, type StatusTone } from './components/StatusPanel'
 import { XmlPreview } from './components/XmlPreview'
 import { ConversionError } from './lib/errors'
@@ -39,7 +38,7 @@ type ConversionState = {
 const initialState: ConversionState = {
   tone: 'idle',
   headline: '等待转换',
-  detail: '设置设备、寄存器组、寄存器和位域后，点击“校验并转换”。',
+  detail: '设置完成后，点击“校验并转换”。',
   issues: [],
   xml: '',
   downloadName: 'nuclei-device.svd',
@@ -955,7 +954,7 @@ function App() {
       setState({
         tone: 'success',
         headline: '转换成功',
-        detail: '寄存器配置已通过 schema 与语义校验，可下载生成的 CMSIS-SVD 文件。',
+        detail: '可下载生成的 CMSIS-SVD 文件。',
         issues: [],
         xml,
         downloadName: normalized.metadata.downloadFileName,
@@ -1013,6 +1012,12 @@ function App() {
           <button type="button" className="primary" onClick={handleConvert}>
             校验并转换
           </button>
+          <StatusPanel
+            tone={state.tone}
+            headline={state.headline}
+            detail={state.detail}
+            issues={state.issues}
+          />
           <button type="button" className="secondary" onClick={handleDownload} disabled={!canDownload}>
             下载 .svd
           </button>
@@ -2242,23 +2247,6 @@ function App() {
           </section>
         </section>
 
-        <aside className="side-column">
-          <section className="panel guide-panel">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">Interactive guide</p>
-                <h2>寄存器配置说明</h2>
-              </div>
-            </div>
-            <FieldGuide />
-          </section>
-          <StatusPanel
-            tone={state.tone}
-            headline={state.headline}
-            detail={state.detail}
-            issues={state.issues}
-          />
-        </aside>
       </section>
 
       <XmlPreview xml={state.xml} />

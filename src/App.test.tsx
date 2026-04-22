@@ -20,6 +20,9 @@ describe('App', () => {
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
     expect(screen.getByLabelText('默认 size')).toHaveValue('32')
     expect(screen.getByText('设备名称').closest('label')).toHaveAttribute('data-input-hint', 'true')
+    expect(screen.getByText('等待转换').closest('.hero-actions')).toBe(
+      screen.getByRole('button', { name: '校验并转换' }).closest('.hero-actions'),
+    )
     expect(screen.getByText('6 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
@@ -31,7 +34,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '折叠寄存器组 GROUP0' }))
     expect(screen.getByRole('button', { name: '新增寄存器组模板' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
-    expect(screen.getByText('寄存器配置说明')).toBeInTheDocument()
+    expect(screen.queryByText('寄存器配置说明')).not.toBeInTheDocument()
   })
 
   it('converts the current register configuration and enables download', async () => {
