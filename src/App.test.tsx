@@ -22,10 +22,10 @@ describe('App', () => {
     expect(screen.getByText('等待转换').closest('.hero-actions')).toBe(
       screen.getByRole('button', { name: '校验并转换' }).closest('.hero-actions'),
     )
-    expect(screen.getByText('6 个 IREGION 寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('5 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '展开寄存器组 GROUP0' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '展开寄存器组模板 GROUP0' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '新增寄存器组模板' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.queryByText('寄存器配置说明')).not.toBeInTheDocument()
@@ -61,7 +61,7 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP0' }))
     fireEvent.change(screen.getAllByLabelText('寄存器组模板名称').at(-1) as HTMLElement, {
       target: { value: 'GPIO_TEMPLATE' },
     })
@@ -84,19 +84,19 @@ describe('App', () => {
     fireEvent.click(screen.getAllByRole('button', { name: '生成实例' }).at(-1) as HTMLElement)
 
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('GROUP_TEMPLATE0_INST0')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('GROUP0_INST0')).toBeInTheDocument()
 
     fireEvent.click(screen.getAllByRole('button', { name: '删除模板' }).at(-1) as HTMLElement)
 
     expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
-    expect(screen.queryByDisplayValue('GROUP_TEMPLATE0_INST0')).not.toBeInTheDocument()
+    expect(screen.queryByDisplayValue('GROUP0_INST0')).not.toBeInTheDocument()
   })
 
   it('omits peripheral templates that have no derived instances from generated XML', async () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP0' }))
     fireEvent.change(screen.getAllByLabelText('寄存器组模板名称').at(-1) as HTMLElement, {
       target: { value: 'UNUSED_TEMPLATE' },
     })
@@ -112,9 +112,9 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
 
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('GROUP0')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('PERI0')).toBeInTheDocument()
     expect(screen.getByText('derivedFrom：-')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '折叠寄存器模板 REG_TEMPLATE0' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '折叠寄存器模板 REG0' })).toBeInTheDocument()
   })
 
   it('creates register templates and derives concrete register instances', async () => {
@@ -170,7 +170,7 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP0' }))
     fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
       target: { value: 'GROUP_STATUS_TEMPLATE' },
     })
@@ -195,7 +195,7 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP0' }))
     fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
       target: { value: 'UNUSED_GROUP_REGISTER_TEMPLATE' },
     })
@@ -209,7 +209,7 @@ describe('App', () => {
     render(<App />)
 
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
-    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP0' }))
     fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
       target: { value: 'GROUP_STATUS_TEMPLATE' },
     })
@@ -248,12 +248,12 @@ describe('App', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
-    expect(screen.getByText('6 个 IREGION 寄存器组')).toBeInTheDocument()
+    expect(screen.getByText('5 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('0 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开 IREGION' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '展开寄存器组 GROUP0' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' })).not.toBeInTheDocument()
-    expect(screen.queryByDisplayValue('GROUP_TEMPLATE0_INST0')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '展开寄存器组模板 GROUP0' })).not.toBeInTheDocument()
+    expect(screen.queryByDisplayValue('GROUP0_INST0')).not.toBeInTheDocument()
   })
 
   it('updates readonly IREGION groups from the IREGION base address', () => {
@@ -277,9 +277,13 @@ describe('App', () => {
     expect(screen.getByText('MTIMERCMP')).toBeInTheDocument()
     expect(screen.queryByText('mtime_lo')).not.toBeInTheDocument()
 
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 SMP_CC' }))
+    expect(screen.getByText('CC_ECC_INJ_ADDR')).toBeInTheDocument()
+    expect(screen.getByText('CC_ECC_INJ_DATA')).toBeInTheDocument()
+
     fireEvent.click(screen.getByRole('button', { name: '展开寄存器组 CIDU' }))
     expect(screen.getByText('INT_NUM')).toBeInTheDocument()
-    expect(screen.queryByText('CIDU_SRW_CTRL')).not.toBeInTheDocument()
+    expect(screen.getByText('CIDU_SRW_CTRL')).toBeInTheDocument()
   })
 
   it('keeps the IREGION base address editable while the panel is collapsed', () => {
@@ -315,7 +319,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '新增寄存器组模板' }))
     fireEvent.click(screen.getByRole('button', { name: '生成实例' }))
     fireEvent.click(screen.getByRole('button', { name: '生成实例' }))
-    fireEvent.change(screen.getByDisplayValue('GROUP_TEMPLATE0_INST1'), { target: { value: 'GROUP_TEMPLATE0_INST0' } })
+    fireEvent.change(screen.getByDisplayValue('GROUP0_INST1'), { target: { value: 'GROUP0_INST0' } })
     fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
 
     expect(await screen.findByText('校验失败')).toBeInTheDocument()

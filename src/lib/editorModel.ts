@@ -1017,7 +1017,7 @@ function createSmpCcRegisters() {
       size: '64', 
     }),
     createPresetRegister({
-      name: 'CC_ECC_INJ_ADDR',
+      name: 'CC_ECC_INJ_DATA',
       addressOffset: '0x74C',
       description: 'Precise injection error data.',
     }),
