@@ -649,14 +649,14 @@ function createTimerRegisters() {
       ],
     }),
     ...createRangeRegisters({
-      count: 4,
+      count: 8,
       startOffset: 0x1000,
       stride: 4,
       nameAt: (index) => `CLINT_MSIP_HART${index}`,
       descriptionAt: (index) => `Software interrupt register for hart ${index}.`,
     }),
     ...createRangeRegisters({
-      count: 4,
+      count: 8,
       startOffset: 0x5000,
       stride: 8,
       nameAt: (index) => `CLINT_MTIMECMP_HART${index}`,
@@ -670,7 +670,7 @@ function createTimerRegisters() {
       size: '64',
     }),
     ...createRangeRegisters({
-      count: 4,
+      count: 8,
       startOffset: 0xD000,
       stride: 4,
       nameAt: (index) => `CLINT_SSIP_HART${index}`,
@@ -712,66 +712,66 @@ function createEclicRegisters() {
   ]
 }
 
-function createPlicRegisters() {
-  return [
-    ...createRangeRegisters({
-      count: 1023,
-      startOffset: 0x4,
-      stride: 4,
-      nameAt: (index) => `SOURCE${index + 1}_PRIORITY`,
-      descriptionAt: (index) => `Priority register for interrupt source ${index + 1}.`,
-    }),
-    ...createRangeRegisters({
-      count: 32,
-      startOffset: 0x1000,
-      stride: 4,
-      nameAt: (index) => `PENDING_ARRAY_WORD${index}`,
-      descriptionAt: (index) =>
-        `Pending array word ${index}, covering interrupt sources ${index * 32}-${index * 32 + 31}.`,
-    }),
-    ...createRangeRegisters({
-      count: 32,
-      startOffset: 0x2000,
-      stride: 4,
-      nameAt: (index) => `HART0_M_ENABLE_WORD${index}`,
-      descriptionAt: (index) =>
-        `Hart 0 M-mode enable word ${index}, covering interrupt sources ${index * 32}-${index * 32 + 31}.`,
-    }),
-    ...createRangeRegisters({
-      count: 32,
-      startOffset: 0x2080,
-      stride: 4,
-      nameAt: (index) => `HART0_S_ENABLE_WORD${index}`,
-      descriptionAt: (index) =>
-        `Hart 0 S-mode enable word ${index}, covering interrupt sources ${index * 32}-${index * 32 + 31}.`,
-    }),
-    createPresetRegister({
-      name: 'HART0_M_THRESHOLD',
-      addressOffset: '0x200000',
-      description: 'Hart 0 M-mode priority threshold register.',
-    }),
-    createPresetRegister({
-      name: 'HART0_M_CLAIM_COMPLETE',
-      addressOffset: '0x200004',
-      description: 'Hart 0 M-mode claim/complete register.',
-    }),
-    createPresetRegister({
-      name: 'HART0_S_THRESHOLD',
-      addressOffset: '0x201000',
-      description: 'Hart 0 S-mode priority threshold register.',
-    }),
-    createPresetRegister({
-      name: 'HART0_S_CLAIM_COMPLETE',
-      addressOffset: '0x201004',
-      description: 'Hart 0 S-mode claim/complete register.',
-    }),
-    createPresetRegister({
-      name: 'plic_srw_ctrl',
-      addressOffset: '0x3FFFFFC',
-      description: 'Controls S-mode access to PLIC priority and pending registers.',
-    }),
-  ]
-}
+// function createPlicRegisters() {
+//   return [
+//     ...createRangeRegisters({
+//       count: 1023,
+//       startOffset: 0x4,
+//       stride: 4,
+//       nameAt: (index) => `SOURCE${index + 1}_PRIORITY`,
+//       descriptionAt: (index) => `Priority register for interrupt source ${index + 1}.`,
+//     }),
+//     ...createRangeRegisters({
+//       count: 32,
+//       startOffset: 0x1000,
+//       stride: 4,
+//       nameAt: (index) => `PENDING_ARRAY_WORD${index}`,
+//       descriptionAt: (index) =>
+//         `Pending array word ${index}, covering interrupt sources ${index * 32}-${index * 32 + 31}.`,
+//     }),
+//     ...createRangeRegisters({
+//       count: 32,
+//       startOffset: 0x2000,
+//       stride: 4,
+//       nameAt: (index) => `HART0_M_ENABLE_WORD${index}`,
+//       descriptionAt: (index) =>
+//         `Hart 0 M-mode enable word ${index}, covering interrupt sources ${index * 32}-${index * 32 + 31}.`,
+//     }),
+//     ...createRangeRegisters({
+//       count: 32,
+//       startOffset: 0x2080,
+//       stride: 4,
+//       nameAt: (index) => `HART0_S_ENABLE_WORD${index}`,
+//       descriptionAt: (index) =>
+//         `Hart 0 S-mode enable word ${index}, covering interrupt sources ${index * 32}-${index * 32 + 31}.`,
+//     }),
+//     createPresetRegister({
+//       name: 'HART0_M_THRESHOLD',
+//       addressOffset: '0x200000',
+//       description: 'Hart 0 M-mode priority threshold register.',
+//     }),
+//     createPresetRegister({
+//       name: 'HART0_M_CLAIM_COMPLETE',
+//       addressOffset: '0x200004',
+//       description: 'Hart 0 M-mode claim/complete register.',
+//     }),
+//     createPresetRegister({
+//       name: 'HART0_S_THRESHOLD',
+//       addressOffset: '0x201000',
+//       description: 'Hart 0 S-mode priority threshold register.',
+//     }),
+//     createPresetRegister({
+//       name: 'HART0_S_CLAIM_COMPLETE',
+//       addressOffset: '0x201004',
+//       description: 'Hart 0 S-mode claim/complete register.',
+//     }),
+//     createPresetRegister({
+//       name: 'plic_srw_ctrl',
+//       addressOffset: '0x3FFFFFC',
+//       description: 'Controls S-mode access to PLIC priority and pending registers.',
+//     }),
+//   ]
+// }
 
 function createCiduRegisters() {
   return [
@@ -805,6 +805,11 @@ function createCiduRegisters() {
       addressOffset: '0xC090',
       description: 'Indicates the static interrupt count in the cluster.',
       access: 'read-only',
+    }),
+    createPresetRegister({
+      name: 'CIDU_SRW_CTRL',
+      addressOffset: '0xC09C',
+      description: 'Control S-mode can access this CIDU register or not',
     }),
   ]
 }
@@ -983,6 +988,44 @@ function createSmpCcRegisters() {
       nameAt: (index) => `CLIENT${index}_WAY_MASK`,
       descriptionAt: (index) => `Cluster cache client ${index} way mask register.`,
     }),
+    createPresetRegister({
+      name: 'CC_INV_RANGE',
+      addressOffset: '0x720',
+      description: 'Cluster invalidate address range control and status.',
+    }),
+    createPresetRegister({
+      name: 'CC_INV_RANGE_START',
+      addressOffset: '0x724',
+      description: 'Cluster invalidate address range start address.',
+      size: '64',
+    }),
+    createPresetRegister({
+      name: 'CC_INV_RANGE_END',
+      addressOffset: '0x72C',
+      description: 'Cluster invalidate address range end address.',
+      size: '64',
+    }),
+    createPresetRegister({
+      name: 'CC_ECC_INJ_WAY',
+      addressOffset: '0x740',
+      description: 'Precise injection error WAY number.',
+    }),
+    createPresetRegister({
+      name: 'CC_ECC_INJ_ADDR',
+      addressOffset: '0x744',
+      description: 'Precise injection error address.',
+      size: '64', 
+    }),
+    createPresetRegister({
+      name: 'CC_ECC_INJ_ADDR',
+      addressOffset: '0x74C',
+      description: 'Precise injection error data.',
+    }),
+    createPresetRegister({
+      name: 'IOCP_ATTR_RMP',
+      addressOffset: '0x750',
+      description: 'IOCP attribute remap.',
+    }),
   ]
 }
 
@@ -1027,14 +1070,6 @@ function createIRegionPeripherals() {
       groupName: 'IREGION',
       expanded: false,
       registers: createCiduRegisters(),
-    }),
-    createEmptyPeripheral({
-      name: 'PLIC',
-      description: 'Platform-Level Interrupt Controller registers.',
-      baseAddress: '0x04000000',
-      groupName: 'IREGION',
-      expanded: false,
-      registers: createPlicRegisters(),
     }),
   ]
 }
