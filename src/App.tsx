@@ -181,6 +181,7 @@ function AccessSelect({
 function App() {
   const [device, setDevice] = useState<EditorDevice>(() => createDefaultEditorDevice())
   const [state, setState] = useState<ConversionState>(initialState)
+  const [deviceInfoCollapsed, setDeviceInfoCollapsed] = useState(false)
 
   const resolvedIRegionPeripherals = useMemo(
     () => resolveIRegionPeripherals(device.iregionBaseAddress, device.iregionPeripherals),
@@ -1046,83 +1047,104 @@ function App() {
             </div>
           </div>
 
-          <section className="editor-section">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">Device profile</p>
-                <h3>设备基础信息</h3>
+          <div className={`editor-workspace ${deviceInfoCollapsed ? 'device-info-collapsed' : ''}`}>
+            <aside className="device-info-panel" aria-label="设备基础信息设置">
+              <div className="device-info-header">
+                <div>
+                  <p className="eyebrow">Device profile</p>
+                  <h3>设备基础信息</h3>
+                </div>
+                <button
+                  type="button"
+                  className="secondary collapse-side-button"
+                  aria-expanded={!deviceInfoCollapsed}
+                  aria-label={deviceInfoCollapsed ? '展开设备基础信息侧栏' : '向左折叠设备基础信息'}
+                  onClick={() => setDeviceInfoCollapsed((current) => !current)}
+                >
+                  {deviceInfoCollapsed ? '›' : '‹'}
+                </button>
               </div>
-            </div>
-            <div className="form-grid device-form-grid">
-              <label>
-                <span>设备名称</span>
-                <input
-                  value={device.name}
-                  onChange={(event) => handleDeviceChange('name', event.target.value)}
-                />
-              </label>
-              <label>
-                <span>版本</span>
-                <input
-                  value={device.version}
-                  onChange={(event) => handleDeviceChange('version', event.target.value)}
-                />
-              </label>
-              <label>
-                <span>addressUnitBits</span>
-                <input
-                  value={device.addressUnitBits}
-                  onChange={(event) => handleDeviceChange('addressUnitBits', event.target.value)}
-                  inputMode="numeric"
-                />
-              </label>
-              <label>
-                <span>width</span>
-                <input
-                  value={device.width}
-                  onChange={(event) => handleDeviceChange('width', event.target.value)}
-                  inputMode="numeric"
-                />
-              </label>
-              <label>
-                <span>默认 size</span>
-                <input
-                  value={device.size}
-                  onChange={(event) => handleDeviceChange('size', event.target.value)}
-                  inputMode="numeric"
-                />
-              </label>
-              <AccessSelect
-                value={device.access}
-                onChange={(nextValue) => handleDeviceChange('access', nextValue)}
-                label="默认 access"
-              />
-              <label>
-                <span>默认 resetValue</span>
-                <input
-                  value={device.resetValue}
-                  onChange={(event) => handleDeviceChange('resetValue', event.target.value)}
-                  placeholder="0x00000000"
-                />
-              </label>
-              <label>
-                <span>默认 resetMask</span>
-                <input
-                  value={device.resetMask}
-                  onChange={(event) => handleDeviceChange('resetMask', event.target.value)}
-                  placeholder="0xFFFFFFFF"
-                />
-              </label>
-              <label className="device-span-full">
-                <span>设备描述</span>
-                <input
-                  value={device.description}
-                  onChange={(event) => handleDeviceChange('description', event.target.value)}
-                />
-              </label>
-            </div>
-          </section>
-
+              {deviceInfoCollapsed ? (
+                <button
+                  type="button"
+                  className="device-info-rail"
+                  aria-label="展开设备基础信息"
+                  onClick={() => setDeviceInfoCollapsed(false)}
+                >
+                  <span>设备基础信息</span>
+                </button>
+              ) : (
+                <div className="form-grid device-form-grid">
+                  <label>
+                    <span>设备名称</span>
+                    <input
+                      value={device.name}
+                      onChange={(event) => handleDeviceChange('name', event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>版本</span>
+                    <input
+                      value={device.version}
+                      onChange={(event) => handleDeviceChange('version', event.target.value)}
+                    />
+                  </label>
+                  <label>
+                    <span>addressUnitBits</span>
+                    <input
+                      value={device.addressUnitBits}
+                      onChange={(event) => handleDeviceChange('addressUnitBits', event.target.value)}
+                      inputMode="numeric"
+                    />
+                  </label>
+                  <label>
+                    <span>width</span>
+                    <input
+                      value={device.width}
+                      onChange={(event) => handleDeviceChange('width', event.target.value)}
+                      inputMode="numeric"
+                    />
+                  </label>
+                  <label>
+                    <span>默认 size</span>
+                    <input
+                      value={device.size}
+                      onChange={(event) => handleDeviceChange('size', event.target.value)}
+                      inputMode="numeric"
+                    />
+                  </label>
+                  <AccessSelect
+                    value={device.access}
+                    onChange={(nextValue) => handleDeviceChange('access', nextValue)}
+                    label="默认 access"
+                  />
+                  <label>
+                    <span>默认 resetValue</span>
+                    <input
+                      value={device.resetValue}
+                      onChange={(event) => handleDeviceChange('resetValue', event.target.value)}
+                      placeholder="0x00000000"
+                    />
+                  </label>
+                  <label>
+                    <span>默认 resetMask</span>
+                    <input
+                      value={device.resetMask}
+                      onChange={(event) => handleDeviceChange('resetMask', event.target.value)}
+                      placeholder="0xFFFFFFFF"
+                    />
+                  </label>
+                  <label className="device-span-full">
+                    <span>设备描述</span>
+                    <input
+                      value={device.description}
+                      onChange={(event) => handleDeviceChange('description', event.target.value)}
+                    />
+                  </label>
+                </div>
+              )}
+            </aside>
+            <div className="register-settings-panel">
           <section className="editor-section">
             <div className="section-heading">
               <div>
@@ -2245,6 +2267,8 @@ function App() {
               </section>
             </div>
           </section>
+            </div>
+          </div>
         </section>
 
       </section>

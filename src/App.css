@@ -220,6 +220,85 @@ label span {
   gap: 1.25rem;
 }
 
+.editor-workspace {
+  display: grid;
+  grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+  transition: grid-template-columns 180ms ease;
+}
+
+.editor-workspace.device-info-collapsed {
+  grid-template-columns: 3.25rem minmax(0, 1fr);
+}
+
+.device-info-panel {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 1rem;
+  align-self: start;
+  min-width: 0;
+  border: 1px solid #dbe5f5;
+  border-radius: 18px;
+  background: #f9fbff;
+  padding: 0.95rem;
+}
+
+.device-info-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.device-info-header h3 {
+  margin: 0;
+}
+
+.collapse-side-button {
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  font-size: 1.25rem;
+}
+
+.device-info-collapsed .device-info-panel {
+  min-height: 17rem;
+  padding: 0.5rem;
+}
+
+.device-info-collapsed .device-info-header > div {
+  display: none;
+}
+
+.device-info-collapsed .device-info-header {
+  justify-content: center;
+}
+
+.device-info-rail {
+  display: grid;
+  place-items: center;
+  min-height: 11rem;
+  padding: 0.75rem 0;
+  border-radius: 999px;
+  background: #eef4ff;
+  color: #1849a9;
+  border-color: #c7d7ff;
+}
+
+.device-info-rail span {
+  writing-mode: vertical-rl;
+  letter-spacing: 0.12em;
+}
+
+.register-settings-panel {
+  display: grid;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
 .editor-section {
   display: grid;
   gap: 1rem;
@@ -239,7 +318,7 @@ label span {
 }
 
 .device-form-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .device-span-2 {
@@ -649,6 +728,29 @@ label span {
   .hero-actions {
     min-width: unset;
     grid-auto-flow: row;
+  }
+
+  .editor-workspace,
+  .editor-workspace.device-info-collapsed {
+    grid-template-columns: 1fr;
+  }
+
+  .device-info-panel {
+    position: static;
+  }
+
+  .device-info-collapsed .device-info-panel {
+    min-height: auto;
+  }
+
+  .device-info-rail {
+    min-height: auto;
+    padding: 0.7rem 1rem;
+  }
+
+  .device-info-rail span {
+    writing-mode: horizontal-tb;
+    letter-spacing: normal;
   }
 
 }

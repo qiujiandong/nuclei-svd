@@ -37,6 +37,19 @@ describe('App', () => {
     expect(screen.queryByText('寄存器配置说明')).not.toBeInTheDocument()
   })
 
+  it('collapses the device profile settings to the left side', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '向左折叠设备基础信息' }))
+
+    expect(screen.queryByLabelText('设备名称')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '展开设备基础信息' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: '展开设备基础信息' }))
+
+    expect(screen.getByLabelText('设备名称')).toHaveValue('NucleiDemo')
+  })
+
   it('converts the current register configuration and enables download', async () => {
     render(<App />)
 
