@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import App from './App'
 
@@ -123,6 +123,22 @@ describe('App', () => {
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<register derivedFrom="STATUS_TEMPLATE">')
   })
 
+  it('removes derived register instances when deleting their register template', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+    fireEvent.change(screen.getByLabelText('寄存器模板名称'), { target: { value: 'STATUS_TEMPLATE' } })
+    fireEvent.click(screen.getAllByRole('button', { name: '生成实例' }).at(-1) as HTMLElement)
+
+    expect(screen.getByDisplayValue('STATUS_TEMPLATE_INST0')).toBeInTheDocument()
+
+    const templateCard = closestCard(screen.getByRole('button', { name: '折叠寄存器模板 STATUS_TEMPLATE' }))
+    fireEvent.click(within(templateCard).getByRole('button', { name: '删除模板' }))
+
+    expect(screen.queryByDisplayValue('STATUS_TEMPLATE_INST0')).not.toBeInTheDocument()
+    expect(screen.queryByText('derivedFrom：STATUS_TEMPLATE')).not.toBeInTheDocument()
+  })
+
   it('creates register templates inside peripheral templates and derives register instances', async () => {
     render(<App />)
 
@@ -144,6 +160,24 @@ describe('App', () => {
 
     expect(await screen.findByText('转换成功')).toBeInTheDocument()
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<register derivedFrom="GROUP_STATUS_TEMPLATE">')
+  })
+
+  it('removes derived register instances inside group templates when deleting their register template', () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
+    fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
+      target: { value: 'GROUP_STATUS_TEMPLATE' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '生成寄存器实例' }))
+
+    expect(screen.getByDisplayValue('GROUP_STATUS_TEMPLATE_INST0')).toBeInTheDocument()
+
+    const templateCard = closestCard(screen.getByRole('button', { name: '折叠寄存器模板 GROUP_STATUS_TEMPLATE' }))
+    fireEvent.click(within(templateCard).getByRole('button', { name: '删除模板' }))
+
+    expect(screen.queryByDisplayValue('GROUP_STATUS_TEMPLATE_INST0')).not.toBeInTheDocument()
+    expect(screen.queryByText('derivedFrom：GROUP_STATUS_TEMPLATE')).not.toBeInTheDocument()
   })
 
   it('keeps standalone registers available inside custom groups', () => {

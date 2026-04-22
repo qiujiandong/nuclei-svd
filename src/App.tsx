@@ -608,10 +608,18 @@ function App() {
   }
 
   const handleRemoveRegisterTemplate = (peripheralId: string, templateId: string) => {
-    updatePeripheral(peripheralId, (peripheral) => ({
-      ...peripheral,
-      registerTemplates: peripheral.registerTemplates.filter((template) => template.id !== templateId),
-    }))
+    updatePeripheral(peripheralId, (peripheral) => {
+      const removedTemplate = peripheral.registerTemplates.find((template) => template.id === templateId)
+      const removedTemplateName = removedTemplate?.name.trim()
+
+      return {
+        ...peripheral,
+        registerTemplates: peripheral.registerTemplates.filter((template) => template.id !== templateId),
+        registers: removedTemplateName
+          ? peripheral.registers.filter((register) => register.derivedFrom !== removedTemplateName)
+          : peripheral.registers,
+      }
+    })
   }
 
   const handleGenerateRegisterFromTemplate = (peripheralId: string, templateId: string) => {
@@ -682,12 +690,22 @@ function App() {
   }
 
   const handleRemoveTemplateRegisterTemplate = (templateId: string, registerTemplateId: string) => {
-    updatePeripheralTemplate(templateId, (template) => ({
-      ...template,
-      registerTemplates: template.registerTemplates.filter(
-        (registerTemplate) => registerTemplate.id !== registerTemplateId,
-      ),
-    }))
+    updatePeripheralTemplate(templateId, (template) => {
+      const removedTemplate = template.registerTemplates.find(
+        (registerTemplate) => registerTemplate.id === registerTemplateId,
+      )
+      const removedTemplateName = removedTemplate?.name.trim()
+
+      return {
+        ...template,
+        registerTemplates: template.registerTemplates.filter(
+          (registerTemplate) => registerTemplate.id !== registerTemplateId,
+        ),
+        registers: removedTemplateName
+          ? template.registers.filter((register) => register.derivedFrom !== removedTemplateName)
+          : template.registers,
+      }
+    })
   }
 
   const handleGenerateTemplateRegisterFromTemplate = (
