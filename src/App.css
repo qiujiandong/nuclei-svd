@@ -110,6 +110,29 @@ select {
   font-weight: 600;
 }
 
+.has-input-hint {
+  cursor: help;
+}
+
+.tippy-box[data-theme~='nuclei-field'] {
+  border: 1px solid rgba(18, 32, 51, 0.16);
+  border-radius: 14px;
+  background: #172234;
+  box-shadow: 0 12px 28px rgba(18, 32, 51, 0.2);
+  color: #f5f8fc;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.tippy-box[data-theme~='nuclei-field'] .tippy-content {
+  padding: 0.6rem 0.75rem;
+}
+
+.tippy-box[data-theme~='nuclei-field'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: #172234;
+}
+
 label {
   display: grid;
   gap: 0.45rem;

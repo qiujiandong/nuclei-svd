@@ -19,6 +19,7 @@ describe('App', () => {
     expect(screen.getByText('寄存器设置界面')).toBeInTheDocument()
     expect(screen.getByDisplayValue('NucleiDemo')).toBeInTheDocument()
     expect(screen.getByLabelText('默认 size')).toHaveValue('32')
+    expect(screen.getByText('设备名称').closest('label')).toHaveAttribute('data-input-hint', 'true')
     expect(screen.getByText('6 个 IREGION 寄存器组')).toBeInTheDocument()
     expect(screen.getByText('1 个自定义寄存器组')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '展开寄存器组 GROUP0' })).toBeInTheDocument()
