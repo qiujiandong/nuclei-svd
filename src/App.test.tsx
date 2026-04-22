@@ -123,6 +123,19 @@ describe('App', () => {
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<register derivedFrom="STATUS_TEMPLATE">')
   })
 
+  it('omits register templates that have no derived register instances from generated XML', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '新增寄存器组' }))
+    fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
+      target: { value: 'UNUSED_REGISTER_TEMPLATE' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
+
+    expect(await screen.findByText('转换成功')).toBeInTheDocument()
+    expect(screen.getByTestId('xml-preview')).not.toHaveTextContent('<name>UNUSED_REGISTER_TEMPLATE</name>')
+  })
+
   it('removes derived register instances when deleting their register template', () => {
     render(<App />)
 
@@ -160,6 +173,19 @@ describe('App', () => {
 
     expect(await screen.findByText('转换成功')).toBeInTheDocument()
     expect(screen.getByTestId('xml-preview')).toHaveTextContent('<register derivedFrom="GROUP_STATUS_TEMPLATE">')
+  })
+
+  it('omits unused register templates inside group templates from generated XML', async () => {
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: '展开寄存器组模板 GROUP_TEMPLATE0' }))
+    fireEvent.change(screen.getByLabelText('寄存器模板名称'), {
+      target: { value: 'UNUSED_GROUP_REGISTER_TEMPLATE' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: '校验并转换' }))
+
+    expect(await screen.findByText('转换成功')).toBeInTheDocument()
+    expect(screen.getByTestId('xml-preview')).not.toHaveTextContent('<name>UNUSED_GROUP_REGISTER_TEMPLATE</name>')
   })
 
   it('removes derived register instances inside group templates when deleting their register template', () => {

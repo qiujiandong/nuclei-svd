@@ -1099,14 +1099,24 @@ function buildRegister(register: EditorRegister): SvdRegisterInput {
 }
 
 function buildPeripheral(peripheral: EditorPeripheral): SvdPeripheralInput {
+  const instantiatedRegisterTemplateNames = new Set(
+    peripheral.registers
+      .map((register) => register.derivedFrom?.trim())
+      .filter((derivedFrom): derivedFrom is string => Boolean(derivedFrom)),
+  )
+  const instantiatedRegisterTemplates = peripheral.registerTemplates.filter((template) =>
+    instantiatedRegisterTemplateNames.has(template.name.trim()),
+  )
+  const registers = [...instantiatedRegisterTemplates, ...peripheral.registers]
+
   return {
     name: peripheral.name.trim(),
     description: peripheral.description.trim(),
     baseAddress: peripheral.baseAddress.trim(),
     ...optionalStringProperty('derivedFrom', peripheral.derivedFrom ?? ''),
     ...optionalStringProperty('groupName', peripheral.groupName),
-    ...(peripheral.registerTemplates.length + peripheral.registers.length > 0
-      ? { registers: [...peripheral.registerTemplates, ...peripheral.registers].map((register) => buildRegister(register)) }
+    ...(registers.length > 0
+      ? { registers: registers.map((register) => buildRegister(register)) }
       : {}),
   }
 }
