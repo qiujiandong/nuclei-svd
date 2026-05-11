@@ -14,6 +14,8 @@ export type PresetRegisterDefinition = {
   name: string
   description: string
   addressOffset: string
+  dim?: string
+  dimIncrement?: string
   size?: string
   access?: EditorAccess
   fields?: PresetFieldDefinition[]
@@ -158,6 +160,41 @@ function offsetAtIndex(offset: string, index: number, indexedName: boolean) {
   return `0x${(base + stride * index).toString(16).toUpperCase()}`
 }
 
+function offsetIncrement(offset: string, indexedName: boolean) {
+  const normalized = normalizeHex(offset.replace(/\s+/g, ''))
+  if (!normalized.includes('i')) {
+    return indexedName ? '0x4' : undefined
+  }
+
+  const match = normalized.match(/^(0x[0-9a-fA-F]+)(?:\+([0-9]+)\*i)?$/)
+  if (!match) {
+    return '0x4'
+  }
+
+  const stride = match[2] ? Number(match[2]) : 0
+  return `0x${stride.toString(16).toUpperCase()}`
+}
+
+function indexedRegisterCount(register: IRegionRegister) {
+  if (register.name === "SOURCE[i]_PRIORITY") {
+    return 128
+  }
+  if (register.name === "PENDING[i]") {
+    return 4
+  }
+  if (register.name === "M_INT_ENABLE[i]") {
+    return 4
+  }
+  if (register.name === "S_INT_ENABLE[i]") {
+    return 4
+  }
+  if (register.name.includes('clicint') && register.name.includes('[i]')) {
+    return 64
+  }
+
+  return 8
+}
+
 function uniquifyFieldName(name: string, existingNames: Map<string, number>) {
   const nextCount = existingNames.get(name) ?? 0
   existingNames.set(name, nextCount + 1)
@@ -182,29 +219,24 @@ function uniquifyRegisterNames(registers: PresetRegisterDefinition[]) {
 }
 
 function createRegisterInstances(register: IRegionRegister) {
-  const indexed = register.name.includes('[i]') || register.offset.includes('i')
-  let count = indexed ? 8 : 1
-
-  if (register.name === "SOURCE[i]_PRIORITY") {
-    count = 128
-  } else if (register.name === "PENDING[i]") {
-    count = 4
-  } else if (register.name === "M_INT_ENABLE[i]") {
-    count = 4
-  } else if (register.name === "S_INT_ENABLE[i]") {
-    count = 4
-  } else if (register.name.includes('clicint') && register.name.includes('[i]')) {
-    count = 64
-  }
+  const indexedName = register.name.includes('[i]')
+  const indexed = indexedName || register.offset.includes('i')
+  const dim = indexedName ? indexedRegisterCount(register) : undefined
+  const count = indexedName ? 1 : indexed ? 8 : 1
 
   return Array.from({ length: count }, (_, index): PresetRegisterDefinition => {
     const fieldNameCounts = new Map<string, number>()
     const fields = (register.fields ?? []).map((field) => {
       const parsedBits = parseBits(field.bits)
-      const fieldName = normalizeName(field.name, indexed ? index : undefined)
+      const fieldName = normalizeName(
+        field.name,
+        indexedName ? undefined : indexed ? index : undefined,
+      )
       return {
         name: uniquifyFieldName(fieldName, fieldNameCounts),
-        description: (field.description ?? '').replace(/\bi\b/g, String(index)),
+        description: indexedName
+          ? (field.description ?? '')
+          : (field.description ?? '').replace(/\bi\b/g, String(index)),
         bitOffset: parsedBits.bitOffset,
         bitWidth: parsedBits.bitWidth,
         access: accessFromPermission(field.type),
@@ -214,11 +246,21 @@ function createRegisterInstances(register: IRegionRegister) {
     const maxBit = fields.reduce((currentMax, field) => Math.max(currentMax, field.maxBit), 31)
 
     return {
-      name: indexed ? normalizeName(register.name, index) : normalizeName(register.name),
-      description: indexed
+      name: indexedName
+        ? normalizeName(register.name).replace('{index}', '%s')
+        : indexed
+          ? normalizeName(register.name, index)
+          : normalizeName(register.name),
+      description: indexed && !indexedName
         ? (register.description ?? '').replace(/\bi\b/g, String(index))
         : (register.description ?? ''),
-      addressOffset: offsetAtIndex(register.offset, index, register.name.includes('[i]')),
+      addressOffset: offsetAtIndex(register.offset, index, indexedName),
+      ...(dim
+        ? {
+            dim: String(dim),
+            dimIncrement: offsetIncrement(register.offset, indexedName),
+          }
+        : {}),
       ...(maxBit >= 32 ? { size: '64' } : {}),
       ...optionalAccess(register.permission),
       fields: fields.map(({ maxBit: _maxBit, ...field }) => field),

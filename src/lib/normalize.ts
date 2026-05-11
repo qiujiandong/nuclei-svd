@@ -132,6 +132,33 @@ function normalizeRegister(
     'addressOffset',
     issues,
   )
+  const dim = parseNumericInput(register.dim, `${path}.dim`, 'dim', issues)
+  const dimIncrement = parseNumericInput(
+    register.dimIncrement,
+    `${path}.dimIncrement`,
+    'dimIncrement',
+    issues,
+  )
+
+  if (dim !== undefined && dim <= 0) {
+    issues.push(
+      buildConversionIssue(
+        `${path}.dim`,
+        'dim must be a positive integer.',
+        'semantic.invalid-number',
+      ),
+    )
+  }
+
+  if (dim !== undefined && dimIncrement === undefined) {
+    issues.push(
+      buildConversionIssue(
+        `${path}.dimIncrement`,
+        'dimIncrement is required when dim is set.',
+        'semantic.invalid-number',
+      ),
+    )
+  }
 
   const effectiveSize = register.derivedFrom ? register.size : register.size ?? device.size
   const effectiveAccess = register.derivedFrom ? register.access : register.access ?? device.access
@@ -209,6 +236,8 @@ function normalizeRegister(
     description: register.description,
     addressOffset: addressOffset ?? Number.NaN,
     absoluteAddress,
+    dim,
+    dimIncrement,
     derivedFrom: register.derivedFrom,
     size: effectiveSize,
     access: effectiveAccess,
@@ -256,19 +285,27 @@ function normalizePeripheral(
       issues,
     )
 
-    if (!Number.isNaN(normalizedRegister.absoluteAddress)) {
-      const existingPath = seenAbsoluteAddresses.get(normalizedRegister.absoluteAddress)
+    const registerDim = normalizedRegister.dim ?? 1
+    const registerDimIncrement = normalizedRegister.dimIncrement ?? 0
+
+    for (let arrayIndex = 0; arrayIndex < registerDim; arrayIndex += 1) {
+      const absoluteAddress = normalizedRegister.absoluteAddress + registerDimIncrement * arrayIndex
+      if (Number.isNaN(absoluteAddress)) {
+        continue
+      }
+
+      const existingPath = seenAbsoluteAddresses.get(absoluteAddress)
       if (existingPath) {
         issues.push(
           buildConversionIssue(
             `${registerPath}.addressOffset`,
-            `Register absolute address ${formatHexValue(normalizedRegister.absoluteAddress)} duplicates ${existingPath}.`,
+            `Register absolute address ${formatHexValue(absoluteAddress)} duplicates ${existingPath}.`,
             'semantic.duplicate-absolute-address',
           ),
         )
       } else {
         seenAbsoluteAddresses.set(
-          normalizedRegister.absoluteAddress,
+          absoluteAddress,
           `${registerPath}.addressOffset`,
         )
       }

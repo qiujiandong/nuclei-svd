@@ -50,6 +50,12 @@ function registerToXml(register: NormalizedSvdRegister, level: number) {
   const inner = '  '.repeat(level + 1)
   const lines = [
     openNode('register', { derivedFrom: register.derivedFrom }, indent),
+    textNode('dim', register.dim, inner),
+    textNode(
+      'dimIncrement',
+      register.dimIncrement !== undefined ? formatHexValue(register.dimIncrement) : undefined,
+      inner,
+    ),
     textNode('name', register.name, inner),
     textNode('description', register.description, inner),
     textNode('addressOffset', formatHexValue(register.addressOffset), inner),

@@ -65,6 +65,8 @@ export const svdYamlSchema = {
                     name: { type: 'string', minLength: 1 },
                     description: { type: 'string', minLength: 1 },
                     addressOffset: scalarAddressSchema,
+                    dim: { type: 'integer', minimum: 1 },
+                    dimIncrement: scalarAddressSchema,
                     derivedFrom: { type: 'string', minLength: 1 },
                     size: { type: 'integer', minimum: 0 },
                     access: accessSchema,

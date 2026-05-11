@@ -19,6 +19,8 @@ export interface EditorRegister {
   name: string
   description: string
   addressOffset: string
+  dim: string
+  dimIncrement: string
   derivedFrom?: string
   size: string
   access: EditorAccess
@@ -124,6 +126,8 @@ export function createEmptyRegister(
     name: 'CTRL',
     description: 'Control register',
     addressOffset: '0x0',
+    dim: '',
+    dimIncrement: '',
     derivedFrom: undefined,
     size: '',
     access: '',
@@ -158,6 +162,8 @@ export function cloneEditorRegister(
     name: register.name,
     description: register.description,
     addressOffset: register.addressOffset,
+    dim: register.dim,
+    dimIncrement: register.dimIncrement,
     derivedFrom: register.derivedFrom,
     size: register.size,
     access: register.access,
@@ -173,6 +179,8 @@ function createPresetRegister({
   name,
   description,
   addressOffset,
+  dim,
+  dimIncrement,
   size = '32',
   access = '',
   fields = [],
@@ -180,6 +188,8 @@ function createPresetRegister({
   name: string
   description: string
   addressOffset: string
+  dim?: string
+  dimIncrement?: string
   size?: string
   access?: EditorAccess
   fields?: PresetFieldDefinition[]
@@ -188,6 +198,8 @@ function createPresetRegister({
     name,
     description,
     addressOffset,
+    dim: dim ?? '',
+    dimIncrement: dimIncrement ?? '',
     size,
     access,
     resetValue: '',
@@ -282,6 +294,8 @@ function createPresetRegisters(registers: PresetRegisterDefinition[]) {
       name: register.name,
       description: register.description,
       addressOffset: register.addressOffset,
+      dim: register.dim,
+      dimIncrement: register.dimIncrement,
       size: register.size,
       access: register.access,
       fields: register.fields ?? [],
@@ -344,6 +358,8 @@ function buildRegister(register: EditorRegister): SvdRegisterInput {
     name: register.name.trim(),
     description: register.description.trim(),
     addressOffset: register.addressOffset.trim(),
+    ...optionalIntegerProperty('dim', register.dim),
+    ...optionalIntegerProperty('dimIncrement', register.dimIncrement),
     ...optionalStringProperty('derivedFrom', register.derivedFrom ?? ''),
     ...optionalIntegerProperty('size', register.size),
     ...optionalStringProperty('access', register.access),
