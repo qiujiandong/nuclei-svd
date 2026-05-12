@@ -2,7 +2,7 @@
   "name": "nuclei-svd",
   "description": "A tool to generate CMSIS-SVD for SoC based on Nuclei CPU",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0-dev",
   "type": "module",
   "scripts": {
     "dev": "vite",
