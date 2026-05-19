@@ -970,14 +970,6 @@ export function EditorApp() {
         </div>
       </header>
 
-      <section className="metrics-bar" aria-label="当前寄存器配置统计">
-        <span>设备：{summarizeName(device.name, '未命名设备')}</span>
-        <span>{stats.iregionGroupCount} 个 IREGION 寄存器组</span>
-        <span>{stats.customGroupCount} 个自定义寄存器组</span>
-        <span>{stats.registerCount} 个寄存器</span>
-        <span>{stats.fieldCount} 个位域</span>
-      </section>
-
       <section className="app-workspace">
         <aside className="app-sidebar" aria-label="配置导航">
           {APP_NAV_GROUPS.map((group) => (
@@ -1010,11 +1002,6 @@ export function EditorApp() {
             <div>
               <p className="eyebrow">{activePageMeta.eyebrow}</p>
               <h2>{activePageMeta.title}</h2>
-            </div>
-            <div className="card-actions">
-              <button type="button" className="secondary" onClick={controllerGroups.device.actions.reset}>
-                重置设置
-              </button>
             </div>
           </div>
 
