@@ -46,6 +46,31 @@ const initialState: ConversionState = {
 
 const showIRegionDebugCard = import.meta.env.DEV || import.meta.env.VITE_DEBUG === 'true'
 
+type AppPageId = 'iregion-template' | 'register-template' | 'device-info' | 'peripheral-config' | 'preview'
+
+const DEFAULT_APP_PAGE: AppPageId = 'register-template'
+
+const APP_NAV_GROUPS: Array<{
+  title: string
+  pages: Array<{ id: AppPageId; title: string; eyebrow: string }>
+}> = [
+  {
+    title: '寄存器模板配置',
+    pages: [
+      { id: 'iregion-template', title: 'IREGION模板', eyebrow: 'IREGION template' },
+      { id: 'register-template', title: '寄存器模板', eyebrow: 'Register templates' },
+    ],
+  },
+  {
+    title: 'SoC配置',
+    pages: [
+      { id: 'device-info', title: '设备基础信息', eyebrow: 'Device profile' },
+      { id: 'peripheral-config', title: '外设基础配置', eyebrow: 'Peripheral profile' },
+      { id: 'preview', title: '预览', eyebrow: 'SVD preview' },
+    ],
+  },
+]
+
 const FIELD_HINTS: Record<string, string> = {
   设备名称: '生成 <device><name>，也会作为默认下载文件名的一部分。',
   版本: '生成 SVD device.version，用于标识当前设备描述版本。',
@@ -201,6 +226,7 @@ function AccessSelect({
 function App() {
   const [device, setDevice] = useState<EditorDevice>(() => createDefaultEditorDevice())
   const [state, setState] = useState<ConversionState>(initialState)
+  const [activePage, setActivePage] = useState<AppPageId>(DEFAULT_APP_PAGE)
   const [deviceInfoCollapsed, setDeviceInfoCollapsed] = useState(true)
 
   const resolvedIRegionPeripherals = useMemo(
@@ -987,6 +1013,7 @@ function App() {
 
   const handleReset = () => {
     setDevice(createCollapsedDefaultDevice())
+    setActivePage(DEFAULT_APP_PAGE)
     setDeviceInfoCollapsed(true)
     setState(initialState)
   }
@@ -1003,6 +1030,10 @@ function App() {
     URL.revokeObjectURL(url)
   }
 
+  const activePageMeta =
+    APP_NAV_GROUPS.flatMap((group) => group.pages).find((page) => page.id === activePage) ??
+    APP_NAV_GROUPS[0].pages[0]
+
   return (
     <main className="app-shell">
       <header className="hero-panel">
@@ -1018,20 +1049,6 @@ function App() {
             </p>
           </div>
         </div>
-        <div className="hero-actions">
-          <button type="button" className="primary" onClick={handleConvert}>
-            校验并转换
-          </button>
-          <StatusPanel
-            tone={state.tone}
-            headline={state.headline}
-            detail={state.detail}
-            issues={state.issues}
-          />
-          <button type="button" className="secondary" onClick={handleDownload} disabled={!canDownload}>
-            下载 .svd
-          </button>
-        </div>
       </header>
 
       <section className="metrics-bar" aria-label="当前寄存器配置统计">
@@ -1042,12 +1059,38 @@ function App() {
         <span>{stats.fieldCount} 个位域</span>
       </section>
 
-      <section className="layout-grid">
+      <section className="app-workspace">
+        <aside className="app-sidebar" aria-label="配置导航">
+          {APP_NAV_GROUPS.map((group) => (
+            <div className="nav-group" key={group.title}>
+              <h2>{group.title}</h2>
+              <div className="nav-list">
+                {group.pages.map((page) => (
+                  <button
+                    type="button"
+                    className={`nav-item ${activePage === page.id ? 'active' : ''}`}
+                    aria-current={activePage === page.id ? 'page' : undefined}
+                    key={page.id}
+                    onClick={() => {
+                      setActivePage(page.id)
+                      if (page.id === 'device-info') {
+                        setDeviceInfoCollapsed(false)
+                      }
+                    }}
+                  >
+                    {page.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </aside>
+
         <section className="panel editor-panel">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Interactive register designer</p>
-              <h2>寄存器设置界面</h2>
+              <p className="eyebrow">{activePageMeta.eyebrow}</p>
+              <h2>{activePageMeta.title}</h2>
             </div>
             <div className="card-actions">
               <button type="button" className="secondary" onClick={handleReset}>
@@ -1056,6 +1099,7 @@ function App() {
             </div>
           </div>
 
+          {activePage === 'device-info' ? (
           <div className={`editor-workspace ${deviceInfoCollapsed ? 'device-info-collapsed' : ''}`}>
             <aside className="device-info-panel" aria-label="设备基础信息设置">
               <div className="device-info-header">
@@ -1162,6 +1206,9 @@ function App() {
                 </div>
               )}
             </aside>
+          </div>
+          ) : null}
+          {activePage === 'iregion-template' ? (
             <div className="register-settings-panel">
           {showIRegionDebugCard ? (
           <section className="editor-section">
@@ -1270,8 +1317,19 @@ function App() {
               ) : null}
             </article>
           </section>
+          ) : (
+            <section className="editor-section">
+              <article className="editor-card readonly-card">
+                <p className="readonly-note">
+                  IREGION 模板预览在开发模式或启用 VITE_DEBUG=true 时显示。
+                </p>
+              </article>
+            </section>
+          )}
+            </div>
           ) : null}
-
+          {activePage === 'register-template' ? (
+            <div className="register-settings-panel">
           <section className="editor-section">
             <div className="section-heading">
               <div>
@@ -2265,12 +2323,45 @@ function App() {
             </div>
           </section>
             </div>
-          </div>
+          ) : null}
+          {activePage === 'peripheral-config' ? (
+            <section className="editor-section">
+              <article className="editor-card readonly-card">
+                <div className="card-body">
+                  <p className="readonly-note">
+                    暂无独立的外设基础配置内容。当前外设和寄存器实例仍在寄存器模板页统一管理。
+                  </p>
+                  <div className="readonly-meta">
+                    <span>{stats.customGroupCount} 个自定义寄存器组</span>
+                    <span>{stats.registerCount} 个寄存器</span>
+                    <span>{stats.fieldCount} 个位域</span>
+                  </div>
+                </div>
+              </article>
+            </section>
+          ) : null}
+          {activePage === 'preview' ? (
+            <section className="editor-section preview-page">
+              <div className="preview-actions">
+                <button type="button" className="primary" onClick={handleConvert}>
+                  校验并转换
+                </button>
+                <button type="button" className="secondary" onClick={handleDownload} disabled={!canDownload}>
+                  下载 .svd
+                </button>
+              </div>
+              <StatusPanel
+                tone={state.tone}
+                headline={state.headline}
+                detail={state.detail}
+                issues={state.issues}
+              />
+              <XmlPreview xml={state.xml} />
+            </section>
+          ) : null}
         </section>
 
       </section>
-
-      <XmlPreview xml={state.xml} />
     </main>
   )
 }

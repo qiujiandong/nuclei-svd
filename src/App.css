@@ -55,13 +55,6 @@ body {
   flex: 0 0 auto;
 }
 
-.hero-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-width: 22rem;
-}
-
 button,
 .ghost-button,
 select,
@@ -156,11 +149,54 @@ label span {
   color: #42536a;
 }
 
-.layout-grid {
+.app-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 1.25rem;
+  border: 1px solid rgba(18, 32, 51, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 36px rgba(18, 32, 51, 0.08);
+  padding: 1rem;
+}
+
+.nav-group {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.nav-group h2 {
+  margin: 0;
+  color: #122033;
+  font-size: 0.95rem;
+}
+
+.nav-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.nav-item {
+  width: 100%;
+  border-radius: 10px;
+  background: transparent;
+  color: #42536a;
+  text-align: left;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: #eef4ff;
+  color: #1849a9;
+  border-color: #c7d7ff;
 }
 
 .panel {
@@ -206,6 +242,16 @@ label span {
 
 .preview-panel {
   margin-top: 1rem;
+}
+
+.preview-page {
+  max-width: 78rem;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .xml-preview {
@@ -651,7 +697,7 @@ label span {
   padding-left: 1.2rem;
 }
 
-.hero-actions .status-panel {
+.status-panel {
   border-radius: 18px;
   border: 1px solid #c7d7ff;
   background: #eef4ff;
@@ -720,14 +766,13 @@ label span {
 
 @media (max-width: 1080px) {
   .hero-panel,
-  .layout-grid {
+  .app-workspace {
     grid-template-columns: 1fr;
     display: grid;
   }
 
-  .hero-actions {
-    min-width: unset;
-    grid-auto-flow: row;
+  .app-sidebar {
+    position: static;
   }
 
   .editor-workspace,
