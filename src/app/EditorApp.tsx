@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 import type { StatusIssue, StatusTone } from '../components/StatusPanel'
 import { ConversionError } from '../lib/errors'
 import {
@@ -47,6 +48,7 @@ const initialState: ConversionState = {
 }
 
 const showIRegionDebugCard = import.meta.env.DEV || import.meta.env.VITE_DEBUG === 'true'
+const editorConfigFormat = 'nuclei-svd-editor-config'
 
 function createCollapsedDefaultDevice() {
   const nextDevice = createDefaultEditorDevice()
@@ -66,6 +68,23 @@ function createCollapsedDefaultDevice() {
       expanded: false,
     })),
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isEditorDeviceExport(value: unknown): value is { device: EditorDevice } {
+  if (!isRecord(value) || value.format !== editorConfigFormat || !isRecord(value.device)) {
+    return false
+  }
+
+  return (
+    typeof value.device.name === 'string' &&
+    Array.isArray(value.device.iregionPeripherals) &&
+    Array.isArray(value.device.peripheralTemplates) &&
+    Array.isArray(value.device.peripherals)
+  )
 }
 
 function summarizeName(value: string, fallback: string) {
@@ -144,6 +163,7 @@ export function EditorApp() {
   const [state, setState] = useState<ConversionState>(initialState)
   const [activePage, setActivePage] = useState<AppPageId>(DEFAULT_APP_PAGE)
   const [deviceInfoCollapsed, setDeviceInfoCollapsed] = useState(true)
+  const configInputRef = useRef<HTMLInputElement | null>(null)
 
   const resolvedIRegionPeripherals = useMemo(
     () => resolveIRegionPeripherals(device.iregionBaseAddress, device.iregionPeripherals),
@@ -326,11 +346,11 @@ export function EditorApp() {
       peripheralTemplates: current.peripheralTemplates.map((template) =>
         template.id === templateId
           ? {
-              ...template,
-              registers: template.registers.map((register) =>
-                register.id === registerId ? { ...register, expanded: !register.expanded } : register,
-              ),
-            }
+            ...template,
+            registers: template.registers.map((register) =>
+              register.id === registerId ? { ...register, expanded: !register.expanded } : register,
+            ),
+          }
           : template,
       ),
     }))
@@ -342,13 +362,13 @@ export function EditorApp() {
       peripheralTemplates: current.peripheralTemplates.map((template) =>
         template.id === templateId
           ? {
-              ...template,
-              registerTemplates: template.registerTemplates.map((registerTemplate) =>
-                registerTemplate.id === registerTemplateId
-                  ? { ...registerTemplate, expanded: !registerTemplate.expanded }
-                  : registerTemplate,
-              ),
-            }
+            ...template,
+            registerTemplates: template.registerTemplates.map((registerTemplate) =>
+              registerTemplate.id === registerTemplateId
+                ? { ...registerTemplate, expanded: !registerTemplate.expanded }
+                : registerTemplate,
+            ),
+          }
           : template,
       ),
     }))
@@ -360,11 +380,11 @@ export function EditorApp() {
       peripherals: current.peripherals.map((peripheral) =>
         peripheral.id === peripheralId
           ? {
-              ...peripheral,
-              registers: peripheral.registers.map((register) =>
-                register.id === registerId ? { ...register, expanded: !register.expanded } : register,
-              ),
-            }
+            ...peripheral,
+            registers: peripheral.registers.map((register) =>
+              register.id === registerId ? { ...register, expanded: !register.expanded } : register,
+            ),
+          }
           : peripheral,
       ),
     }))
@@ -562,11 +582,11 @@ export function EditorApp() {
       peripherals: current.peripherals.map((peripheral) =>
         peripheral.id === peripheralId
           ? {
-              ...peripheral,
-              registerTemplates: peripheral.registerTemplates.map((template) =>
-                template.id === templateId ? { ...template, expanded: !template.expanded } : template,
-              ),
-            }
+            ...peripheral,
+            registerTemplates: peripheral.registerTemplates.map((template) =>
+              template.id === templateId ? { ...template, expanded: !template.expanded } : template,
+            ),
+          }
           : peripheral,
       ),
     }))
@@ -898,6 +918,53 @@ export function EditorApp() {
     setState(initialState)
   }
 
+  const handleExportConfig = () => {
+    const payload = JSON.stringify(
+      {
+        format: editorConfigFormat,
+        version: 1,
+        device,
+      },
+      null,
+      2,
+    )
+    const blob = new Blob([payload], { type: 'application/json;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `${device.name.trim() || 'nuclei-device'}-config.json`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleImportConfig = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+
+    if (!file) return
+
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown
+      if (!isEditorDeviceExport(parsed)) {
+        throw new Error('Unsupported editor config')
+      }
+
+      setDevice(parsed.device)
+      setActivePage(DEFAULT_APP_PAGE)
+      setDeviceInfoCollapsed(true)
+      invalidateResult('已导入配置，请重新执行校验与转换。')
+    } catch {
+      setState({
+        tone: 'error',
+        headline: '导入失败',
+        detail: '请选择由“导出配置”生成的 JSON 文件。',
+        issues: [{ path: 'config', message: '无法读取编辑器配置文件。', rule: 'config.import' }],
+        xml: '',
+        downloadName: 'nuclei-device.svd',
+      })
+    }
+  }
+
   const handleDownload = () => {
     if (!canDownload) return
 
@@ -997,1159 +1064,1185 @@ export function EditorApp() {
           ))}
         </aside>
 
-        <section className="panel editor-panel">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">{activePageMeta.eyebrow}</p>
-              <h2>{activePageMeta.title}</h2>
-            </div>
-          </div>
-
-          {activePage === 'device-info' ? (
-            <DeviceInfoPage
-              device={device}
-              collapsed={controllerGroups.device.collapsed}
-              onCollapsedChange={controllerGroups.device.actions.setCollapsed}
-              onDeviceChange={controllerGroups.device.actions.changeDevice}
-              onIRegionBaseAddressChange={controllerGroups.device.actions.changeIRegionBaseAddress}
-            />
-          ) : null}
-          {activePage === 'iregion-template' ? (
-            <IRegionTemplatePage>
-          {showIRegionDebugCard ? (
-          <section className="editor-section">
-            <div className="section-heading">
-              <div>
-                <p className="eyebrow">IREGION map</p>
-                <h3>IREGION</h3>
-              </div>
-            </div>
-
-            <article className="editor-card readonly-card">
-              <div className="card-header">
-                <button
-                  type="button"
-                  className="collapse-toggle"
-                  aria-expanded={device.iregionExpanded}
-                  aria-label={device.iregionExpanded ? '折叠 IREGION' : '展开 IREGION'}
-                  onClick={toggleIRegionCard}
-                >
-                  <span>{device.iregionExpanded ? '▾' : '▸'}</span>
-                  <span>IREGION</span>
+        <div className="workspace-main">
+          <section className="panel toolbar-panel" aria-label="全局操作">
+            <div className="toolbar-row">
+              <button type="button" className="ghost-button" onClick={controllerGroups.device.actions.reset}>
+                重置设置
+              </button>
+              <div className="toolbar-actions">
+                <button type="button" className="secondary" onClick={() => configInputRef.current?.click()}>
+                  导入配置
                 </button>
-                <div className="readonly-header-controls">
-                  <div className="readonly-meta">
-                    <span>寄存器组：{stats.iregionGroupCount}</span>
-                  </div>
-                </div>
+                <button type="button" className="secondary" onClick={handleExportConfig}>
+                  导出配置
+                </button>
+                <input
+                  ref={configInputRef}
+                  className="visually-hidden"
+                  type="file"
+                  accept="application/json,.json"
+                  aria-label="导入配置文件"
+                  onChange={handleImportConfig}
+                />
               </div>
-
-              {device.iregionExpanded ? (
-                <div className="card-body">
-                  <div className="readonly-toolbar">
-                    <span className="readonly-note">
-                    </span>
-                  </div>
-
-                  <div className="card-stack">
-                    {resolvedIRegionPeripherals.map((peripheral, peripheralIndex) => (
-                      <article className="editor-card group-card readonly-card" key={peripheral.id}>
-                        <div className="card-header">
-                          <button
-                            type="button"
-                            className="collapse-toggle"
-                            aria-expanded={peripheral.expanded}
-                            aria-label={`${peripheral.expanded ? '折叠' : '展开'}寄存器组 ${summarizeName(peripheral.name, `IREGION 组 ${peripheralIndex + 1}`)}`}
-                            onClick={() => toggleIRegionPeripheral(peripheral.id)}
-                          >
-                            <span>{peripheral.expanded ? '▾' : '▸'}</span>
-                            <span>{summarizeName(peripheral.name, `IREGION 组 ${peripheralIndex + 1}`)}</span>
-                          </button>
-                          <div className="readonly-meta">
-                            <span>实际基地址：{peripheral.baseAddress}</span>
-                            <span>寄存器数：{peripheral.registers.length}</span>
-                          </div>
-                        </div>
-
-                        {peripheral.expanded ? (
-                          <div className="card-body">
-                            <div className="readonly-grid">
-                              <div>
-                                <span className="readonly-label">groupName</span>
-                                <strong>{peripheral.groupName || '-'}</strong>
-                              </div>
-                              <div>
-                                <span className="readonly-label">实际基地址</span>
-                                <strong>{peripheral.baseAddress}</strong>
-                              </div>
-                              <div className="readonly-wide">
-                                <span className="readonly-label">说明</span>
-                                <strong>{peripheral.description}</strong>
-                              </div>
-                            </div>
-
-                            <div className="field-table-wrap">
-                              <table className="field-table readonly-table">
-                                <thead>
-                                  <tr>
-                                    <th scope="col">寄存器名称</th>
-                                    <th scope="col">addressOffset</th>
-                                    <th scope="col">实际地址</th>
-                                    <th scope="col">size</th>
-                                    <th scope="col">access</th>
-                                    <th scope="col">说明</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {peripheral.registers.map((register) => (
-                                    <tr key={register.id}>
-                                      <td>{register.name}</td>
-                                      <td>{register.addressOffset}</td>
-                                      <td>{formatResolvedAddress(peripheral.baseAddress, register.addressOffset)}</td>
-                                      <td>{register.size || device.size}</td>
-                                      <td>{register.access || device.access || 'inherit'}</td>
-                                      <td>{register.description}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        ) : null}
-                      </article>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </article>
+            </div>
           </section>
-          ) : (
-            <section className="editor-section">
-              <article className="editor-card readonly-card">
-                <p className="readonly-note">
-                  IREGION 模板预览在开发模式或启用 VITE_DEBUG=true 时显示。
-                </p>
-              </article>
-            </section>
-          )}
-            </IRegionTemplatePage>
-          ) : null}
-          {activePage === 'register-template' ? (
-            <RegisterTemplatePage>
-          <section className="editor-section">
-            <div className="section-heading">
+
+          <section className="panel editor-panel">
+            <div className="panel-heading">
               <div>
-                <p className="eyebrow">Custom register groups</p>
-                <h3>自定义寄存器组</h3>
+                <p className="eyebrow">{activePageMeta.eyebrow}</p>
+                <h2>{activePageMeta.title}</h2>
               </div>
             </div>
 
-            <div className="custom-group-columns">
-              <section className="editor-card column-panel">
-                <div className="column-header">
-                  <div>
-                    <p className="eyebrow">Group templates</p>
-                    <h4>寄存器组模板</h4>
-                  </div>
-                  <button type="button" className="secondary" onClick={handleAddPeripheralTemplate}>
-                    新增寄存器组模板
-                  </button>
-                </div>
-                <div className="nested-stack">
-                  {device.peripheralTemplates.map((template, templateIndex) => (
-                    <article className={`editor-card group-card template-linked-card ${templateColorClass(templateIndex)}`} key={template.id}>
+            {activePage === 'iregion-template' ? (
+              <IRegionTemplatePage>
+                {showIRegionDebugCard ? (
+                  <section className="editor-section">
+                    <div className="section-heading">
+                      <div>
+                        <p className="eyebrow">IREGION map</p>
+                        <h3>IREGION</h3>
+                      </div>
+                    </div>
+
+                    <article className="editor-card readonly-card">
                       <div className="card-header">
                         <button
                           type="button"
                           className="collapse-toggle"
-                          aria-expanded={template.expanded}
-                          aria-label={`${template.expanded ? '折叠' : '展开'}寄存器组模板 ${summarizeName(template.name, `寄存器组模板 ${templateIndex + 1}`)}`}
-                          onClick={() => togglePeripheralTemplate(template.id)}
+                          aria-expanded={device.iregionExpanded}
+                          aria-label={device.iregionExpanded ? '折叠 IREGION' : '展开 IREGION'}
+                          onClick={toggleIRegionCard}
                         >
-                          <span>{template.expanded ? '▾' : '▸'}</span>
-                          <span>{summarizeName(template.name, `寄存器组模板 ${templateIndex + 1}`)}</span>
+                          <span>{device.iregionExpanded ? '▾' : '▸'}</span>
+                          <span>IREGION</span>
                         </button>
-                        <div className="card-actions">
-                          <button
-                            type="button"
-                            className="secondary"
-                            onClick={() => handleGeneratePeripheralFromTemplate(template.id)}
-                          >
-                            生成实例
-                          </button>
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={() => handleRemovePeripheralTemplate(template.id)}
-                          >
-                            删除模板
-                          </button>
+                        <div className="readonly-header-controls">
+                          <div className="readonly-meta">
+                            <span>寄存器组：{stats.iregionGroupCount}</span>
+                          </div>
                         </div>
                       </div>
-                      {template.expanded ? (
+
+                      {device.iregionExpanded ? (
                         <div className="card-body">
-                          <div className="inline-field-row">
-                            <label className="inline-field inline-medium">
-                              <span>模板名称</span>
-                              <input
-                                aria-label="寄存器组模板名称"
-                                value={template.name}
-                                onChange={(event) =>
-                                  handlePeripheralTemplateChange(template.id, 'name', event.target.value)
-                                }
-                              />
-                            </label>
-                            <label className="inline-field inline-small">
-                              <span>groupName</span>
-                              <input
-                                value={template.groupName}
-                                onChange={(event) =>
-                                  handlePeripheralTemplateChange(template.id, 'groupName', event.target.value)
-                                }
-                              />
-                            </label>
-                            <label className="inline-field inline-wide">
-                              <span>模板描述</span>
-                              <input
-                                value={template.description}
-                                onChange={(event) =>
-                                  handlePeripheralTemplateChange(template.id, 'description', event.target.value)
-                                }
-                              />
-                            </label>
+                          <div className="readonly-toolbar">
+                            <span className="readonly-note">
+                            </span>
                           </div>
-                          <div className="nested-stack">
-                            <section className="editor-card column-panel">
-                              <div className="column-header">
-                                <div>
-                                  <p className="eyebrow">Register templates</p>
-                                  <h4>寄存器模板</h4>
-                                </div>
-                                <button
-                                  type="button"
-                                  className="secondary"
-                                  onClick={() =>
-                                    handleAddTemplateRegisterTemplate(
-                                      template.id,
-                                      template.registerTemplates.length,
-                                    )
-                                  }
-                                >
-                                  新增寄存器模板
-                                </button>
-                              </div>
-                              <div className="nested-stack">
-                                {template.registerTemplates.map((registerTemplate, registerTemplateIndex) => (
-                                  <article
-                                    className={`editor-card register-card register-linked-card ${registerTemplateColorClass(registerTemplateIndex)}`}
-                                    key={registerTemplate.id}
-                                  >
-                                    <div className="card-header">
-                                      <button
-                                        type="button"
-                                        className="collapse-toggle"
-                                        aria-expanded={registerTemplate.expanded}
-                                        aria-label={`${registerTemplate.expanded ? '折叠' : '展开'}寄存器模板 ${summarizeName(registerTemplate.name, `寄存器模板 ${registerTemplateIndex + 1}`)}`}
-                                        onClick={() => toggleTemplateRegisterTemplate(template.id, registerTemplate.id)}
-                                      >
-                                        <span>{registerTemplate.expanded ? '▾' : '▸'}</span>
-                                        <span>{summarizeName(registerTemplate.name, `寄存器模板 ${registerTemplateIndex + 1}`)}</span>
-                                      </button>
-                                      <div className="card-actions">
-                                        <button
-                                          type="button"
-                                          className="secondary"
-                                          onClick={() =>
-                                            handleAddTemplateRegisterTemplateField(
-                                              template.id,
-                                              registerTemplate.id,
-                                              registerTemplate.fields.length + 1,
-                                            )
-                                          }
-                                        >
-                                          新增位域
-                                        </button>
-                                        <button
-                                          type="button"
-                                          className="secondary"
-                                          onClick={() =>
-                                            handleGenerateTemplateRegisterFromTemplate(template.id, registerTemplate.id)
-                                          }
-                                        >
-                                          生成寄存器实例
-                                        </button>
-                                        <button
-                                          type="button"
-                                          className="ghost-button"
-                                          onClick={() => handleRemoveTemplateRegisterTemplate(template.id, registerTemplate.id)}
-                                        >
-                                          删除模板
-                                        </button>
-                                      </div>
-                                    </div>
-                                    {registerTemplate.expanded ? (
-                                      <div className="card-body">
-                                        <div className="inline-field-row">
-                                          <label className="inline-field inline-medium">
-                                            <span>模板名称</span>
-                                            <input
-                                              aria-label="寄存器模板名称"
-                                              value={registerTemplate.name}
-                                              onChange={(event) =>
-                                                handleTemplateRegisterTemplateChange(
-                                                  template.id,
-                                                  registerTemplate.id,
-                                                  'name',
-                                                  event.target.value,
-                                                )
-                                              }
-                                            />
-                                          </label>
-                                          <label className="inline-field inline-small">
-                                            <span>addressOffset</span>
-                                            <input
-                                              value={registerTemplate.addressOffset}
-                                              onChange={(event) =>
-                                                handleTemplateRegisterTemplateChange(
-                                                  template.id,
-                                                  registerTemplate.id,
-                                                  'addressOffset',
-                                                  event.target.value,
-                                                )
-                                              }
-                                            />
-                                          </label>
-                                          <label className="inline-field inline-wide">
-                                            <span>模板描述</span>
-                                            <input
-                                              value={registerTemplate.description}
-                                              onChange={(event) =>
-                                                handleTemplateRegisterTemplateChange(
-                                                  template.id,
-                                                  registerTemplate.id,
-                                                  'description',
-                                                  event.target.value,
-                                                )
-                                              }
-                                            />
-                                          </label>
-                                        </div>
-                                        <div className="field-table-wrap">
-                                          <table className="field-table">
-                                            <thead>
-                                              <tr>
-                                                <th scope="col">位域名称</th>
-                                                <th scope="col">bitOffset</th>
-                                                <th scope="col">bitWidth</th>
-                                                <th scope="col">位域描述</th>
-                                                <th scope="col">操作</th>
-                                              </tr>
-                                            </thead>
-                                            <tbody>
-                                              {registerTemplate.fields.map((field, fieldIndex) => (
-                                                <tr key={field.id}>
-                                                  <td>
-                                                    <input
-                                                      aria-label={`寄存器模板位域名称 ${fieldIndex + 1}`}
-                                                      value={field.name}
-                                                      onChange={(event) =>
-                                                        handleTemplateRegisterTemplateFieldChange(
-                                                          template.id,
-                                                          registerTemplate.id,
-                                                          field.id,
-                                                          'name',
-                                                          event.target.value,
-                                                        )
-                                                      }
-                                                    />
-                                                  </td>
-                                                  <td>
-                                                    <input
-                                                      value={field.bitOffset}
-                                                      onChange={(event) =>
-                                                        handleTemplateRegisterTemplateFieldChange(
-                                                          template.id,
-                                                          registerTemplate.id,
-                                                          field.id,
-                                                          'bitOffset',
-                                                          event.target.value,
-                                                        )
-                                                      }
-                                                    />
-                                                  </td>
-                                                  <td>
-                                                    <input
-                                                      value={field.bitWidth}
-                                                      onChange={(event) =>
-                                                        handleTemplateRegisterTemplateFieldChange(
-                                                          template.id,
-                                                          registerTemplate.id,
-                                                          field.id,
-                                                          'bitWidth',
-                                                          event.target.value,
-                                                        )
-                                                      }
-                                                    />
-                                                  </td>
-                                                  <td>
-                                                    <input
-                                                      value={field.description}
-                                                      onChange={(event) =>
-                                                        handleTemplateRegisterTemplateFieldChange(
-                                                          template.id,
-                                                          registerTemplate.id,
-                                                          field.id,
-                                                          'description',
-                                                          event.target.value,
-                                                        )
-                                                      }
-                                                    />
-                                                  </td>
-                                                  <td>
-                                                    <button
-                                                      type="button"
-                                                      className="ghost-button table-action"
-                                                      onClick={() =>
-                                                        handleRemoveTemplateRegisterTemplateField(
-                                                          template.id,
-                                                          registerTemplate.id,
-                                                          field.id,
-                                                        )
-                                                      }
-                                                    >
-                                                      删除
-                                                    </button>
-                                                  </td>
-                                                </tr>
-                                              ))}
-                                            </tbody>
-                                          </table>
-                                        </div>
-                                      </div>
-                                    ) : null}
-                                  </article>
-                                ))}
-                              </div>
-                            </section>
-                            <section className="editor-card column-panel">
-                              <div className="column-header">
-                                <div>
-                                  <p className="eyebrow">Register instances</p>
-                                  <h4>寄存器实例</h4>
-                                </div>
-                                <button
-                                  type="button"
-                                  className="secondary"
-                                  onClick={() => handleAddTemplateRegister(template.id)}
-                                >
-                                  新增寄存器
-                                </button>
-                              </div>
-                              {template.registers.map((register, registerIndex) => (
-                                <article
-                                  className={`editor-card register-card ${register.derivedFrom ? `register-linked-card ${derivedRegisterColorClass(register.derivedFrom, template.registerTemplates)}` : ''}`}
-                                  key={register.id}
-                                >
+
+                          <div className="card-stack">
+                            {resolvedIRegionPeripherals.map((peripheral, peripheralIndex) => (
+                              <article className="editor-card group-card readonly-card" key={peripheral.id}>
                                 <div className="card-header">
                                   <button
                                     type="button"
                                     className="collapse-toggle"
-                                    aria-expanded={register.expanded}
-                                    aria-label={`${register.expanded ? '折叠' : '展开'}寄存器 ${summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}`}
-                                    onClick={() => toggleTemplateRegister(template.id, register.id)}
+                                    aria-expanded={peripheral.expanded}
+                                    aria-label={`${peripheral.expanded ? '折叠' : '展开'}寄存器组 ${summarizeName(peripheral.name, `IREGION 组 ${peripheralIndex + 1}`)}`}
+                                    onClick={() => toggleIRegionPeripheral(peripheral.id)}
                                   >
-                                    <span>{register.expanded ? '▾' : '▸'}</span>
-                                    <span>{summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}</span>
+                                    <span>{peripheral.expanded ? '▾' : '▸'}</span>
+                                    <span>{summarizeName(peripheral.name, `IREGION 组 ${peripheralIndex + 1}`)}</span>
                                   </button>
-                                  <div className="card-actions">
-                                    <button
-                                      type="button"
-                                      className="secondary"
-                                      onClick={() =>
-                                        handleAddTemplateField(template.id, register.id, register.fields.length + 1)
-                                      }
-                                      disabled={Boolean(register.derivedFrom)}
-                                    >
-                                      新增位域
-                                    </button>
-                                    <button
-                                      type="button"
-                                      className="ghost-button"
-                                      onClick={() => handleRemoveTemplateRegister(template.id, register.id)}
-                                    >
-                                      删除寄存器
-                                    </button>
+                                  <div className="readonly-meta">
+                                    <span>实际基地址：{peripheral.baseAddress}</span>
+                                    <span>寄存器数：{peripheral.registers.length}</span>
                                   </div>
                                 </div>
-                                {register.expanded ? (
+
+                                {peripheral.expanded ? (
                                   <div className="card-body">
-                                    <div className="inline-field-row">
-                                      <label className="inline-field inline-medium">
-                                        <span>寄存器名称</span>
-                                        <input
-                                          aria-label="寄存器名称"
-                                          value={register.name}
-                                          onChange={(event) =>
-                                            handleTemplateRegisterChange(
-                                              template.id,
-                                              register.id,
-                                              'name',
-                                              event.target.value,
-                                            )
-                                          }
-                                        />
-                                      </label>
-                                      <label className="inline-field inline-small">
-                                        <span>addressOffset</span>
-                                        <input
-                                          value={register.addressOffset}
-                                          onChange={(event) =>
-                                            handleTemplateRegisterChange(
-                                              template.id,
-                                              register.id,
-                                              'addressOffset',
-                                              event.target.value,
-                                            )
-                                          }
-                                        />
-                                      </label>
-                                      <label className="inline-field inline-wide">
-                                        <span>寄存器描述</span>
-                                        <input
-                                          value={register.description}
-                                          onChange={(event) =>
-                                            handleTemplateRegisterChange(
-                                              template.id,
-                                              register.id,
-                                              'description',
-                                              event.target.value,
-                                            )
-                                          }
-                                        />
-                                      </label>
+                                    <div className="readonly-grid">
+                                      <div>
+                                        <span className="readonly-label">groupName</span>
+                                        <strong>{peripheral.groupName || '-'}</strong>
+                                      </div>
+                                      <div>
+                                        <span className="readonly-label">实际基地址</span>
+                                        <strong>{peripheral.baseAddress}</strong>
+                                      </div>
+                                      <div className="readonly-wide">
+                                        <span className="readonly-label">说明</span>
+                                        <strong>{peripheral.description}</strong>
+                                      </div>
                                     </div>
-                                    <div className="readonly-meta">
-                                      <span>derivedFrom：{register.derivedFrom || '-'}</span>
-                                    </div>
-                                    {!register.derivedFrom ? (
+
                                     <div className="field-table-wrap">
-                                      <table className="field-table">
+                                      <table className="field-table readonly-table">
                                         <thead>
                                           <tr>
-                                            <th scope="col">位域名称</th>
-                                            <th scope="col">bitOffset</th>
-                                            <th scope="col">bitWidth</th>
-                                            <th scope="col">位域描述</th>
-                                            <th scope="col">操作</th>
+                                            <th scope="col">寄存器名称</th>
+                                            <th scope="col">addressOffset</th>
+                                            <th scope="col">实际地址</th>
+                                            <th scope="col">size</th>
+                                            <th scope="col">access</th>
+                                            <th scope="col">说明</th>
                                           </tr>
                                         </thead>
                                         <tbody>
-                                          {register.fields.map((field, fieldIndex) => (
-                                            <tr key={field.id}>
-                                              <td>
-                                                <input
-                                                  aria-label={`模板位域名称 ${fieldIndex + 1}`}
-                                                  value={field.name}
-                                                  onChange={(event) =>
-                                                    handleTemplateFieldChange(
-                                                      template.id,
-                                                      register.id,
-                                                      field.id,
-                                                      'name',
-                                                      event.target.value,
-                                                    )
-                                                  }
-                                                />
-                                              </td>
-                                              <td>
-                                                <input
-                                                  value={field.bitOffset}
-                                                  onChange={(event) =>
-                                                    handleTemplateFieldChange(
-                                                      template.id,
-                                                      register.id,
-                                                      field.id,
-                                                      'bitOffset',
-                                                      event.target.value,
-                                                    )
-                                                  }
-                                                />
-                                              </td>
-                                              <td>
-                                                <input
-                                                  value={field.bitWidth}
-                                                  onChange={(event) =>
-                                                    handleTemplateFieldChange(
-                                                      template.id,
-                                                      register.id,
-                                                      field.id,
-                                                      'bitWidth',
-                                                      event.target.value,
-                                                    )
-                                                  }
-                                                />
-                                              </td>
-                                              <td>
-                                                <input
-                                                  value={field.description}
-                                                  onChange={(event) =>
-                                                    handleTemplateFieldChange(
-                                                      template.id,
-                                                      register.id,
-                                                      field.id,
-                                                      'description',
-                                                      event.target.value,
-                                                    )
-                                                  }
-                                                />
-                                              </td>
-                                              <td>
-                                                <button
-                                                  type="button"
-                                                  className="ghost-button table-action"
-                                                  onClick={() => handleRemoveTemplateField(template.id, register.id, field.id)}
-                                                >
-                                                  删除
-                                                </button>
-                                              </td>
+                                          {peripheral.registers.map((register) => (
+                                            <tr key={register.id}>
+                                              <td>{register.name}</td>
+                                              <td>{register.addressOffset}</td>
+                                              <td>{formatResolvedAddress(peripheral.baseAddress, register.addressOffset)}</td>
+                                              <td>{register.size || device.size}</td>
+                                              <td>{register.access || device.access || 'inherit'}</td>
+                                              <td>{register.description}</td>
                                             </tr>
                                           ))}
                                         </tbody>
                                       </table>
                                     </div>
-                                    ) : null}
                                   </div>
                                 ) : null}
                               </article>
                             ))}
-                            </section>
                           </div>
                         </div>
                       ) : null}
                     </article>
-                  ))}
-                </div>
-              </section>
+                  </section>
+                ) : (
+                  <section className="editor-section">
+                    <article className="editor-card readonly-card">
+                      <p className="readonly-note">
+                        IREGION 模板预览在开发模式或启用 VITE_DEBUG=true 时显示。
+                      </p>
+                    </article>
+                  </section>
+                )}
+              </IRegionTemplatePage>
+            ) : null}
+            {activePage === 'device-info' ? (
+              <DeviceInfoPage
+                device={device}
+                collapsed={controllerGroups.device.collapsed}
+                onCollapsedChange={controllerGroups.device.actions.setCollapsed}
+                onDeviceChange={controllerGroups.device.actions.changeDevice}
+                onIRegionBaseAddressChange={controllerGroups.device.actions.changeIRegionBaseAddress}
+              />
+            ) : null}
+            {activePage === 'register-template' ? (
+              <RegisterTemplatePage>
+                <section className="editor-section">
+                  <div className="section-heading">
+                    <div>
+                      <p className="eyebrow">Custom register groups</p>
+                      <h3>自定义寄存器组</h3>
+                    </div>
+                  </div>
 
-              <section className="editor-card column-panel">
-                <div className="column-header">
-                  <div>
-                    <p className="eyebrow">Derived instances</p>
-                    <h4>实例寄存器组</h4>
-                  </div>
-                  <div className="card-actions">
-                    <button type="button" className="secondary" onClick={handleAddPeripheral}>
-                      新增寄存器组
-                    </button>
-                  </div>
-                </div>
-                <div className="nested-stack">
-                  {device.peripherals.map((peripheral, peripheralIndex) => (
-                    <article
-                      className={`editor-card group-card ${peripheral.derivedFrom ? `template-linked-card ${derivedColorClass(peripheral.derivedFrom, device.peripheralTemplates)}` : ''}`}
-                      key={peripheral.id}
-                    >
-                      <div className="card-header">
-                        <button
-                          type="button"
-                          className="collapse-toggle"
-                          aria-expanded={peripheral.expanded}
-                          aria-label={`${peripheral.expanded ? '折叠' : '展开'}寄存器组 ${summarizeName(peripheral.name, `寄存器组 ${peripheralIndex + 1}`)}`}
-                          onClick={() => togglePeripheral(peripheral.id)}
-                        >
-                          <span>{peripheral.expanded ? '▾' : '▸'}</span>
-                          <span>{summarizeName(peripheral.name, `寄存器组 ${peripheralIndex + 1}`)}</span>
-                        </button>
-                        <div className="card-actions">
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={() => handleRemovePeripheral(peripheral.id)}
-                          >
-                            删除组
-                          </button>
+                  <div className="custom-group-columns">
+                    <section className="editor-card column-panel">
+                      <div className="column-header">
+                        <div>
+                          <p className="eyebrow">Group templates</p>
+                          <h4>寄存器组模板</h4>
                         </div>
+                        <button type="button" className="secondary" onClick={handleAddPeripheralTemplate}>
+                          新增寄存器组模板
+                        </button>
                       </div>
-                      {peripheral.expanded ? (
-                        <div className="card-body">
-                          <div className="inline-field-row">
-                            <label className="inline-field inline-medium">
-                              <span>name</span>
-                              <input
-                                value={peripheral.name}
-                                onChange={(event) => handlePeripheralChange(peripheral.id, 'name', event.target.value)}
-                              />
-                            </label>
-                            <label className="inline-field inline-small">
-                              <span>groupName</span>
-                              <input
-                                value={peripheral.groupName}
-                                onChange={(event) =>
-                                  handlePeripheralChange(peripheral.id, 'groupName', event.target.value)
-                                }
-                              />
-                            </label>
-                            <label className="inline-field inline-small">
-                              <span>baseAddress</span>
-                              <input
-                                value={peripheral.baseAddress}
-                                onChange={(event) =>
-                                  handlePeripheralChange(peripheral.id, 'baseAddress', event.target.value)
-                                }
-                              />
-                            </label>
-                            <label className="inline-field inline-wide">
-                              <span>description</span>
-                              <input
-                                value={peripheral.description}
-                                onChange={(event) =>
-                                  handlePeripheralChange(peripheral.id, 'description', event.target.value)
-                                }
-                              />
-                            </label>
-                          </div>
-                          <div className="readonly-meta">
-                            <span>derivedFrom：{peripheral.derivedFrom || '-'}</span>
-                          </div>
-                          {!peripheral.derivedFrom ? (
-                            <div className="nested-stack">
-                              <section className="editor-card column-panel">
-                                <div className="column-header">
-                                  <div>
-                                    <p className="eyebrow">Register templates</p>
-                                    <h4>寄存器模板</h4>
-                                  </div>
-                                  <div className="card-actions">
-                                    <button
-                                      type="button"
-                                      className="secondary"
-                                      onClick={() =>
-                                        handleAddRegisterTemplate(
-                                          peripheral.id,
-                                          peripheral.registerTemplates.length,
-                                        )
+                      <div className="nested-stack">
+                        {device.peripheralTemplates.map((template, templateIndex) => (
+                          <article className={`editor-card group-card template-linked-card ${templateColorClass(templateIndex)}`} key={template.id}>
+                            <div className="card-header">
+                              <button
+                                type="button"
+                                className="collapse-toggle"
+                                aria-expanded={template.expanded}
+                                aria-label={`${template.expanded ? '折叠' : '展开'}寄存器组模板 ${summarizeName(template.name, `寄存器组模板 ${templateIndex + 1}`)}`}
+                                onClick={() => togglePeripheralTemplate(template.id)}
+                              >
+                                <span>{template.expanded ? '▾' : '▸'}</span>
+                                <span>{summarizeName(template.name, `寄存器组模板 ${templateIndex + 1}`)}</span>
+                              </button>
+                              <div className="card-actions">
+                                <button
+                                  type="button"
+                                  className="secondary"
+                                  onClick={() => handleGeneratePeripheralFromTemplate(template.id)}
+                                >
+                                  生成实例
+                                </button>
+                                <button
+                                  type="button"
+                                  className="ghost-button"
+                                  onClick={() => handleRemovePeripheralTemplate(template.id)}
+                                >
+                                  删除模板
+                                </button>
+                              </div>
+                            </div>
+                            {template.expanded ? (
+                              <div className="card-body">
+                                <div className="inline-field-row">
+                                  <label className="inline-field inline-medium">
+                                    <span>模板名称</span>
+                                    <input
+                                      aria-label="寄存器组模板名称"
+                                      value={template.name}
+                                      onChange={(event) =>
+                                        handlePeripheralTemplateChange(template.id, 'name', event.target.value)
                                       }
-                                    >
-                                      新增寄存器模板
-                                    </button>
-                                  </div>
+                                    />
+                                  </label>
+                                  <label className="inline-field inline-small">
+                                    <span>groupName</span>
+                                    <input
+                                      value={template.groupName}
+                                      onChange={(event) =>
+                                        handlePeripheralTemplateChange(template.id, 'groupName', event.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <label className="inline-field inline-wide">
+                                    <span>模板描述</span>
+                                    <input
+                                      value={template.description}
+                                      onChange={(event) =>
+                                        handlePeripheralTemplateChange(template.id, 'description', event.target.value)
+                                      }
+                                    />
+                                  </label>
                                 </div>
                                 <div className="nested-stack">
-                                  {peripheral.registerTemplates.map((template, templateIndex) => (
-                                    <article className={`editor-card register-card register-linked-card ${registerTemplateColorClass(templateIndex)}`} key={template.id}>
-                                      <div className="card-header">
-                                        <button
-                                          type="button"
-                                          className="collapse-toggle"
-                                          aria-expanded={template.expanded}
-                                          aria-label={`${template.expanded ? '折叠' : '展开'}寄存器模板 ${summarizeName(template.name, `寄存器模板 ${templateIndex + 1}`)}`}
-                                          onClick={() => toggleRegisterTemplate(peripheral.id, template.id)}
-                                        >
-                                          <span>{template.expanded ? '▾' : '▸'}</span>
-                                          <span>{summarizeName(template.name, `寄存器模板 ${templateIndex + 1}`)}</span>
-                                        </button>
-                                        <div className="card-actions">
-                                          <button
-                                            type="button"
-                                            className="secondary"
-                                            onClick={() =>
-                                              handleAddRegisterTemplateField(
-                                                peripheral.id,
-                                                template.id,
-                                                template.fields.length + 1,
-                                              )
-                                            }
-                                          >
-                                            新增位域
-                                          </button>
-                                          <button
-                                            type="button"
-                                            className="secondary"
-                                            onClick={() => handleGenerateRegisterFromTemplate(peripheral.id, template.id)}
-                                          >
-                                            生成实例
-                                          </button>
-                                          <button
-                                            type="button"
-                                            className="ghost-button"
-                                            onClick={() => handleRemoveRegisterTemplate(peripheral.id, template.id)}
-                                          >
-                                            删除模板
-                                          </button>
-                                        </div>
+                                  <section className="editor-card column-panel">
+                                    <div className="column-header">
+                                      <div>
+                                        <p className="eyebrow">Register templates</p>
+                                        <h4>寄存器模板</h4>
                                       </div>
-                                      {template.expanded ? (
-                                        <div className="card-body">
-                                          <div className="inline-field-row">
-                                            <label className="inline-field inline-medium">
-                                              <span>模板名称</span>
-                                              <input
-                                                aria-label="寄存器模板名称"
-                                                value={template.name}
-                                                onChange={(event) =>
-                                                  handleRegisterTemplateChange(
-                                                    peripheral.id,
-                                                    template.id,
-                                                    'name',
-                                                    event.target.value,
-                                                  )
-                                                }
-                                              />
-                                            </label>
-                                            <label className="inline-field inline-small">
-                                              <span>addressOffset</span>
-                                              <input
-                                                value={template.addressOffset}
-                                                onChange={(event) =>
-                                                  handleRegisterTemplateChange(
-                                                    peripheral.id,
-                                                    template.id,
-                                                    'addressOffset',
-                                                    event.target.value,
-                                                  )
-                                                }
-                                              />
-                                            </label>
-                                            <label className="inline-field inline-wide">
-                                              <span>模板描述</span>
-                                              <input
-                                                value={template.description}
-                                                onChange={(event) =>
-                                                  handleRegisterTemplateChange(
-                                                    peripheral.id,
-                                                    template.id,
-                                                    'description',
-                                                    event.target.value,
-                                                  )
-                                                }
-                                              />
-                                            </label>
-                                          </div>
-                                          <div className="field-table-wrap">
-                                            <table className="field-table">
-                                              <thead>
-                                                <tr>
-                                                  <th scope="col">位域名称</th>
-                                                  <th scope="col">bitOffset</th>
-                                                  <th scope="col">bitWidth</th>
-                                                  <th scope="col">位域描述</th>
-                                                  <th scope="col">操作</th>
-                                                </tr>
-                                              </thead>
-                                              <tbody>
-                                                {template.fields.map((field, fieldIndex) => (
-                                                  <tr key={field.id}>
-                                                    <td>
-                                                      <input
-                                                        aria-label={`寄存器模板位域名称 ${fieldIndex + 1}`}
-                                                        value={field.name}
-                                                        onChange={(event) =>
-                                                          handleRegisterTemplateFieldChange(
-                                                            peripheral.id,
-                                                            template.id,
-                                                            field.id,
-                                                            'name',
-                                                            event.target.value,
-                                                          )
-                                                        }
-                                                      />
-                                                    </td>
-                                                    <td>
-                                                      <input
-                                                        value={field.bitOffset}
-                                                        onChange={(event) =>
-                                                          handleRegisterTemplateFieldChange(
-                                                            peripheral.id,
-                                                            template.id,
-                                                            field.id,
-                                                            'bitOffset',
-                                                            event.target.value,
-                                                          )
-                                                        }
-                                                      />
-                                                    </td>
-                                                    <td>
-                                                      <input
-                                                        value={field.bitWidth}
-                                                        onChange={(event) =>
-                                                          handleRegisterTemplateFieldChange(
-                                                            peripheral.id,
-                                                            template.id,
-                                                            field.id,
-                                                            'bitWidth',
-                                                            event.target.value,
-                                                          )
-                                                        }
-                                                      />
-                                                    </td>
-                                                    <td>
-                                                      <input
-                                                        value={field.description}
-                                                        onChange={(event) =>
-                                                          handleRegisterTemplateFieldChange(
-                                                            peripheral.id,
-                                                            template.id,
-                                                            field.id,
-                                                            'description',
-                                                            event.target.value,
-                                                          )
-                                                        }
-                                                      />
-                                                    </td>
-                                                    <td>
-                                                      <button
-                                                        type="button"
-                                                        className="ghost-button table-action"
-                                                        onClick={() =>
-                                                          handleRemoveRegisterTemplateField(
-                                                            peripheral.id,
-                                                            template.id,
-                                                            field.id,
-                                                          )
-                                                        }
-                                                      >
-                                                        删除
-                                                      </button>
-                                                    </td>
-                                                  </tr>
-                                                ))}
-                                              </tbody>
-                                            </table>
-                                          </div>
-                                        </div>
-                                      ) : null}
-                                    </article>
-                                  ))}
-                                </div>
-                              </section>
-                              <section className="editor-card column-panel">
-                                <div className="column-header">
-                                  <div>
-                                    <p className="eyebrow">Register instances</p>
-                                    <h4>寄存器实例</h4>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    className="secondary"
-                                    onClick={() => handleAddRegister(peripheral.id)}
-                                  >
-                                    新增寄存器
-                                  </button>
-                                </div>
-                              {peripheral.registers.map((register, registerIndex) => (
-                                <article
-                                  className={`editor-card register-card ${register.derivedFrom ? `register-linked-card ${derivedRegisterColorClass(register.derivedFrom, peripheral.registerTemplates)}` : ''}`}
-                                  key={register.id}
-                                >
-                                  <div className="card-header">
-                                    <button
-                                      type="button"
-                                      className="collapse-toggle"
-                                      aria-expanded={register.expanded}
-                                      aria-label={`${register.expanded ? '折叠' : '展开'}寄存器 ${summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}`}
-                                      onClick={() => toggleRegister(peripheral.id, register.id)}
-                                    >
-                                      <span>{register.expanded ? '▾' : '▸'}</span>
-                                      <span>{summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}</span>
-                                    </button>
-                                    <div className="card-actions">
                                       <button
                                         type="button"
                                         className="secondary"
                                         onClick={() =>
-                                          handleAddField(peripheral.id, register.id, register.fields.length + 1)
+                                          handleAddTemplateRegisterTemplate(
+                                            template.id,
+                                            template.registerTemplates.length,
+                                          )
                                         }
-                                        disabled={Boolean(register.derivedFrom)}
                                       >
-                                        新增位域
-                                      </button>
-                                      <button
-                                        type="button"
-                                        className="ghost-button"
-                                        onClick={() => handleRemoveRegister(peripheral.id, register.id)}
-                                      >
-                                        删除寄存器
+                                        新增寄存器模板
                                       </button>
                                     </div>
-                                  </div>
-
-                                  {register.expanded ? (
-                                    <div className="card-body">
-                                      <div className="inline-field-row">
-                                        <label className="inline-field inline-medium">
-                                          <span>寄存器名称</span>
-                                          <input
-                                            aria-label="寄存器名称"
-                                            value={register.name}
-                                            onChange={(event) =>
-                                              handleRegisterChange(
-                                                peripheral.id,
-                                                register.id,
-                                                'name',
-                                                event.target.value,
-                                              )
-                                            }
-                                          />
-                                        </label>
-                                        <label className="inline-field inline-small">
-                                          <span>addressOffset</span>
-                                          <input
-                                            aria-label="addressOffset"
-                                            value={register.addressOffset}
-                                            onChange={(event) =>
-                                              handleRegisterChange(
-                                                peripheral.id,
-                                                register.id,
-                                                'addressOffset',
-                                                event.target.value,
-                                              )
-                                            }
-                                          />
-                                        </label>
-                                        <label className="inline-field inline-wide">
-                                          <span>寄存器描述</span>
-                                          <input
-                                            value={register.description}
-                                            onChange={(event) =>
-                                              handleRegisterChange(
-                                                peripheral.id,
-                                                register.id,
-                                                'description',
-                                                event.target.value,
-                                              )
-                                            }
-                                          />
-                                        </label>
-                                      </div>
-                                      <div className="readonly-meta">
-                                        <span>derivedFrom：{register.derivedFrom || '-'}</span>
-                                      </div>
-                                      {!register.derivedFrom ? (
-                                      <div className="field-table-wrap">
-                                        <table className="field-table">
-                                          <thead>
-                                            <tr>
-                                              <th scope="col">位域名称</th>
-                                              <th scope="col">bitOffset</th>
-                                              <th scope="col">bitWidth</th>
-                                              <th scope="col">位域描述</th>
-                                              <th scope="col">操作</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody>
-                                            {register.fields.map((field, fieldIndex) => (
-                                              <tr key={field.id}>
-                                                <td>
+                                    <div className="nested-stack">
+                                      {template.registerTemplates.map((registerTemplate, registerTemplateIndex) => (
+                                        <article
+                                          className={`editor-card register-card register-linked-card ${registerTemplateColorClass(registerTemplateIndex)}`}
+                                          key={registerTemplate.id}
+                                        >
+                                          <div className="card-header">
+                                            <button
+                                              type="button"
+                                              className="collapse-toggle"
+                                              aria-expanded={registerTemplate.expanded}
+                                              aria-label={`${registerTemplate.expanded ? '折叠' : '展开'}寄存器模板 ${summarizeName(registerTemplate.name, `寄存器模板 ${registerTemplateIndex + 1}`)}`}
+                                              onClick={() => toggleTemplateRegisterTemplate(template.id, registerTemplate.id)}
+                                            >
+                                              <span>{registerTemplate.expanded ? '▾' : '▸'}</span>
+                                              <span>{summarizeName(registerTemplate.name, `寄存器模板 ${registerTemplateIndex + 1}`)}</span>
+                                            </button>
+                                            <div className="card-actions">
+                                              <button
+                                                type="button"
+                                                className="secondary"
+                                                onClick={() =>
+                                                  handleAddTemplateRegisterTemplateField(
+                                                    template.id,
+                                                    registerTemplate.id,
+                                                    registerTemplate.fields.length + 1,
+                                                  )
+                                                }
+                                              >
+                                                新增位域
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className="secondary"
+                                                onClick={() =>
+                                                  handleGenerateTemplateRegisterFromTemplate(template.id, registerTemplate.id)
+                                                }
+                                              >
+                                                生成寄存器实例
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className="ghost-button"
+                                                onClick={() => handleRemoveTemplateRegisterTemplate(template.id, registerTemplate.id)}
+                                              >
+                                                删除模板
+                                              </button>
+                                            </div>
+                                          </div>
+                                          {registerTemplate.expanded ? (
+                                            <div className="card-body">
+                                              <div className="inline-field-row">
+                                                <label className="inline-field inline-medium">
+                                                  <span>模板名称</span>
                                                   <input
-                                                    aria-label={`位域名称 ${fieldIndex + 1}`}
-                                                    value={field.name}
+                                                    aria-label="寄存器模板名称"
+                                                    value={registerTemplate.name}
                                                     onChange={(event) =>
-                                                      handleFieldChange(
-                                                        peripheral.id,
-                                                        register.id,
-                                                        field.id,
+                                                      handleTemplateRegisterTemplateChange(
+                                                        template.id,
+                                                        registerTemplate.id,
                                                         'name',
                                                         event.target.value,
                                                       )
                                                     }
                                                   />
-                                                </td>
-                                                <td>
+                                                </label>
+                                                <label className="inline-field inline-small">
+                                                  <span>addressOffset</span>
                                                   <input
-                                                    value={field.bitOffset}
+                                                    value={registerTemplate.addressOffset}
                                                     onChange={(event) =>
-                                                      handleFieldChange(
-                                                        peripheral.id,
-                                                        register.id,
-                                                        field.id,
-                                                        'bitOffset',
+                                                      handleTemplateRegisterTemplateChange(
+                                                        template.id,
+                                                        registerTemplate.id,
+                                                        'addressOffset',
                                                         event.target.value,
                                                       )
                                                     }
                                                   />
-                                                </td>
-                                                <td>
+                                                </label>
+                                                <label className="inline-field inline-wide">
+                                                  <span>模板描述</span>
                                                   <input
-                                                    value={field.bitWidth}
+                                                    value={registerTemplate.description}
                                                     onChange={(event) =>
-                                                      handleFieldChange(
-                                                        peripheral.id,
-                                                        register.id,
-                                                        field.id,
-                                                        'bitWidth',
-                                                        event.target.value,
-                                                      )
-                                                    }
-                                                  />
-                                                </td>
-                                                <td>
-                                                  <input
-                                                    value={field.description}
-                                                    onChange={(event) =>
-                                                      handleFieldChange(
-                                                        peripheral.id,
-                                                        register.id,
-                                                        field.id,
+                                                      handleTemplateRegisterTemplateChange(
+                                                        template.id,
+                                                        registerTemplate.id,
                                                         'description',
                                                         event.target.value,
                                                       )
                                                     }
                                                   />
-                                                </td>
-                                                <td>
-                                                  <button
-                                                    type="button"
-                                                    className="ghost-button table-action"
-                                                    onClick={() =>
-                                                      handleRemoveField(peripheral.id, register.id, field.id)
-                                                    }
-                                                  >
-                                                    删除
-                                                  </button>
-                                                </td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                      ) : null}
+                                                </label>
+                                              </div>
+                                              <div className="field-table-wrap">
+                                                <table className="field-table">
+                                                  <thead>
+                                                    <tr>
+                                                      <th scope="col">位域名称</th>
+                                                      <th scope="col">bitOffset</th>
+                                                      <th scope="col">bitWidth</th>
+                                                      <th scope="col">位域描述</th>
+                                                      <th scope="col">操作</th>
+                                                    </tr>
+                                                  </thead>
+                                                  <tbody>
+                                                    {registerTemplate.fields.map((field, fieldIndex) => (
+                                                      <tr key={field.id}>
+                                                        <td>
+                                                          <input
+                                                            aria-label={`寄存器模板位域名称 ${fieldIndex + 1}`}
+                                                            value={field.name}
+                                                            onChange={(event) =>
+                                                              handleTemplateRegisterTemplateFieldChange(
+                                                                template.id,
+                                                                registerTemplate.id,
+                                                                field.id,
+                                                                'name',
+                                                                event.target.value,
+                                                              )
+                                                            }
+                                                          />
+                                                        </td>
+                                                        <td>
+                                                          <input
+                                                            value={field.bitOffset}
+                                                            onChange={(event) =>
+                                                              handleTemplateRegisterTemplateFieldChange(
+                                                                template.id,
+                                                                registerTemplate.id,
+                                                                field.id,
+                                                                'bitOffset',
+                                                                event.target.value,
+                                                              )
+                                                            }
+                                                          />
+                                                        </td>
+                                                        <td>
+                                                          <input
+                                                            value={field.bitWidth}
+                                                            onChange={(event) =>
+                                                              handleTemplateRegisterTemplateFieldChange(
+                                                                template.id,
+                                                                registerTemplate.id,
+                                                                field.id,
+                                                                'bitWidth',
+                                                                event.target.value,
+                                                              )
+                                                            }
+                                                          />
+                                                        </td>
+                                                        <td>
+                                                          <input
+                                                            value={field.description}
+                                                            onChange={(event) =>
+                                                              handleTemplateRegisterTemplateFieldChange(
+                                                                template.id,
+                                                                registerTemplate.id,
+                                                                field.id,
+                                                                'description',
+                                                                event.target.value,
+                                                              )
+                                                            }
+                                                          />
+                                                        </td>
+                                                        <td>
+                                                          <button
+                                                            type="button"
+                                                            className="ghost-button table-action"
+                                                            onClick={() =>
+                                                              handleRemoveTemplateRegisterTemplateField(
+                                                                template.id,
+                                                                registerTemplate.id,
+                                                                field.id,
+                                                              )
+                                                            }
+                                                          >
+                                                            删除
+                                                          </button>
+                                                        </td>
+                                                      </tr>
+                                                    ))}
+                                                  </tbody>
+                                                </table>
+                                              </div>
+                                            </div>
+                                          ) : null}
+                                        </article>
+                                      ))}
                                     </div>
-                                  ) : null}
-                                </article>
-                              ))}
-                              </section>
-                            </div>
-                          ) : null}
+                                  </section>
+                                  <section className="editor-card column-panel">
+                                    <div className="column-header">
+                                      <div>
+                                        <p className="eyebrow">Register instances</p>
+                                        <h4>寄存器实例</h4>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        className="secondary"
+                                        onClick={() => handleAddTemplateRegister(template.id)}
+                                      >
+                                        新增寄存器
+                                      </button>
+                                    </div>
+                                    {template.registers.map((register, registerIndex) => (
+                                      <article
+                                        className={`editor-card register-card ${register.derivedFrom ? `register-linked-card ${derivedRegisterColorClass(register.derivedFrom, template.registerTemplates)}` : ''}`}
+                                        key={register.id}
+                                      >
+                                        <div className="card-header">
+                                          <button
+                                            type="button"
+                                            className="collapse-toggle"
+                                            aria-expanded={register.expanded}
+                                            aria-label={`${register.expanded ? '折叠' : '展开'}寄存器 ${summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}`}
+                                            onClick={() => toggleTemplateRegister(template.id, register.id)}
+                                          >
+                                            <span>{register.expanded ? '▾' : '▸'}</span>
+                                            <span>{summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}</span>
+                                          </button>
+                                          <div className="card-actions">
+                                            <button
+                                              type="button"
+                                              className="secondary"
+                                              onClick={() =>
+                                                handleAddTemplateField(template.id, register.id, register.fields.length + 1)
+                                              }
+                                              disabled={Boolean(register.derivedFrom)}
+                                            >
+                                              新增位域
+                                            </button>
+                                            <button
+                                              type="button"
+                                              className="ghost-button"
+                                              onClick={() => handleRemoveTemplateRegister(template.id, register.id)}
+                                            >
+                                              删除寄存器
+                                            </button>
+                                          </div>
+                                        </div>
+                                        {register.expanded ? (
+                                          <div className="card-body">
+                                            <div className="inline-field-row">
+                                              <label className="inline-field inline-medium">
+                                                <span>寄存器名称</span>
+                                                <input
+                                                  aria-label="寄存器名称"
+                                                  value={register.name}
+                                                  onChange={(event) =>
+                                                    handleTemplateRegisterChange(
+                                                      template.id,
+                                                      register.id,
+                                                      'name',
+                                                      event.target.value,
+                                                    )
+                                                  }
+                                                />
+                                              </label>
+                                              <label className="inline-field inline-small">
+                                                <span>addressOffset</span>
+                                                <input
+                                                  value={register.addressOffset}
+                                                  onChange={(event) =>
+                                                    handleTemplateRegisterChange(
+                                                      template.id,
+                                                      register.id,
+                                                      'addressOffset',
+                                                      event.target.value,
+                                                    )
+                                                  }
+                                                />
+                                              </label>
+                                              <label className="inline-field inline-wide">
+                                                <span>寄存器描述</span>
+                                                <input
+                                                  value={register.description}
+                                                  onChange={(event) =>
+                                                    handleTemplateRegisterChange(
+                                                      template.id,
+                                                      register.id,
+                                                      'description',
+                                                      event.target.value,
+                                                    )
+                                                  }
+                                                />
+                                              </label>
+                                            </div>
+                                            <div className="readonly-meta">
+                                              <span>derivedFrom：{register.derivedFrom || '-'}</span>
+                                            </div>
+                                            {!register.derivedFrom ? (
+                                              <div className="field-table-wrap">
+                                                <table className="field-table">
+                                                  <thead>
+                                                    <tr>
+                                                      <th scope="col">位域名称</th>
+                                                      <th scope="col">bitOffset</th>
+                                                      <th scope="col">bitWidth</th>
+                                                      <th scope="col">位域描述</th>
+                                                      <th scope="col">操作</th>
+                                                    </tr>
+                                                  </thead>
+                                                  <tbody>
+                                                    {register.fields.map((field, fieldIndex) => (
+                                                      <tr key={field.id}>
+                                                        <td>
+                                                          <input
+                                                            aria-label={`模板位域名称 ${fieldIndex + 1}`}
+                                                            value={field.name}
+                                                            onChange={(event) =>
+                                                              handleTemplateFieldChange(
+                                                                template.id,
+                                                                register.id,
+                                                                field.id,
+                                                                'name',
+                                                                event.target.value,
+                                                              )
+                                                            }
+                                                          />
+                                                        </td>
+                                                        <td>
+                                                          <input
+                                                            value={field.bitOffset}
+                                                            onChange={(event) =>
+                                                              handleTemplateFieldChange(
+                                                                template.id,
+                                                                register.id,
+                                                                field.id,
+                                                                'bitOffset',
+                                                                event.target.value,
+                                                              )
+                                                            }
+                                                          />
+                                                        </td>
+                                                        <td>
+                                                          <input
+                                                            value={field.bitWidth}
+                                                            onChange={(event) =>
+                                                              handleTemplateFieldChange(
+                                                                template.id,
+                                                                register.id,
+                                                                field.id,
+                                                                'bitWidth',
+                                                                event.target.value,
+                                                              )
+                                                            }
+                                                          />
+                                                        </td>
+                                                        <td>
+                                                          <input
+                                                            value={field.description}
+                                                            onChange={(event) =>
+                                                              handleTemplateFieldChange(
+                                                                template.id,
+                                                                register.id,
+                                                                field.id,
+                                                                'description',
+                                                                event.target.value,
+                                                              )
+                                                            }
+                                                          />
+                                                        </td>
+                                                        <td>
+                                                          <button
+                                                            type="button"
+                                                            className="ghost-button table-action"
+                                                            onClick={() => handleRemoveTemplateField(template.id, register.id, field.id)}
+                                                          >
+                                                            删除
+                                                          </button>
+                                                        </td>
+                                                      </tr>
+                                                    ))}
+                                                  </tbody>
+                                                </table>
+                                              </div>
+                                            ) : null}
+                                          </div>
+                                        ) : null}
+                                      </article>
+                                    ))}
+                                  </section>
+                                </div>
+                              </div>
+                            ) : null}
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="editor-card column-panel">
+                      <div className="column-header">
+                        <div>
+                          <p className="eyebrow">Derived instances</p>
+                          <h4>实例寄存器组</h4>
                         </div>
-                      ) : null}
-                    </article>
-                  ))}
-                </div>
-              </section>
-            </div>
+                        <div className="card-actions">
+                          <button type="button" className="secondary" onClick={handleAddPeripheral}>
+                            新增寄存器组
+                          </button>
+                        </div>
+                      </div>
+                      <div className="nested-stack">
+                        {device.peripherals.map((peripheral, peripheralIndex) => (
+                          <article
+                            className={`editor-card group-card ${peripheral.derivedFrom ? `template-linked-card ${derivedColorClass(peripheral.derivedFrom, device.peripheralTemplates)}` : ''}`}
+                            key={peripheral.id}
+                          >
+                            <div className="card-header">
+                              <button
+                                type="button"
+                                className="collapse-toggle"
+                                aria-expanded={peripheral.expanded}
+                                aria-label={`${peripheral.expanded ? '折叠' : '展开'}寄存器组 ${summarizeName(peripheral.name, `寄存器组 ${peripheralIndex + 1}`)}`}
+                                onClick={() => togglePeripheral(peripheral.id)}
+                              >
+                                <span>{peripheral.expanded ? '▾' : '▸'}</span>
+                                <span>{summarizeName(peripheral.name, `寄存器组 ${peripheralIndex + 1}`)}</span>
+                              </button>
+                              <div className="card-actions">
+                                <button
+                                  type="button"
+                                  className="ghost-button"
+                                  onClick={() => handleRemovePeripheral(peripheral.id)}
+                                >
+                                  删除组
+                                </button>
+                              </div>
+                            </div>
+                            {peripheral.expanded ? (
+                              <div className="card-body">
+                                <div className="inline-field-row">
+                                  <label className="inline-field inline-medium">
+                                    <span>name</span>
+                                    <input
+                                      value={peripheral.name}
+                                      onChange={(event) => handlePeripheralChange(peripheral.id, 'name', event.target.value)}
+                                    />
+                                  </label>
+                                  <label className="inline-field inline-small">
+                                    <span>groupName</span>
+                                    <input
+                                      value={peripheral.groupName}
+                                      onChange={(event) =>
+                                        handlePeripheralChange(peripheral.id, 'groupName', event.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <label className="inline-field inline-small">
+                                    <span>baseAddress</span>
+                                    <input
+                                      value={peripheral.baseAddress}
+                                      onChange={(event) =>
+                                        handlePeripheralChange(peripheral.id, 'baseAddress', event.target.value)
+                                      }
+                                    />
+                                  </label>
+                                  <label className="inline-field inline-wide">
+                                    <span>description</span>
+                                    <input
+                                      value={peripheral.description}
+                                      onChange={(event) =>
+                                        handlePeripheralChange(peripheral.id, 'description', event.target.value)
+                                      }
+                                    />
+                                  </label>
+                                </div>
+                                <div className="readonly-meta">
+                                  <span>derivedFrom：{peripheral.derivedFrom || '-'}</span>
+                                </div>
+                                {!peripheral.derivedFrom ? (
+                                  <div className="nested-stack">
+                                    <section className="editor-card column-panel">
+                                      <div className="column-header">
+                                        <div>
+                                          <p className="eyebrow">Register templates</p>
+                                          <h4>寄存器模板</h4>
+                                        </div>
+                                        <div className="card-actions">
+                                          <button
+                                            type="button"
+                                            className="secondary"
+                                            onClick={() =>
+                                              handleAddRegisterTemplate(
+                                                peripheral.id,
+                                                peripheral.registerTemplates.length,
+                                              )
+                                            }
+                                          >
+                                            新增寄存器模板
+                                          </button>
+                                        </div>
+                                      </div>
+                                      <div className="nested-stack">
+                                        {peripheral.registerTemplates.map((template, templateIndex) => (
+                                          <article className={`editor-card register-card register-linked-card ${registerTemplateColorClass(templateIndex)}`} key={template.id}>
+                                            <div className="card-header">
+                                              <button
+                                                type="button"
+                                                className="collapse-toggle"
+                                                aria-expanded={template.expanded}
+                                                aria-label={`${template.expanded ? '折叠' : '展开'}寄存器模板 ${summarizeName(template.name, `寄存器模板 ${templateIndex + 1}`)}`}
+                                                onClick={() => toggleRegisterTemplate(peripheral.id, template.id)}
+                                              >
+                                                <span>{template.expanded ? '▾' : '▸'}</span>
+                                                <span>{summarizeName(template.name, `寄存器模板 ${templateIndex + 1}`)}</span>
+                                              </button>
+                                              <div className="card-actions">
+                                                <button
+                                                  type="button"
+                                                  className="secondary"
+                                                  onClick={() =>
+                                                    handleAddRegisterTemplateField(
+                                                      peripheral.id,
+                                                      template.id,
+                                                      template.fields.length + 1,
+                                                    )
+                                                  }
+                                                >
+                                                  新增位域
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  className="secondary"
+                                                  onClick={() => handleGenerateRegisterFromTemplate(peripheral.id, template.id)}
+                                                >
+                                                  生成实例
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  className="ghost-button"
+                                                  onClick={() => handleRemoveRegisterTemplate(peripheral.id, template.id)}
+                                                >
+                                                  删除模板
+                                                </button>
+                                              </div>
+                                            </div>
+                                            {template.expanded ? (
+                                              <div className="card-body">
+                                                <div className="inline-field-row">
+                                                  <label className="inline-field inline-medium">
+                                                    <span>模板名称</span>
+                                                    <input
+                                                      aria-label="寄存器模板名称"
+                                                      value={template.name}
+                                                      onChange={(event) =>
+                                                        handleRegisterTemplateChange(
+                                                          peripheral.id,
+                                                          template.id,
+                                                          'name',
+                                                          event.target.value,
+                                                        )
+                                                      }
+                                                    />
+                                                  </label>
+                                                  <label className="inline-field inline-small">
+                                                    <span>addressOffset</span>
+                                                    <input
+                                                      value={template.addressOffset}
+                                                      onChange={(event) =>
+                                                        handleRegisterTemplateChange(
+                                                          peripheral.id,
+                                                          template.id,
+                                                          'addressOffset',
+                                                          event.target.value,
+                                                        )
+                                                      }
+                                                    />
+                                                  </label>
+                                                  <label className="inline-field inline-wide">
+                                                    <span>模板描述</span>
+                                                    <input
+                                                      value={template.description}
+                                                      onChange={(event) =>
+                                                        handleRegisterTemplateChange(
+                                                          peripheral.id,
+                                                          template.id,
+                                                          'description',
+                                                          event.target.value,
+                                                        )
+                                                      }
+                                                    />
+                                                  </label>
+                                                </div>
+                                                <div className="field-table-wrap">
+                                                  <table className="field-table">
+                                                    <thead>
+                                                      <tr>
+                                                        <th scope="col">位域名称</th>
+                                                        <th scope="col">bitOffset</th>
+                                                        <th scope="col">bitWidth</th>
+                                                        <th scope="col">位域描述</th>
+                                                        <th scope="col">操作</th>
+                                                      </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                      {template.fields.map((field, fieldIndex) => (
+                                                        <tr key={field.id}>
+                                                          <td>
+                                                            <input
+                                                              aria-label={`寄存器模板位域名称 ${fieldIndex + 1}`}
+                                                              value={field.name}
+                                                              onChange={(event) =>
+                                                                handleRegisterTemplateFieldChange(
+                                                                  peripheral.id,
+                                                                  template.id,
+                                                                  field.id,
+                                                                  'name',
+                                                                  event.target.value,
+                                                                )
+                                                              }
+                                                            />
+                                                          </td>
+                                                          <td>
+                                                            <input
+                                                              value={field.bitOffset}
+                                                              onChange={(event) =>
+                                                                handleRegisterTemplateFieldChange(
+                                                                  peripheral.id,
+                                                                  template.id,
+                                                                  field.id,
+                                                                  'bitOffset',
+                                                                  event.target.value,
+                                                                )
+                                                              }
+                                                            />
+                                                          </td>
+                                                          <td>
+                                                            <input
+                                                              value={field.bitWidth}
+                                                              onChange={(event) =>
+                                                                handleRegisterTemplateFieldChange(
+                                                                  peripheral.id,
+                                                                  template.id,
+                                                                  field.id,
+                                                                  'bitWidth',
+                                                                  event.target.value,
+                                                                )
+                                                              }
+                                                            />
+                                                          </td>
+                                                          <td>
+                                                            <input
+                                                              value={field.description}
+                                                              onChange={(event) =>
+                                                                handleRegisterTemplateFieldChange(
+                                                                  peripheral.id,
+                                                                  template.id,
+                                                                  field.id,
+                                                                  'description',
+                                                                  event.target.value,
+                                                                )
+                                                              }
+                                                            />
+                                                          </td>
+                                                          <td>
+                                                            <button
+                                                              type="button"
+                                                              className="ghost-button table-action"
+                                                              onClick={() =>
+                                                                handleRemoveRegisterTemplateField(
+                                                                  peripheral.id,
+                                                                  template.id,
+                                                                  field.id,
+                                                                )
+                                                              }
+                                                            >
+                                                              删除
+                                                            </button>
+                                                          </td>
+                                                        </tr>
+                                                      ))}
+                                                    </tbody>
+                                                  </table>
+                                                </div>
+                                              </div>
+                                            ) : null}
+                                          </article>
+                                        ))}
+                                      </div>
+                                    </section>
+                                    <section className="editor-card column-panel">
+                                      <div className="column-header">
+                                        <div>
+                                          <p className="eyebrow">Register instances</p>
+                                          <h4>寄存器实例</h4>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          className="secondary"
+                                          onClick={() => handleAddRegister(peripheral.id)}
+                                        >
+                                          新增寄存器
+                                        </button>
+                                      </div>
+                                      {peripheral.registers.map((register, registerIndex) => (
+                                        <article
+                                          className={`editor-card register-card ${register.derivedFrom ? `register-linked-card ${derivedRegisterColorClass(register.derivedFrom, peripheral.registerTemplates)}` : ''}`}
+                                          key={register.id}
+                                        >
+                                          <div className="card-header">
+                                            <button
+                                              type="button"
+                                              className="collapse-toggle"
+                                              aria-expanded={register.expanded}
+                                              aria-label={`${register.expanded ? '折叠' : '展开'}寄存器 ${summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}`}
+                                              onClick={() => toggleRegister(peripheral.id, register.id)}
+                                            >
+                                              <span>{register.expanded ? '▾' : '▸'}</span>
+                                              <span>{summarizeName(register.name, `寄存器 ${registerIndex + 1}`)}</span>
+                                            </button>
+                                            <div className="card-actions">
+                                              <button
+                                                type="button"
+                                                className="secondary"
+                                                onClick={() =>
+                                                  handleAddField(peripheral.id, register.id, register.fields.length + 1)
+                                                }
+                                                disabled={Boolean(register.derivedFrom)}
+                                              >
+                                                新增位域
+                                              </button>
+                                              <button
+                                                type="button"
+                                                className="ghost-button"
+                                                onClick={() => handleRemoveRegister(peripheral.id, register.id)}
+                                              >
+                                                删除寄存器
+                                              </button>
+                                            </div>
+                                          </div>
+
+                                          {register.expanded ? (
+                                            <div className="card-body">
+                                              <div className="inline-field-row">
+                                                <label className="inline-field inline-medium">
+                                                  <span>寄存器名称</span>
+                                                  <input
+                                                    aria-label="寄存器名称"
+                                                    value={register.name}
+                                                    onChange={(event) =>
+                                                      handleRegisterChange(
+                                                        peripheral.id,
+                                                        register.id,
+                                                        'name',
+                                                        event.target.value,
+                                                      )
+                                                    }
+                                                  />
+                                                </label>
+                                                <label className="inline-field inline-small">
+                                                  <span>addressOffset</span>
+                                                  <input
+                                                    aria-label="addressOffset"
+                                                    value={register.addressOffset}
+                                                    onChange={(event) =>
+                                                      handleRegisterChange(
+                                                        peripheral.id,
+                                                        register.id,
+                                                        'addressOffset',
+                                                        event.target.value,
+                                                      )
+                                                    }
+                                                  />
+                                                </label>
+                                                <label className="inline-field inline-wide">
+                                                  <span>寄存器描述</span>
+                                                  <input
+                                                    value={register.description}
+                                                    onChange={(event) =>
+                                                      handleRegisterChange(
+                                                        peripheral.id,
+                                                        register.id,
+                                                        'description',
+                                                        event.target.value,
+                                                      )
+                                                    }
+                                                  />
+                                                </label>
+                                              </div>
+                                              <div className="readonly-meta">
+                                                <span>derivedFrom：{register.derivedFrom || '-'}</span>
+                                              </div>
+                                              {!register.derivedFrom ? (
+                                                <div className="field-table-wrap">
+                                                  <table className="field-table">
+                                                    <thead>
+                                                      <tr>
+                                                        <th scope="col">位域名称</th>
+                                                        <th scope="col">bitOffset</th>
+                                                        <th scope="col">bitWidth</th>
+                                                        <th scope="col">位域描述</th>
+                                                        <th scope="col">操作</th>
+                                                      </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                      {register.fields.map((field, fieldIndex) => (
+                                                        <tr key={field.id}>
+                                                          <td>
+                                                            <input
+                                                              aria-label={`位域名称 ${fieldIndex + 1}`}
+                                                              value={field.name}
+                                                              onChange={(event) =>
+                                                                handleFieldChange(
+                                                                  peripheral.id,
+                                                                  register.id,
+                                                                  field.id,
+                                                                  'name',
+                                                                  event.target.value,
+                                                                )
+                                                              }
+                                                            />
+                                                          </td>
+                                                          <td>
+                                                            <input
+                                                              value={field.bitOffset}
+                                                              onChange={(event) =>
+                                                                handleFieldChange(
+                                                                  peripheral.id,
+                                                                  register.id,
+                                                                  field.id,
+                                                                  'bitOffset',
+                                                                  event.target.value,
+                                                                )
+                                                              }
+                                                            />
+                                                          </td>
+                                                          <td>
+                                                            <input
+                                                              value={field.bitWidth}
+                                                              onChange={(event) =>
+                                                                handleFieldChange(
+                                                                  peripheral.id,
+                                                                  register.id,
+                                                                  field.id,
+                                                                  'bitWidth',
+                                                                  event.target.value,
+                                                                )
+                                                              }
+                                                            />
+                                                          </td>
+                                                          <td>
+                                                            <input
+                                                              value={field.description}
+                                                              onChange={(event) =>
+                                                                handleFieldChange(
+                                                                  peripheral.id,
+                                                                  register.id,
+                                                                  field.id,
+                                                                  'description',
+                                                                  event.target.value,
+                                                                )
+                                                              }
+                                                            />
+                                                          </td>
+                                                          <td>
+                                                            <button
+                                                              type="button"
+                                                              className="ghost-button table-action"
+                                                              onClick={() =>
+                                                                handleRemoveField(peripheral.id, register.id, field.id)
+                                                              }
+                                                            >
+                                                              删除
+                                                            </button>
+                                                          </td>
+                                                        </tr>
+                                                      ))}
+                                                    </tbody>
+                                                  </table>
+                                                </div>
+                                              ) : null}
+                                            </div>
+                                          ) : null}
+                                        </article>
+                                      ))}
+                                    </section>
+                                  </div>
+                                ) : null}
+                              </div>
+                            ) : null}
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+                </section>
+              </RegisterTemplatePage>
+            ) : null}
+            {activePage === 'peripheral-config' ? (
+              <PeripheralConfigPage
+                customGroupCount={controllerGroups.peripheral.stats.customGroupCount}
+                registerCount={controllerGroups.peripheral.stats.registerCount}
+                fieldCount={controllerGroups.peripheral.stats.fieldCount}
+              />
+            ) : null}
+            {activePage === 'preview' ? (
+              <PreviewPage
+                canDownload={controllerGroups.conversion.canDownload}
+                tone={controllerGroups.conversion.state.tone}
+                headline={controllerGroups.conversion.state.headline}
+                detail={controllerGroups.conversion.state.detail}
+                issues={controllerGroups.conversion.state.issues}
+                xml={controllerGroups.conversion.state.xml}
+                onConvert={controllerGroups.conversion.actions.convert}
+                onDownload={controllerGroups.conversion.actions.download}
+              />
+            ) : null}
           </section>
-            </RegisterTemplatePage>
-          ) : null}
-          {activePage === 'peripheral-config' ? (
-            <PeripheralConfigPage
-              customGroupCount={controllerGroups.peripheral.stats.customGroupCount}
-              registerCount={controllerGroups.peripheral.stats.registerCount}
-              fieldCount={controllerGroups.peripheral.stats.fieldCount}
-            />
-          ) : null}
-          {activePage === 'preview' ? (
-            <PreviewPage
-              canDownload={controllerGroups.conversion.canDownload}
-              tone={controllerGroups.conversion.state.tone}
-              headline={controllerGroups.conversion.state.headline}
-              detail={controllerGroups.conversion.state.detail}
-              issues={controllerGroups.conversion.state.issues}
-              xml={controllerGroups.conversion.state.xml}
-              onConvert={controllerGroups.conversion.actions.convert}
-              onDownload={controllerGroups.conversion.actions.download}
-            />
-          ) : null}
-        </section>
+        </div>
 
       </section>
     </main>

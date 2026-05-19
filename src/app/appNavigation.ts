@@ -16,7 +16,7 @@ export type AppNavGroup = {
   pages: AppNavPage[]
 }
 
-export const DEFAULT_APP_PAGE: AppPageId = 'register-template'
+export const DEFAULT_APP_PAGE: AppPageId = 'iregion-template'
 
 export const APP_NAV_GROUPS: AppNavGroup[] = [
   {
