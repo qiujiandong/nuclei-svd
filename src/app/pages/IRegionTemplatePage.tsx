@@ -2,25 +2,19 @@ import type { EditorDevice, EditorIRegionConfig } from '../../lib/editorModel'
 
 export type IRegionTemplatePageProps = {
   device: EditorDevice
-  onIRegionConfigChange: (field: keyof EditorIRegionConfig, value: string) => void
+  onIRegionConfigChange: (field: keyof EditorIRegionConfig, value: string | boolean) => void
   onIRegionBaseAddressChange: (value: string) => void
 }
 
-// function summarizeName(value: string, fallback: string) {
-//   const trimmed = value.trim()
-//   return trimmed.length > 0 ? trimmed : fallback
-// }
-
-// function formatResolvedAddress(baseAddress: string, offset: string) {
-//   const parsedBase = Number(baseAddress)
-//   const parsedOffset = Number(offset)
-//
-//   if (!Number.isInteger(parsedBase) || !Number.isInteger(parsedOffset)) {
-//     return '--'
-//   }
-//
-//   return `0x${(parsedBase + parsedOffset).toString(16).toUpperCase()}`
-// }
+const existenceFields: Array<{ field: keyof EditorIRegionConfig; label: string }> = [
+  { field: 'iinfoExist', label: 'IINFO' },
+  { field: 'debugExist', label: 'Debug' },
+  { field: 'eclicExist', label: 'ECLIC' },
+  { field: 'timerExist', label: 'Timer' },
+  { field: 'smpExist', label: 'SMP' },
+  { field: 'ciduExist', label: 'CIDU' },
+  { field: 'plicExist', label: 'PLIC' },
+]
 
 export function IRegionTemplatePage({
   device,
@@ -38,50 +32,69 @@ export function IRegionTemplatePage({
           placeholder="0x18000000"
         />
       </label>
-      <label>
-        <span>CPU Count</span>
-        <input
-          value={device.iregionConfig.cpuCount}
-          onChange={(event) => onIRegionConfigChange('cpuCount', event.target.value)}
-          inputMode="numeric"
-          min={1}
-          max={8}
-          placeholder='8'
-        />
-      </label>
-      <label>
-        <span>ECLIC Interrupt Count</span>
-        <input
-          value={device.iregionConfig.eclicInterruptCount}
-          onChange={(event) => onIRegionConfigChange('eclicInterruptCount', event.target.value)}
-          inputMode="numeric"
-          min={1}
-          max={1024}
-          placeholder='64'
-        />
-      </label>
-      <label>
-        <span>CIDU Interrupt Count</span>
-        <input
-          value={device.iregionConfig.ciduInterruptCount}
-          onChange={(event) => onIRegionConfigChange('ciduInterruptCount', event.target.value)}
-          inputMode="numeric"
-          min={1}
-          max={4096}
-          placeholder='128'
-        />
-      </label>
-      <label>
-        <span>PLIC Interrupt Count</span>
-        <input
-          value={device.iregionConfig.plicInterruptCountX32}
-          onChange={(event) => onIRegionConfigChange('plicInterruptCountX32', event.target.value)}
-          inputMode="numeric"
-          min={1}
-          max={32}
-          placeholder='8'
-        />
-      </label>
+      {device.iregionConfig.timerExist ? (
+        <label>
+          <span>CPU Count</span>
+          <input
+            value={device.iregionConfig.cpuCount}
+            onChange={(event) => onIRegionConfigChange('cpuCount', event.target.value)}
+            inputMode="numeric"
+            min={1}
+            max={8}
+            placeholder='8'
+          />
+        </label>
+      ) : null}
+      {device.iregionConfig.eclicExist ? (
+        <label>
+          <span>ECLIC Interrupt Count</span>
+          <input
+            value={device.iregionConfig.eclicInterruptCount}
+            onChange={(event) => onIRegionConfigChange('eclicInterruptCount', event.target.value)}
+            inputMode="numeric"
+            min={1}
+            max={1024}
+            placeholder='64'
+          />
+        </label>
+      ) : null}
+      {device.iregionConfig.ciduExist ? (
+        <label>
+          <span>CIDU Interrupt Count</span>
+          <input
+            value={device.iregionConfig.ciduInterruptCount}
+            onChange={(event) => onIRegionConfigChange('ciduInterruptCount', event.target.value)}
+            inputMode="numeric"
+            min={1}
+            max={4096}
+            placeholder='128'
+          />
+        </label>
+
+      ) : null}
+      {device.iregionConfig.plicExist ? (
+        <label>
+          <span>PLIC Interrupt Count</span>
+          <input
+            value={device.iregionConfig.plicInterruptCountX32}
+            onChange={(event) => onIRegionConfigChange('plicInterruptCountX32', event.target.value)}
+            inputMode="numeric"
+            min={1}
+            max={32}
+            placeholder='8'
+          />
+        </label>
+      ) : null}
+      {existenceFields.map(({ field, label }) => (
+        <label key={field}>
+          <span>{label}</span>
+          <input
+            type="checkbox"
+            checked={Boolean(device.iregionConfig[field])}
+            onChange={(event) => onIRegionConfigChange(field, event.target.checked)}
+          />
+        </label>
+      ))}
     </div>
   )
 }

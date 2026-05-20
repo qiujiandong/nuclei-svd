@@ -16,7 +16,7 @@ export type EditorControllerInput = {
     actions: {
       setCollapsed: (collapsed: boolean) => void
       changeDevice: (field: keyof EditorDevice, value: string) => void
-      changeIRegionConfig: (field: keyof EditorIRegionConfig, value: string) => void
+      changeIRegionConfig: (field: keyof EditorIRegionConfig, value: string | boolean) => void
       changeIRegionBaseAddress: (value: string) => void
       reset: () => void
     }

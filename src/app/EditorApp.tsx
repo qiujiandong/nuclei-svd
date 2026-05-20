@@ -359,7 +359,7 @@ export function EditorApp() {
     }))
   }
 
-  const handleIRegionConfigChange = (field: keyof EditorIRegionConfig, value: string) => {
+  const handleIRegionConfigChange = (field: keyof EditorIRegionConfig, value: string | boolean) => {
     const newConfigs = { ...device.iregionConfig, [field]: value }
     updateDevice((current) => ({
       ...current,
