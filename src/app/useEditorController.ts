@@ -1,4 +1,5 @@
 import type { EditorDevice } from '../lib/editorModel'
+import type { EditorIRegionConfig } from '../lib/editorModel'
 import type { ConversionState } from './EditorApp'
 
 export type EditorStats = {
@@ -15,6 +16,7 @@ export type EditorControllerInput = {
     actions: {
       setCollapsed: (collapsed: boolean) => void
       changeDevice: (field: keyof EditorDevice, value: string) => void
+      changeIRegionConfig: (field: keyof EditorIRegionConfig, value: string) => void
       changeIRegionBaseAddress: (value: string) => void
       reset: () => void
     }

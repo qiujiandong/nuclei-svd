@@ -1,4 +1,4 @@
-import type { EditorAccess } from './editorModel'
+import type { EditorAccess, EditorIRegionConfig } from './editorModel'
 
 import iregionSource from './iregion.js?raw'
 
@@ -218,6 +218,12 @@ function uniquifyRegisterNames(registers: PresetRegisterDefinition[]) {
   })
 }
 
+// cidu -> core[i]_int_status has fixed count 32
+// cidu -> semaphore[i] has fixed count 32
+// register of eclic with [i] should support config -> ECLIC Interrupts
+// register of timer msip0-7, mtimecmp0-7, setssip0-7 should support config -> CPU Count
+// cidu -> int[i]_indicator and int[i]_mask should support config -> CIDU Interrupt Count
+// plic -> source[i]_priority only support multiple of 32, the factor only support 0-31 -> PLIC Interrupt Count
 function createRegisterInstances(register: IRegionRegister) {
   const indexedName = register.name.includes('[i]')
   const indexed = indexedName || register.offset.includes('i')
@@ -271,6 +277,22 @@ function createRegisterInstances(register: IRegionRegister) {
 function optionalAccess(permission?: string) {
   const access = accessFromPermission(permission)
   return access ? { access } : {}
+}
+
+export function createIRegionConfig(): EditorIRegionConfig {
+  return {
+    cpuCount: 8,
+    eclicInterruptCount: 128,
+    ciduInterruptCount: 32,
+    plicInterruptCountX32: 32,
+    iinfoExist: true,
+    debugExist: false,
+    eclicExist: true,
+    timerExist: true,
+    smpExist: true,
+    ciduExist: true,
+    plicExist: true,
+  }
 }
 
 export function createIRegionUnitDefinitions(): PresetPeripheralDefinition[] {

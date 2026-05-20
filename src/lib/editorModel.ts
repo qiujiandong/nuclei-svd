@@ -1,5 +1,5 @@
 import type { Access, SvdFieldInput, SvdPeripheralInput, SvdRegisterInput, SvdYamlInput } from '../types/svd'
-import { createIRegionUnitDefinitions } from './iregionData'
+import { createIRegionConfig, createIRegionUnitDefinitions } from './iregionData'
 import type { PresetRegisterDefinition } from './iregionData'
 
 export type EditorAccess = Access | ''
@@ -42,6 +42,20 @@ export interface EditorPeripheral {
   registers: EditorRegister[]
 }
 
+export interface EditorIRegionConfig {
+  cpuCount: number
+  eclicInterruptCount: number
+  ciduInterruptCount: number
+  plicInterruptCountX32: number
+  iinfoExist: boolean
+  debugExist: boolean
+  eclicExist: boolean
+  timerExist: boolean
+  smpExist: boolean
+  ciduExist: boolean
+  plicExist: boolean
+}
+
 export interface EditorDevice {
   name: string
   version: string
@@ -54,6 +68,7 @@ export interface EditorDevice {
   resetMask: string
   iregionExpanded: boolean
   iregionBaseAddress: string
+  iregionConfig: EditorIRegionConfig
   iregionPeripherals: EditorPeripheral[]
   peripheralTemplates: EditorPeripheral[]
   peripherals: EditorPeripheral[]
@@ -329,6 +344,7 @@ export function createDefaultEditorDevice(): EditorDevice {
     resetMask: '0xFFFFFFFF',
     iregionExpanded: false,
     iregionBaseAddress: '0x18000000',
+    iregionConfig: createIRegionConfig(),
     iregionPeripherals: createIRegionPeripherals(),
     peripheralTemplates: [],
     peripherals: [],

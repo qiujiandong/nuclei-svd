@@ -12,9 +12,9 @@ import {
   createEmptyField,
   createPeripheralInstanceFromTemplate,
   createRegisterInstanceFromTemplate,
-  resolveIRegionPeripherals,
   type EditorDevice,
   type EditorField,
+  type EditorIRegionConfig,
   type EditorPeripheral,
   type EditorRegister,
 } from '../lib/editorModel'
@@ -47,7 +47,7 @@ const initialState: ConversionState = {
   downloadName: 'nuclei-device.svd',
 }
 
-const showIRegionDebugCard = import.meta.env.DEV || import.meta.env.VITE_DEBUG === 'true'
+// const showIRegionDebugCard = import.meta.env.DEV || import.meta.env.VITE_DEBUG === 'true'
 const editorConfigFormat = 'nuclei-svd-editor-config'
 
 function createCollapsedDefaultDevice() {
@@ -127,10 +127,10 @@ export function EditorApp() {
   const [deviceInfoCollapsed, setDeviceInfoCollapsed] = useState(true)
   const configInputRef = useRef<HTMLInputElement | null>(null)
 
-  const resolvedIRegionPeripherals = useMemo(
-    () => resolveIRegionPeripherals(device.iregionBaseAddress, device.iregionPeripherals),
-    [device.iregionBaseAddress, device.iregionPeripherals],
-  )
+  // const resolvedIRegionPeripherals = useMemo(
+  //   () => resolveIRegionPeripherals(device.iregionBaseAddress, device.iregionPeripherals),
+  //   [device.iregionBaseAddress, device.iregionPeripherals],
+  // )
 
   const canDownload = state.tone === 'success' && state.xml.length > 0
   const stats = useMemo(() => {
@@ -193,21 +193,21 @@ export function EditorApp() {
     }))
   }
 
-  const toggleIRegionPeripheral = (peripheralId: string) => {
-    setDevice((current) => ({
-      ...current,
-      iregionPeripherals: current.iregionPeripherals.map((peripheral) =>
-        peripheral.id === peripheralId ? { ...peripheral, expanded: !peripheral.expanded } : peripheral,
-      ),
-    }))
-  }
-
-  const toggleIRegionCard = () => {
-    setDevice((current) => ({
-      ...current,
-      iregionExpanded: !current.iregionExpanded,
-    }))
-  }
+  // const toggleIRegionPeripheral = (peripheralId: string) => {
+  //   setDevice((current) => ({
+  //     ...current,
+  //     iregionPeripherals: current.iregionPeripherals.map((peripheral) =>
+  //       peripheral.id === peripheralId ? { ...peripheral, expanded: !peripheral.expanded } : peripheral,
+  //     ),
+  //   }))
+  // }
+  //
+  // const toggleIRegionCard = () => {
+  //   setDevice((current) => ({
+  //     ...current,
+  //     iregionExpanded: !current.iregionExpanded,
+  //   }))
+  // }
 
   const updateTemplateRegister = (
     templateId: string,
@@ -356,6 +356,14 @@ export function EditorApp() {
     updateDevice((current) => ({
       ...current,
       [field]: value,
+    }))
+  }
+
+  const handleIRegionConfigChange = (field: keyof EditorIRegionConfig, value: string) => {
+    const newConfigs = { ...device.iregionConfig, [field]: value }
+    updateDevice((current) => ({
+      ...current,
+      iregionConfig: newConfigs,
     }))
   }
 
@@ -946,6 +954,7 @@ export function EditorApp() {
       actions: {
         setCollapsed: setDeviceInfoCollapsed,
         changeDevice: handleDeviceChange,
+        changeIRegionConfig: handleIRegionConfigChange,
         changeIRegionBaseAddress: handleIRegionBaseAddressChange,
         reset: handleReset,
       },
@@ -1062,11 +1071,8 @@ export function EditorApp() {
             {activePage === 'iregion-template' ? (
               <IRegionTemplatePage
                 device={device}
-                resolvedIRegionPeripherals={resolvedIRegionPeripherals}
-                iregionGroupCount={stats.iregionGroupCount}
-                showDebugCard={showIRegionDebugCard}
-                onToggleIRegionCard={toggleIRegionCard}
-                onToggleIRegionPeripheral={toggleIRegionPeripheral}
+                onIRegionConfigChange={controllerGroups.device.actions.changeIRegionConfig}
+                onIRegionBaseAddressChange={controllerGroups.device.actions.changeIRegionBaseAddress}
               />
             ) : null}
             {activePage === 'register-template' ? (
@@ -1118,8 +1124,6 @@ export function EditorApp() {
             {activePage === 'device-info' ? (
               <DeviceInfoPage
                 device={device}
-                collapsed={controllerGroups.device.collapsed}
-                onCollapsedChange={controllerGroups.device.actions.setCollapsed}
                 onDeviceChange={controllerGroups.device.actions.changeDevice}
                 onIRegionBaseAddressChange={controllerGroups.device.actions.changeIRegionBaseAddress}
               />
