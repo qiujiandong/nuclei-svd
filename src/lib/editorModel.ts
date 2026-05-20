@@ -318,8 +318,8 @@ function createPresetRegisters(registers: PresetRegisterDefinition[]) {
   )
 }
 
-function createIRegionPeripherals() {
-  return createIRegionUnitDefinitions().map((unit) =>
+function createIRegionPeripherals(config: EditorIRegionConfig = createIRegionConfig()) {
+  return createIRegionUnitDefinitions(config).map((unit) =>
     createEmptyPeripheral({
       name: unit.name,
       description: unit.description,
@@ -436,7 +436,7 @@ export function resolveIRegionPeripherals(
 export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
   const resolvedIRegionPeripherals = resolveIRegionPeripherals(
     device.iregionBaseAddress,
-    device.iregionPeripherals,
+    createIRegionPeripherals(device.iregionConfig),
   )
   const instantiatedTemplateNames = new Set(
     device.peripherals
