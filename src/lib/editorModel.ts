@@ -278,8 +278,8 @@ export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
 
 export function createDefaultPeripheralTemplate(index = 0): EditorPeripheral {
   return createEmptyPeripheral({
-    name: `GROUP${index}`,
-    description: 'Register group template',
+    name: `PERI${index}`,
+    description: 'Description of this peripheral',
     baseAddress: '0x0',
     groupName: 'PERIPHERAL_TEMPLATE',
     expanded: false,

@@ -25,7 +25,7 @@ import { DeviceInfoPage } from './pages/DeviceInfoPage'
 import { IRegionTemplatePage } from './pages/IRegionTemplatePage'
 import { PeripheralConfigPage } from './pages/PeripheralConfigPage'
 import { PreviewPage } from './pages/PreviewPage'
-import { RegisterTemplatePage } from './pages/RegisterTemplatePage'
+import { PeripheralTemplatePage } from './pages/PeripheralTemplatePage'
 import { useEditorController } from './useEditorController'
 import { useFieldHints } from './useFieldHints'
 
@@ -1075,8 +1075,8 @@ export function EditorApp() {
                 onIRegionBaseAddressChange={controllerGroups.device.actions.changeIRegionBaseAddress}
               />
             ) : null}
-            {activePage === 'register-template' ? (
-              <RegisterTemplatePage
+            {activePage === 'peripheral-template' ? (
+              <PeripheralTemplatePage
                 device={device}
                 actions={{
                   addPeripheralTemplate: handleAddPeripheralTemplate,

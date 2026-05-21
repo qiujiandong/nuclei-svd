@@ -1,6 +1,6 @@
 export type AppPageId =
   | 'iregion-template'
-  | 'register-template'
+  | 'peripheral-template'
   | 'device-info'
   | 'peripheral-config'
   | 'preview'
@@ -23,7 +23,7 @@ export const APP_NAV_GROUPS: AppNavGroup[] = [
     title: '寄存器模板配置',
     pages: [
       { id: 'iregion-template', title: 'IREGION模板', eyebrow: 'IREGION template' },
-      { id: 'register-template', title: '寄存器模板', eyebrow: 'Register templates' },
+      { id: 'peripheral-template', title: '外设模板', eyebrow: 'Peripheral templates' },
     ],
   },
   {
