@@ -8,10 +8,10 @@ import {
   createDefaultCustomPeripheral,
   createDefaultEditorDevice,
   createDefaultPeripheralTemplate,
-  createDefaultRegisterTemplate,
   createEmptyField,
+  createPeripheralCopyFromTemplate,
   createPeripheralInstanceFromTemplate,
-  createRegisterInstanceFromTemplate,
+  createPeripheralTemplateFromInstance,
   type EditorDevice,
   type EditorField,
   type EditorIRegionConfig,
@@ -116,7 +116,7 @@ function standaloneRegisterSeed(
     resetValue: '',
     resetMask: '',
     expanded: true,
-    fields: [createEmptyField()],
+    fields: [],
   }
 }
 
@@ -222,19 +222,6 @@ export function EditorApp() {
     }))
   }
 
-  const updateTemplateRegisterTemplate = (
-    templateId: string,
-    registerTemplateId: string,
-    updater: (current: EditorRegister) => EditorRegister,
-  ) => {
-    updatePeripheralTemplate(templateId, (template) => ({
-      ...template,
-      registerTemplates: template.registerTemplates.map((registerTemplate) =>
-        registerTemplate.id === registerTemplateId ? updater(registerTemplate) : registerTemplate,
-      ),
-    }))
-  }
-
   const updateRegister = (
     peripheralId: string,
     registerId: string,
@@ -257,18 +244,6 @@ export function EditorApp() {
     updateTemplateRegister(templateId, registerId, (register) => ({
       ...register,
       fields: register.fields.map((field) => (field.id === fieldId ? updater(field) : field)),
-    }))
-  }
-
-  const updateTemplateRegisterTemplateField = (
-    templateId: string,
-    registerTemplateId: string,
-    fieldId: string,
-    updater: (current: EditorField) => EditorField,
-  ) => {
-    updateTemplateRegisterTemplate(templateId, registerTemplateId, (registerTemplate) => ({
-      ...registerTemplate,
-      fields: registerTemplate.fields.map((field) => (field.id === fieldId ? updater(field) : field)),
     }))
   }
 
@@ -318,24 +293,6 @@ export function EditorApp() {
     }))
   }
 
-  const toggleTemplateRegisterTemplate = (templateId: string, registerTemplateId: string) => {
-    setDevice((current) => ({
-      ...current,
-      peripheralTemplates: current.peripheralTemplates.map((template) =>
-        template.id === templateId
-          ? {
-            ...template,
-            registerTemplates: template.registerTemplates.map((registerTemplate) =>
-              registerTemplate.id === registerTemplateId
-                ? { ...registerTemplate, expanded: !registerTemplate.expanded }
-                : registerTemplate,
-            ),
-          }
-          : template,
-      ),
-    }))
-  }
-
   const toggleRegister = (peripheralId: string, registerId: string) => {
     setDevice((current) => ({
       ...current,
@@ -376,7 +333,10 @@ export function EditorApp() {
 
   const handlePeripheralChange = (
     peripheralId: string,
-    field: keyof Omit<EditorPeripheral, 'id' | 'expanded' | 'registers'>,
+    field: keyof Omit<
+      EditorPeripheral,
+      'id' | 'templateId' | 'expanded' | 'derivedFrom' | 'registerTemplates' | 'registers'
+    >,
     value: string,
   ) => {
     updatePeripheral(peripheralId, (peripheral) => ({
@@ -387,7 +347,10 @@ export function EditorApp() {
 
   const handlePeripheralTemplateChange = (
     templateId: string,
-    field: keyof Omit<EditorPeripheral, 'id' | 'expanded' | 'registers'>,
+    field: keyof Omit<
+      EditorPeripheral,
+      'id' | 'templateId' | 'expanded' | 'derivedFrom' | 'registerTemplates' | 'registers'
+    >,
     value: string,
   ) => {
     updatePeripheralTemplate(templateId, (template) => ({
@@ -404,18 +367,6 @@ export function EditorApp() {
   ) => {
     updateTemplateRegister(templateId, registerId, (register) => ({
       ...register,
-      [field]: value,
-    }))
-  }
-
-  const handleTemplateRegisterTemplateChange = (
-    templateId: string,
-    registerTemplateId: string,
-    field: keyof Omit<EditorRegister, 'id' | 'expanded' | 'fields'>,
-    value: string,
-  ) => {
-    updateTemplateRegisterTemplate(templateId, registerTemplateId, (registerTemplate) => ({
-      ...registerTemplate,
       [field]: value,
     }))
   }
@@ -440,19 +391,6 @@ export function EditorApp() {
     value: string,
   ) => {
     updateTemplateField(templateId, registerId, fieldId, (current) => ({
-      ...current,
-      [field]: value,
-    }))
-  }
-
-  const handleTemplateRegisterTemplateFieldChange = (
-    templateId: string,
-    registerTemplateId: string,
-    fieldId: string,
-    field: keyof Omit<EditorField, 'id' | 'expanded'>,
-    value: string,
-  ) => {
-    updateTemplateRegisterTemplateField(templateId, registerTemplateId, fieldId, (current) => ({
       ...current,
       [field]: value,
     }))
@@ -492,21 +430,16 @@ export function EditorApp() {
   }
 
   const handleRemovePeripheralTemplate = (templateId: string) => {
-    updateDevice((current) => {
-      const removedTemplate = current.peripheralTemplates.find((template) => template.id === templateId)
-      const removedTemplateName = removedTemplate?.name.trim()
-
-      return {
-        ...current,
-        peripheralTemplates: current.peripheralTemplates.filter((template) => template.id !== templateId),
-        peripherals: removedTemplateName
-          ? current.peripherals.filter((peripheral) => peripheral.derivedFrom !== removedTemplateName)
-          : current.peripherals,
-      }
-    })
+    updateDevice((current) => ({
+      ...current,
+      peripheralTemplates: current.peripheralTemplates.filter((template) => template.id !== templateId),
+      peripherals: current.peripherals.map((peripheral) =>
+        peripheral.templateId === templateId ? { ...peripheral, templateId: undefined, derivedFrom: undefined } : peripheral,
+      ),
+    }))
   }
 
-  const handleGeneratePeripheralFromTemplate = (templateId: string) => {
+  const handleAddLinkedPeripheralFromTemplate = (templateId: string) => {
     updateDevice((current) => {
       const sourceTemplate = current.peripheralTemplates.find((template) => template.id === templateId)
       if (!sourceTemplate) return current
@@ -521,145 +454,34 @@ export function EditorApp() {
     })
   }
 
-  const updateRegisterTemplate = (
-    peripheralId: string,
-    templateId: string,
-    updater: (current: EditorRegister) => EditorRegister,
-  ) => {
-    updatePeripheral(peripheralId, (peripheral) => ({
-      ...peripheral,
-      registerTemplates: peripheral.registerTemplates.map((template) =>
-        template.id === templateId ? updater(template) : template,
-      ),
-    }))
-  }
-
-  const updateRegisterTemplateField = (
-    peripheralId: string,
-    templateId: string,
-    fieldId: string,
-    updater: (current: EditorField) => EditorField,
-  ) => {
-    updateRegisterTemplate(peripheralId, templateId, (template) => ({
-      ...template,
-      fields: template.fields.map((field) => (field.id === fieldId ? updater(field) : field)),
-    }))
-  }
-
-  const toggleRegisterTemplate = (peripheralId: string, templateId: string) => {
-    setDevice((current) => ({
-      ...current,
-      peripherals: current.peripherals.map((peripheral) =>
-        peripheral.id === peripheralId
-          ? {
-            ...peripheral,
-            registerTemplates: peripheral.registerTemplates.map((template) =>
-              template.id === templateId ? { ...template, expanded: !template.expanded } : template,
-            ),
-          }
-          : peripheral,
-      ),
-    }))
-  }
-
-  const handleRegisterTemplateChange = (
-    peripheralId: string,
-    templateId: string,
-    field: keyof Omit<EditorRegister, 'id' | 'expanded' | 'fields'>,
-    value: string,
-  ) => {
-    updateRegisterTemplate(peripheralId, templateId, (template) => ({
-      ...template,
-      [field]: value,
-    }))
-  }
-
-  const handleRegisterTemplateFieldChange = (
-    peripheralId: string,
-    templateId: string,
-    fieldId: string,
-    field: keyof Omit<EditorField, 'id' | 'expanded'>,
-    value: string,
-  ) => {
-    updateRegisterTemplateField(peripheralId, templateId, fieldId, (current) => ({
-      ...current,
-      [field]: value,
-    }))
-  }
-
-  const handleAddRegisterTemplate = (peripheralId: string, templateCount: number) => {
-    updatePeripheral(peripheralId, (peripheral) => ({
-      ...peripheral,
-      expanded: true,
-      registerTemplates: [
-        ...peripheral.registerTemplates,
-        createDefaultRegisterTemplate(templateCount),
-      ],
-    }))
-  }
-
-  const handleRemoveRegisterTemplate = (peripheralId: string, templateId: string) => {
-    updatePeripheral(peripheralId, (peripheral) => {
-      const removedTemplate = peripheral.registerTemplates.find((template) => template.id === templateId)
-      const removedTemplateName = removedTemplate?.name.trim()
+  const handleAddDetachedPeripheralFromTemplate = (templateId: string) => {
+    updateDevice((current) => {
+      const sourceTemplate = current.peripheralTemplates.find((template) => template.id === templateId)
+      if (!sourceTemplate) return current
 
       return {
-        ...peripheral,
-        registerTemplates: peripheral.registerTemplates.filter((template) => template.id !== templateId),
-        registers: removedTemplateName
-          ? peripheral.registers.filter((register) => register.derivedFrom !== removedTemplateName)
-          : peripheral.registers,
-      }
-    })
-  }
-
-  const handleGenerateRegisterFromTemplate = (peripheralId: string, templateId: string) => {
-    updatePeripheral(peripheralId, (peripheral) => {
-      const sourceTemplate = peripheral.registerTemplates.find((template) => template.id === templateId)
-      if (!sourceTemplate) return peripheral
-
-      return {
-        ...peripheral,
-        registers: [
-          ...peripheral.registers,
-          createRegisterInstanceFromTemplate(
-            sourceTemplate,
-            formatNextOffset([...peripheral.registerTemplates, ...peripheral.registers]),
-            peripheral.registers.length,
-          ),
+        ...current,
+        peripherals: [
+          ...current.peripherals,
+          createPeripheralCopyFromTemplate(sourceTemplate, current.peripherals.length),
         ],
       }
     })
   }
 
-  const handleAddRegisterTemplateField = (
-    peripheralId: string,
-    templateId: string,
-    fieldCount: number,
-  ) => {
-    updateRegisterTemplate(peripheralId, templateId, (template) => ({
-      ...template,
-      expanded: true,
-      fields: [
-        ...template.fields,
-        createEmptyField({
-          name: `FIELD${fieldCount}`,
-          description: 'New bit field',
-          bitOffset: String(fieldCount),
-        }),
-      ],
-    }))
-  }
+  const handleSavePeripheralAsTemplate = (peripheralId: string) => {
+    updateDevice((current) => {
+      const sourcePeripheral = current.peripherals.find((peripheral) => peripheral.id === peripheralId)
+      if (!sourcePeripheral || sourcePeripheral.templateId) return current
 
-  const handleRemoveRegisterTemplateField = (
-    peripheralId: string,
-    templateId: string,
-    fieldId: string,
-  ) => {
-    updateRegisterTemplate(peripheralId, templateId, (template) => ({
-      ...template,
-      fields: template.fields.filter((field) => field.id !== fieldId),
-    }))
+      return {
+        ...current,
+        peripheralTemplates: [
+          ...current.peripheralTemplates,
+          createPeripheralTemplateFromInstance(sourcePeripheral, current.peripheralTemplates.length),
+        ],
+      }
+    })
   }
 
   const handleRemovePeripheral = (peripheralId: string) => {
@@ -667,60 +489,6 @@ export function EditorApp() {
       ...current,
       peripherals: current.peripherals.filter((peripheral) => peripheral.id !== peripheralId),
     }))
-  }
-
-  const handleAddTemplateRegisterTemplate = (templateId: string, templateCount: number) => {
-    updatePeripheralTemplate(templateId, (template) => ({
-      ...template,
-      expanded: true,
-      registerTemplates: [
-        ...template.registerTemplates,
-        createDefaultRegisterTemplate(templateCount),
-      ],
-    }))
-  }
-
-  const handleRemoveTemplateRegisterTemplate = (templateId: string, registerTemplateId: string) => {
-    updatePeripheralTemplate(templateId, (template) => {
-      const removedTemplate = template.registerTemplates.find(
-        (registerTemplate) => registerTemplate.id === registerTemplateId,
-      )
-      const removedTemplateName = removedTemplate?.name.trim()
-
-      return {
-        ...template,
-        registerTemplates: template.registerTemplates.filter(
-          (registerTemplate) => registerTemplate.id !== registerTemplateId,
-        ),
-        registers: removedTemplateName
-          ? template.registers.filter((register) => register.derivedFrom !== removedTemplateName)
-          : template.registers,
-      }
-    })
-  }
-
-  const handleGenerateTemplateRegisterFromTemplate = (
-    templateId: string,
-    registerTemplateId: string,
-  ) => {
-    updatePeripheralTemplate(templateId, (template) => {
-      const sourceTemplate = template.registerTemplates.find(
-        (registerTemplate) => registerTemplate.id === registerTemplateId,
-      )
-      if (!sourceTemplate) return template
-
-      return {
-        ...template,
-        registers: [
-          ...template.registers,
-          createRegisterInstanceFromTemplate(
-            sourceTemplate,
-            formatNextOffset([...template.registerTemplates, ...template.registers]),
-            template.registers.length,
-          ),
-        ],
-      }
-    })
   }
 
   const handleAddTemplateRegister = (templateId: string) => {
@@ -788,25 +556,6 @@ export function EditorApp() {
     }))
   }
 
-  const handleAddTemplateRegisterTemplateField = (
-    templateId: string,
-    registerTemplateId: string,
-    fieldCount: number,
-  ) => {
-    updateTemplateRegisterTemplate(templateId, registerTemplateId, (registerTemplate) => ({
-      ...registerTemplate,
-      expanded: true,
-      fields: [
-        ...registerTemplate.fields,
-        createEmptyField({
-          name: `FIELD${fieldCount}`,
-          description: 'New bit field',
-          bitOffset: String(fieldCount),
-        }),
-      ],
-    }))
-  }
-
   const handleAddField = (
     peripheralId: string,
     registerId: string,
@@ -830,17 +579,6 @@ export function EditorApp() {
     updateTemplateRegister(templateId, registerId, (register) => ({
       ...register,
       fields: register.fields.filter((field) => field.id !== fieldId),
-    }))
-  }
-
-  const handleRemoveTemplateRegisterTemplateField = (
-    templateId: string,
-    registerTemplateId: string,
-    fieldId: string,
-  ) => {
-    updateTemplateRegisterTemplate(templateId, registerTemplateId, (registerTemplate) => ({
-      ...registerTemplate,
-      fields: registerTemplate.fields.filter((field) => field.id !== fieldId),
     }))
   }
 
@@ -963,7 +701,7 @@ export function EditorApp() {
       actions: {
         addPeripheralTemplate: handleAddPeripheralTemplate,
         removePeripheralTemplate: handleRemovePeripheralTemplate,
-        generatePeripheralFromTemplate: handleGeneratePeripheralFromTemplate,
+        generatePeripheralFromTemplate: handleAddLinkedPeripheralFromTemplate,
       },
     },
     peripheral: {
@@ -1081,17 +819,8 @@ export function EditorApp() {
                 actions={{
                   addPeripheralTemplate: handleAddPeripheralTemplate,
                   togglePeripheralTemplate,
-                  generatePeripheralFromTemplate: handleGeneratePeripheralFromTemplate,
                   removePeripheralTemplate: handleRemovePeripheralTemplate,
                   changePeripheralTemplate: handlePeripheralTemplateChange,
-                  addTemplateRegisterTemplate: handleAddTemplateRegisterTemplate,
-                  toggleTemplateRegisterTemplate,
-                  addTemplateRegisterTemplateField: handleAddTemplateRegisterTemplateField,
-                  generateTemplateRegisterFromTemplate: handleGenerateTemplateRegisterFromTemplate,
-                  removeTemplateRegisterTemplate: handleRemoveTemplateRegisterTemplate,
-                  changeTemplateRegisterTemplate: handleTemplateRegisterTemplateChange,
-                  changeTemplateRegisterTemplateField: handleTemplateRegisterTemplateFieldChange,
-                  removeTemplateRegisterTemplateField: handleRemoveTemplateRegisterTemplateField,
                   addTemplateRegister: handleAddTemplateRegister,
                   toggleTemplateRegister,
                   addTemplateField: handleAddTemplateField,
@@ -1099,25 +828,6 @@ export function EditorApp() {
                   changeTemplateRegister: handleTemplateRegisterChange,
                   changeTemplateField: handleTemplateFieldChange,
                   removeTemplateField: handleRemoveTemplateField,
-                  addPeripheral: handleAddPeripheral,
-                  togglePeripheral,
-                  removePeripheral: handleRemovePeripheral,
-                  changePeripheral: handlePeripheralChange,
-                  addRegisterTemplate: handleAddRegisterTemplate,
-                  toggleRegisterTemplate,
-                  addRegisterTemplateField: handleAddRegisterTemplateField,
-                  generateRegisterFromTemplate: handleGenerateRegisterFromTemplate,
-                  removeRegisterTemplate: handleRemoveRegisterTemplate,
-                  changeRegisterTemplate: handleRegisterTemplateChange,
-                  changeRegisterTemplateField: handleRegisterTemplateFieldChange,
-                  removeRegisterTemplateField: handleRemoveRegisterTemplateField,
-                  addRegister: handleAddRegister,
-                  toggleRegister,
-                  addField: handleAddField,
-                  removeRegister: handleRemoveRegister,
-                  changeRegister: handleRegisterChange,
-                  changeField: handleFieldChange,
-                  removeField: handleRemoveField,
                 }}
               />
             ) : null}
@@ -1130,9 +840,26 @@ export function EditorApp() {
             ) : null}
             {activePage === 'peripheral-config' ? (
               <PeripheralConfigPage
+                device={device}
                 customGroupCount={controllerGroups.peripheral.stats.customGroupCount}
                 registerCount={controllerGroups.peripheral.stats.registerCount}
                 fieldCount={controllerGroups.peripheral.stats.fieldCount}
+                actions={{
+                  addPeripheral: handleAddPeripheral,
+                  addLinkedPeripheralFromTemplate: handleAddLinkedPeripheralFromTemplate,
+                  addDetachedPeripheralFromTemplate: handleAddDetachedPeripheralFromTemplate,
+                  savePeripheralAsTemplate: handleSavePeripheralAsTemplate,
+                  togglePeripheral,
+                  removePeripheral: handleRemovePeripheral,
+                  changePeripheral: handlePeripheralChange,
+                  addRegister: handleAddRegister,
+                  toggleRegister,
+                  addField: handleAddField,
+                  removeRegister: handleRemoveRegister,
+                  changeRegister: handleRegisterChange,
+                  changeField: handleFieldChange,
+                  removeField: handleRemoveField,
+                }}
               />
             ) : null}
             {activePage === 'preview' ? (

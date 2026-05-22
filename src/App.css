@@ -592,6 +592,44 @@ label span {
   font-weight: 700;
 }
 
+.instance-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.template-action-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  border: 1px solid #dbe5f5;
+  border-left-width: 0.45rem;
+  border-radius: 16px;
+  padding: 0.55rem 0.7rem;
+}
+
+.template-action-group strong {
+  color: #122033;
+  font-size: 0.86rem;
+}
+
+.inherited-summary {
+  background: #ffffff;
+}
+
+.inherited-summary h4 {
+  margin: 0;
+}
+
+.table-heading-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
 .readonly-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

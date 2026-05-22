@@ -32,6 +32,7 @@ export interface EditorRegister {
 
 export interface EditorPeripheral {
   id: string
+  templateId?: string
   name: string
   description: string
   baseAddress: string
@@ -149,7 +150,7 @@ export function createEmptyRegister(
     resetValue: '',
     resetMask: '',
     expanded: true,
-    fields: [createEmptyField()],
+    fields: [],
     ...overrides,
   }
 }
@@ -229,6 +230,7 @@ export function createEmptyPeripheral(
 ): EditorPeripheral {
   return {
     id: createEditorId('group'),
+    templateId: undefined,
     name: 'GROUP1',
     description: 'Register group',
     baseAddress: '0x0',
@@ -245,7 +247,6 @@ export function createDefaultRegisterTemplate(index = 0): EditorRegister {
     name: `REG${index}`,
     description: 'Register template',
     addressOffset: '0x0',
-    fields: [createEmptyField()],
   })
 }
 
@@ -293,13 +294,43 @@ export function createPeripheralInstanceFromTemplate(
   index: number,
 ): EditorPeripheral {
   return createEmptyPeripheral({
+    templateId: template.id,
     name: `${template.name}_INST${index}`,
     description: template.description,
     baseAddress: '0x40001000',
-    derivedFrom: template.name,
     groupName: template.groupName,
     expanded: true,
     registers: [],
+  })
+}
+
+export function createPeripheralCopyFromTemplate(
+  template: EditorPeripheral,
+  index: number,
+): EditorPeripheral {
+  return createEmptyPeripheral({
+    name: `${template.name}_COPY${index}`,
+    description: template.description,
+    baseAddress: '0x40001000',
+    groupName: template.groupName,
+    expanded: true,
+    registerTemplates: template.registerTemplates.map((registerTemplate) => cloneEditorRegister(registerTemplate)),
+    registers: template.registers.map((register) => cloneEditorRegister(register)),
+  })
+}
+
+export function createPeripheralTemplateFromInstance(
+  peripheral: EditorPeripheral,
+  index: number,
+): EditorPeripheral {
+  return createEmptyPeripheral({
+    name: `${peripheral.name || 'PERI'}_TEMPLATE${index}`,
+    description: peripheral.description,
+    baseAddress: '0x0',
+    groupName: peripheral.groupName || peripheral.name || 'PERIPHERAL',
+    expanded: true,
+    registerTemplates: [],
+    registers: peripheral.registers.map((register) => cloneEditorRegister(register, { derivedFrom: undefined })),
   })
 }
 
@@ -369,6 +400,47 @@ function buildField(field: EditorField): SvdFieldInput {
   }
 }
 
+function buildFieldsWithReserved(register: EditorRegister): SvdFieldInput[] {
+  const userFields = register.fields.map((field) => buildField(field))
+  if (userFields.length === 0) {
+    return []
+  }
+
+  // SVD expects explicit field coverage once any field is declared; fill gaps with reserved ranges.
+  const registerWidth = parseIntegerInput(register.size)
+  const effectiveWidth = Number.isNaN(registerWidth) || registerWidth === 0 ? 32 : registerWidth
+  const sortedFields = [...userFields].sort((left, right) => left.bitOffset - right.bitOffset)
+  const fields: SvdFieldInput[] = []
+  let cursor = 0
+
+  sortedFields.forEach((field, fieldIndex) => {
+    if (Number.isInteger(field.bitOffset) && field.bitOffset > cursor) {
+      fields.push({
+        name: `reserved${fieldIndex}`,
+        description: 'Reserved bits',
+        bitOffset: cursor,
+        bitWidth: field.bitOffset - cursor,
+      })
+    }
+
+    fields.push(field)
+    if (Number.isInteger(field.bitOffset) && Number.isInteger(field.bitWidth)) {
+      cursor = Math.max(cursor, field.bitOffset + field.bitWidth)
+    }
+  })
+
+  if (cursor < effectiveWidth) {
+    fields.push({
+      name: `reserved${fields.length}`,
+      description: 'Reserved bits',
+      bitOffset: cursor,
+      bitWidth: effectiveWidth - cursor,
+    })
+  }
+
+  return fields
+}
+
 function buildRegister(register: EditorRegister): SvdRegisterInput {
   return {
     name: register.name.trim(),
@@ -381,7 +453,7 @@ function buildRegister(register: EditorRegister): SvdRegisterInput {
     ...optionalStringProperty('access', register.access),
     ...optionalStringProperty('resetValue', register.resetValue),
     ...optionalStringProperty('resetMask', register.resetMask),
-    fields: register.fields.map((field) => buildField(field)),
+    fields: buildFieldsWithReserved(register),
   }
 }
 
@@ -404,6 +476,23 @@ function buildPeripheral(peripheral: EditorPeripheral): SvdPeripheralInput {
     ...optionalStringProperty('groupName', peripheral.groupName),
     ...(registers.length > 0
       ? { registers: registers.map((register) => buildRegister(register)) }
+      : {}),
+  }
+}
+
+function buildLinkedPeripheral(
+  instance: EditorPeripheral,
+  template: EditorPeripheral,
+  derivedFrom?: string,
+): SvdPeripheralInput {
+  return {
+    name: instance.name.trim(),
+    description: template.description.trim(),
+    baseAddress: instance.baseAddress.trim(),
+    ...(derivedFrom ? { derivedFrom } : {}),
+    ...optionalStringProperty('groupName', template.groupName || template.name),
+    ...(!derivedFrom && template.registers.length > 0
+      ? { registers: template.registers.map((register) => buildRegister(register)) }
       : {}),
   }
 }
@@ -438,14 +527,29 @@ export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
     device.iregionBaseAddress,
     createIRegionPeripherals(device.iregionConfig),
   )
-  const instantiatedTemplateNames = new Set(
-    device.peripherals
-      .map((peripheral) => peripheral.derivedFrom?.trim())
-      .filter((derivedFrom): derivedFrom is string => Boolean(derivedFrom)),
+  const templateById = new Map(device.peripheralTemplates.map((template) => [template.id, template]))
+  const legacyTemplateByName = new Map(
+    device.peripheralTemplates.map((template) => [template.name.trim(), template]),
   )
-  const instantiatedPeripheralTemplates = device.peripheralTemplates.filter((template) =>
-    instantiatedTemplateNames.has(template.name.trim()),
-  )
+  const firstLinkedInstanceByTemplateId = new Map<string, string>()
+  const resolvedCustomPeripherals = device.peripherals.map((peripheral) => {
+    const linkedTemplate =
+      (peripheral.templateId ? templateById.get(peripheral.templateId) : undefined) ??
+      (peripheral.derivedFrom ? legacyTemplateByName.get(peripheral.derivedFrom.trim()) : undefined)
+
+    if (!linkedTemplate) {
+      return buildPeripheral({ ...peripheral, derivedFrom: undefined })
+    }
+
+    // For linked template instances, the first concrete instance carries registers and later instances derive from it.
+    const firstInstanceName = firstLinkedInstanceByTemplateId.get(linkedTemplate.id)
+    if (!firstInstanceName) {
+      firstLinkedInstanceByTemplateId.set(linkedTemplate.id, peripheral.name.trim())
+      return buildLinkedPeripheral(peripheral, linkedTemplate)
+    }
+
+    return buildLinkedPeripheral(peripheral, linkedTemplate, firstInstanceName)
+  })
 
   return {
     device: {
@@ -460,8 +564,7 @@ export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
       ...optionalStringProperty('resetMask', device.resetMask),
       peripherals: [
         ...resolvedIRegionPeripherals.map((peripheral) => buildPeripheral(peripheral)),
-        ...instantiatedPeripheralTemplates.map((peripheral) => buildPeripheral(peripheral)),
-        ...device.peripherals.map((peripheral) => buildPeripheral(peripheral)),
+        ...resolvedCustomPeripherals,
       ],
     },
   }
