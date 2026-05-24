@@ -1,6 +1,12 @@
 import { useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { StatusIssue, StatusTone } from '../components/StatusPanel'
+import { Badge } from '../components/ui/badge'
+import { Button } from '../components/ui/button'
+import { Card, CardContent } from '../components/ui/card'
+import { PageHeader } from '../components/ui/page-header'
+import { Separator } from '../components/ui/separator'
+import { cn } from '../lib/utils'
 import { ConversionError } from '../lib/errors'
 import {
   buildSvdInputFromEditor,
@@ -728,156 +734,187 @@ export function EditorApp() {
   })
 
   const activePageMeta = appPageMeta(activePage)
+  const pageDescription = {
+    'iregion-template': '配置 IREGION 生成参数和内置模块开关，作为片上基础寄存器模板来源。',
+    'peripheral-template': '维护可复用的外设模板，供 SoC 外设实例按需关联或复制。',
+    'device-info': '填写设备级默认值、总线宽度和下载输出的基础元数据。',
+    'peripheral-config': '创建最终写入 SVD 的外设实例，并指定 baseAddress 与模板关系。',
+    preview: '执行校验并查看最终 XML，确认输出后下载 .svd 文件。',
+  } satisfies Record<AppPageId, string>
 
   return (
-    <main className="app-shell">
-      <header className="hero-panel">
-        <div className="hero-brand">
-          <img src={`${import.meta.env.BASE_URL}nuclei.svg`} alt="Nuclei" className="hero-logo" />
-          <div>
-            <p className="eyebrow">A tool to generate CMSIS-SVD for SoC based on Nuclei CPU</p>
-            <div className="hero-title">
-              <h1>Nuclei SVD</h1>
-            </div>
-            <p className="hero-copy">
+    <main className="app-shell min-h-screen px-4 py-4 text-slate-900 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-6">
+        <header className="rounded-[32px] border border-white/70 bg-white/80 px-6 py-6 shadow-[0_25px_60px_rgba(15,23,42,0.08)] backdrop-blur sm:px-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-start gap-4">
+              <img src={`${import.meta.env.BASE_URL}nuclei.svg`} alt="Nuclei" className="h-16 w-16 rounded-2xl border border-slate-200 bg-slate-50 p-3" />
+              <div className="grid gap-2">
+                <p className="m-0 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">A tool to generate CMSIS-SVD for SoC based on Nuclei CPU</p>
+                <h1 className="m-0 text-3xl font-semibold tracking-tight">Nuclei SVD</h1>
+                <p className="m-0 max-w-3xl text-sm leading-6 text-slate-600">
               为基于 Nuclei CPU 的 SoC 平台快速生成 CMSIS-SVD 文件，便于研发人员进行系统调试。
-            </p>
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="bg-white px-3 py-1.5 text-slate-600">IREGION {stats.iregionGroupCount}</Badge>
+              <Badge variant="outline" className="bg-white px-3 py-1.5 text-slate-600">外设 {stats.customGroupCount}</Badge>
+              <Badge variant="outline" className="bg-white px-3 py-1.5 text-slate-600">寄存器 {stats.registerCount}</Badge>
+              <Badge variant="outline" className="bg-white px-3 py-1.5 text-slate-600">位域 {stats.fieldCount}</Badge>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <section className="app-workspace">
-        <aside className="app-sidebar" aria-label="配置导航">
-          {APP_NAV_GROUPS.map((group) => (
-            <div className="nav-group" key={group.title}>
-              <h2>{group.title}</h2>
-              <div className="nav-list">
-                {group.pages.map((page) => (
-                  <button
-                    type="button"
-                    className={`nav-item ${activePage === page.id ? 'active' : ''}`}
-                    aria-current={activePage === page.id ? 'page' : undefined}
-                    key={page.id}
-                    onClick={() => {
-                      setActivePage(page.id)
-                      if (page.id === 'device-info') {
-                        setDeviceInfoCollapsed(false)
-                      }
-                    }}
-                  >
-                    {page.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </aside>
+        <section className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <aside aria-label="配置导航" className="lg:sticky lg:top-4 lg:self-start">
+            <Card className="rounded-[28px] bg-white/90">
+              <CardContent className="p-4">
+                <div className="grid gap-5">
+                  {APP_NAV_GROUPS.map((group, index) => (
+                    <div className="grid gap-3" key={group.title}>
+                      <h2 className="m-0 text-sm font-semibold text-slate-900">{group.title}</h2>
+                      <div className="grid gap-2">
+                        {group.pages.map((page) => (
+                          <button
+                            type="button"
+                            aria-label={page.title}
+                            className={cn(
+                              'rounded-2xl border px-4 py-3 text-left transition',
+                              activePage === page.id
+                                ? 'border-blue-200 bg-blue-50 text-blue-900 shadow-sm'
+                                : 'border-transparent bg-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900',
+                            )}
+                            aria-current={activePage === page.id ? 'page' : undefined}
+                            key={page.id}
+                            onClick={() => {
+                              setActivePage(page.id)
+                              if (page.id === 'device-info') {
+                                setDeviceInfoCollapsed(false)
+                              }
+                            }}
+                          >
+                            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{page.eyebrow}</div>
+                            <div className="mt-1 text-sm font-semibold">{page.title}</div>
+                          </button>
+                        ))}
+                      </div>
+                      {index < APP_NAV_GROUPS.length - 1 ? <Separator /> : null}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
 
-        <div className="workspace-main">
-          <section className="panel toolbar-panel" aria-label="全局操作">
-            <div className="toolbar-row">
-              <button type="button" className="ghost-button" onClick={controllerGroups.device.actions.reset}>
-                重置设置
-              </button>
-              <div className="toolbar-actions">
-                <button type="button" className="secondary" onClick={() => configInputRef.current?.click()}>
-                  导入配置
-                </button>
-                <button type="button" className="secondary" onClick={handleExportConfig}>
-                  导出配置
-                </button>
-                <input
-                  ref={configInputRef}
-                  className="visually-hidden"
-                  type="file"
-                  accept="application/json,.json"
-                  aria-label="导入配置文件"
-                  onChange={handleImportConfig}
+          <div className="grid min-w-0 gap-6">
+            <PageHeader
+              eyebrow={activePageMeta.eyebrow}
+              title={activePageMeta.title}
+              description={pageDescription[activePage]}
+              stats={[
+                { label: 'IREGION', value: String(stats.iregionGroupCount) },
+                { label: '外设', value: String(stats.customGroupCount) },
+                { label: '寄存器', value: String(stats.registerCount) },
+                { label: '位域', value: String(stats.fieldCount) },
+              ]}
+              actions={
+                <>
+                  <Button type="button" variant="ghost" onClick={controllerGroups.device.actions.reset}>
+                    重置设置
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={() => configInputRef.current?.click()}>
+                    导入配置
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={handleExportConfig}>
+                    导出配置
+                  </Button>
+                </>
+              }
+            />
+
+            <input
+              ref={configInputRef}
+              className="visually-hidden"
+              type="file"
+              accept="application/json,.json"
+              aria-label="导入配置文件"
+              onChange={handleImportConfig}
+            />
+
+            <section className="rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_25px_60px_rgba(15,23,42,0.06)] sm:p-6">
+              {activePage === 'iregion-template' ? (
+                <IRegionTemplatePage
+                  device={device}
+                  onIRegionConfigChange={controllerGroups.device.actions.changeIRegionConfig}
+                  onIRegionBaseAddressChange={controllerGroups.device.actions.changeIRegionBaseAddress}
                 />
-              </div>
-            </div>
-          </section>
-
-          <section className="panel editor-panel">
-            <div className="panel-heading">
-              <div>
-                <p className="eyebrow">{activePageMeta.eyebrow}</p>
-                <h2>{activePageMeta.title}</h2>
-              </div>
-            </div>
-
-            {activePage === 'iregion-template' ? (
-              <IRegionTemplatePage
-                device={device}
-                onIRegionConfigChange={controllerGroups.device.actions.changeIRegionConfig}
-                onIRegionBaseAddressChange={controllerGroups.device.actions.changeIRegionBaseAddress}
-              />
-            ) : null}
-            {activePage === 'peripheral-template' ? (
-              <PeripheralTemplatePage
-                device={device}
-                actions={{
-                  addPeripheralTemplate: handleAddPeripheralTemplate,
-                  togglePeripheralTemplate,
-                  removePeripheralTemplate: handleRemovePeripheralTemplate,
-                  changePeripheralTemplate: handlePeripheralTemplateChange,
-                  addTemplateRegister: handleAddTemplateRegister,
-                  toggleTemplateRegister,
-                  addTemplateField: handleAddTemplateField,
-                  removeTemplateRegister: handleRemoveTemplateRegister,
-                  changeTemplateRegister: handleTemplateRegisterChange,
-                  changeTemplateField: handleTemplateFieldChange,
-                  removeTemplateField: handleRemoveTemplateField,
-                }}
-              />
-            ) : null}
-            {activePage === 'device-info' ? (
-              <DeviceInfoPage
-                device={device}
-                onDeviceChange={controllerGroups.device.actions.changeDevice}
-                onIRegionBaseAddressChange={controllerGroups.device.actions.changeIRegionBaseAddress}
-              />
-            ) : null}
-            {activePage === 'peripheral-config' ? (
-              <PeripheralConfigPage
-                device={device}
-                customGroupCount={controllerGroups.peripheral.stats.customGroupCount}
-                registerCount={controllerGroups.peripheral.stats.registerCount}
-                fieldCount={controllerGroups.peripheral.stats.fieldCount}
-                actions={{
-                  addPeripheral: handleAddPeripheral,
-                  addLinkedPeripheralFromTemplate: handleAddLinkedPeripheralFromTemplate,
-                  addDetachedPeripheralFromTemplate: handleAddDetachedPeripheralFromTemplate,
-                  savePeripheralAsTemplate: handleSavePeripheralAsTemplate,
-                  togglePeripheral,
-                  removePeripheral: handleRemovePeripheral,
-                  changePeripheral: handlePeripheralChange,
-                  addRegister: handleAddRegister,
-                  toggleRegister,
-                  addField: handleAddField,
-                  removeRegister: handleRemoveRegister,
-                  changeRegister: handleRegisterChange,
-                  changeField: handleFieldChange,
-                  removeField: handleRemoveField,
-                }}
-              />
-            ) : null}
-            {activePage === 'preview' ? (
-              <PreviewPage
-                canDownload={controllerGroups.conversion.canDownload}
-                tone={controllerGroups.conversion.state.tone}
-                headline={controllerGroups.conversion.state.headline}
-                detail={controllerGroups.conversion.state.detail}
-                issues={controllerGroups.conversion.state.issues}
-                xml={controllerGroups.conversion.state.xml}
-                onConvert={controllerGroups.conversion.actions.convert}
-                onDownload={controllerGroups.conversion.actions.download}
-              />
-            ) : null}
-          </section>
-        </div>
-
-      </section>
+              ) : null}
+              {activePage === 'peripheral-template' ? (
+                <PeripheralTemplatePage
+                  device={device}
+                  actions={{
+                    addPeripheralTemplate: handleAddPeripheralTemplate,
+                    togglePeripheralTemplate,
+                    removePeripheralTemplate: handleRemovePeripheralTemplate,
+                    changePeripheralTemplate: handlePeripheralTemplateChange,
+                    addTemplateRegister: handleAddTemplateRegister,
+                    toggleTemplateRegister,
+                    addTemplateField: handleAddTemplateField,
+                    removeTemplateRegister: handleRemoveTemplateRegister,
+                    changeTemplateRegister: handleTemplateRegisterChange,
+                    changeTemplateField: handleTemplateFieldChange,
+                    removeTemplateField: handleRemoveTemplateField,
+                  }}
+                />
+              ) : null}
+              {activePage === 'device-info' ? (
+                <DeviceInfoPage
+                  device={device}
+                  onDeviceChange={controllerGroups.device.actions.changeDevice}
+                  onIRegionBaseAddressChange={controllerGroups.device.actions.changeIRegionBaseAddress}
+                />
+              ) : null}
+              {activePage === 'peripheral-config' ? (
+                <PeripheralConfigPage
+                  device={device}
+                  customGroupCount={controllerGroups.peripheral.stats.customGroupCount}
+                  registerCount={controllerGroups.peripheral.stats.registerCount}
+                  fieldCount={controllerGroups.peripheral.stats.fieldCount}
+                  actions={{
+                    addPeripheral: handleAddPeripheral,
+                    addLinkedPeripheralFromTemplate: handleAddLinkedPeripheralFromTemplate,
+                    addDetachedPeripheralFromTemplate: handleAddDetachedPeripheralFromTemplate,
+                    savePeripheralAsTemplate: handleSavePeripheralAsTemplate,
+                    togglePeripheral,
+                    removePeripheral: handleRemovePeripheral,
+                    changePeripheral: handlePeripheralChange,
+                    addRegister: handleAddRegister,
+                    toggleRegister,
+                    addField: handleAddField,
+                    removeRegister: handleRemoveRegister,
+                    changeRegister: handleRegisterChange,
+                    changeField: handleFieldChange,
+                    removeField: handleRemoveField,
+                  }}
+                />
+              ) : null}
+              {activePage === 'preview' ? (
+                <PreviewPage
+                  canDownload={controllerGroups.conversion.canDownload}
+                  tone={controllerGroups.conversion.state.tone}
+                  headline={controllerGroups.conversion.state.headline}
+                  detail={controllerGroups.conversion.state.detail}
+                  issues={controllerGroups.conversion.state.issues}
+                  xml={controllerGroups.conversion.state.xml}
+                  onConvert={controllerGroups.conversion.actions.convert}
+                  onDownload={controllerGroups.conversion.actions.download}
+                />
+              ) : null}
+            </section>
+          </div>
+        </section>
+      </div>
     </main>
   )
 }

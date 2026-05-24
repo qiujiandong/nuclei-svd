@@ -1,5 +1,6 @@
 import { StatusPanel, type StatusIssue, type StatusTone } from '../../components/StatusPanel'
 import { XmlPreview } from '../../components/XmlPreview'
+import { Button } from '../../components/ui/button'
 
 export type PreviewPageProps = {
   canDownload: boolean
@@ -23,14 +24,14 @@ export function PreviewPage({
   onDownload,
 }: PreviewPageProps) {
   return (
-    <section className="editor-section preview-page">
-      <div className="preview-actions">
-        <button type="button" className="primary" onClick={onConvert}>
+    <section className="grid gap-6">
+      <div className="flex flex-wrap gap-3">
+        <Button type="button" onClick={onConvert}>
           校验并转换
-        </button>
-        <button type="button" className="secondary" onClick={onDownload} disabled={!canDownload}>
+        </Button>
+        <Button type="button" variant="secondary" onClick={onDownload} disabled={!canDownload}>
           下载 .svd
-        </button>
+        </Button>
       </div>
       <StatusPanel tone={tone} headline={headline} detail={detail} issues={issues} />
       <XmlPreview xml={xml} />

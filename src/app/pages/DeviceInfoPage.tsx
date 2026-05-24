@@ -1,5 +1,7 @@
 import { AccessSelect } from '../editor/AccessSelect'
 import type { EditorDevice } from '../../lib/editorModel'
+import { FormField } from '../../components/ui/form-field'
+import { Input } from '../../components/ui/input'
 
 export type DeviceInfoPageProps = {
   device: EditorDevice
@@ -10,66 +12,67 @@ export type DeviceInfoPageProps = {
 export function DeviceInfoPage({
   device,
   onDeviceChange,
+  onIRegionBaseAddressChange,
 }: DeviceInfoPageProps) {
   return (
-    <div className="register-settings-panel">
-      <label>
-        <span>设备名称</span>
-        <input value={device.name} onChange={(event) => onDeviceChange('name', event.target.value)} />
-      </label>
-      <label>
-        <span>版本</span>
-        <input value={device.version} onChange={(event) => onDeviceChange('version', event.target.value)} />
-      </label>
-      <label>
-        <span>addressUnitBits</span>
-        <input
+    <div className="device-info-panel grid gap-5 md:grid-cols-2">
+      <FormField label="设备名称">
+        <Input value={device.name} onChange={(event) => onDeviceChange('name', event.target.value)} />
+      </FormField>
+      <FormField label="版本">
+        <Input value={device.version} onChange={(event) => onDeviceChange('version', event.target.value)} />
+      </FormField>
+      <FormField label="IREGION 基地址">
+        <Input
+          aria-label="IREGION 基地址"
+          value={device.iregionBaseAddress}
+          onChange={(event) => onIRegionBaseAddressChange(event.target.value)}
+          placeholder="0x18000000"
+        />
+      </FormField>
+      <FormField label="addressUnitBits">
+        <Input
           value={device.addressUnitBits}
           onChange={(event) => onDeviceChange('addressUnitBits', event.target.value)}
           inputMode="numeric"
         />
-      </label>
-      <label>
-        <span>width</span>
-        <input
+      </FormField>
+      <FormField label="width">
+        <Input
           value={device.width}
           onChange={(event) => onDeviceChange('width', event.target.value)}
           inputMode="numeric"
         />
-      </label>
-      <label>
-        <span>默认 size</span>
-        <input
+      </FormField>
+      <FormField label="默认 size">
+        <Input
           value={device.size}
           onChange={(event) => onDeviceChange('size', event.target.value)}
           inputMode="numeric"
         />
-      </label>
+      </FormField>
       <AccessSelect
         value={device.access}
         onChange={(nextValue) => onDeviceChange('access', nextValue)}
         label="默认 access"
       />
-      <label>
-        <span>默认 resetValue</span>
-        <input
+      <FormField label="默认 resetValue">
+        <Input
           value={device.resetValue}
           onChange={(event) => onDeviceChange('resetValue', event.target.value)}
           placeholder="0x00000000"
         />
-      </label>
-      <label>
-        <span>默认 resetMask</span>
-        <input
+      </FormField>
+      <FormField label="默认 resetMask">
+        <Input
           value={device.resetMask}
           onChange={(event) => onDeviceChange('resetMask', event.target.value)}
           placeholder="0xFFFFFFFF"
         />
-      </label>
-      <label className="device-span-full">
-        <span>设备描述</span>
-        <input value={device.description} onChange={(event) => onDeviceChange('description', event.target.value)} />
-      </label>
+      </FormField>
+      <FormField label="设备描述" className="md:col-span-2">
+        <Input value={device.description} onChange={(event) => onDeviceChange('description', event.target.value)} />
+      </FormField>
     </div>
   )
 }

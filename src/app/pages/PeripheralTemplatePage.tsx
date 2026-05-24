@@ -1,4 +1,7 @@
 import type { EditorDevice } from '../../lib/editorModel'
+import { Button } from '../../components/ui/button'
+import { FormField } from '../../components/ui/form-field'
+import { Input } from '../../components/ui/input'
 import {
   RegisterEditorList,
   type BitField,
@@ -28,76 +31,68 @@ export type PeripheralTemplatePageProps = {
 
 export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePageProps) {
   return (
-    <div className="register-settings-panel">
-      <section className="editor-section">
-        <div className="custom-group-columns">
-          <section className="editor-card column-panel">
-            <div className="column-header">
+    <section className="grid gap-4">
+      <section className="editor-card rounded-3xl border border-border bg-white p-6">
+        <div className="grid gap-4">
+          <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="eyebrow">peripheral templates list</p>
-                <h4>外设模板列表</h4>
+                <p className="m-0 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">peripheral templates list</p>
+                <h4 className="m-0 text-lg font-semibold text-slate-900">外设模板列表</h4>
               </div>
-              <button type="button" className="secondary" onClick={actions.addPeripheralTemplate}>
+              <Button type="button" variant="secondary" onClick={actions.addPeripheralTemplate}>
                 新增外设模板
-              </button>
-            </div>
-            <div className="nested-stack">
-              {device.peripheralTemplates.length > 0 ? (
-                device.peripheralTemplates.map((template, templateIndex) => (
-                  <article
-                    className={`editor-card group-card template-linked-card ${templateColorClass(templateIndex)}`}
-                    key={template.id}
-                  >
-                    <div className="card-header">
+              </Button>
+          </div>
+          <div className="grid gap-4">
+            {device.peripheralTemplates.length > 0 ? (
+              device.peripheralTemplates.map((template, templateIndex) => (
+                <article
+                  className={`editor-card rounded-3xl border p-5 ${templateColorClass(templateIndex)}`}
+                  key={template.id}
+                >
+                  <div className="flex items-center justify-between gap-3">
                       <button
                         type="button"
-                        className="collapse-toggle"
+                        className="flex flex-1 items-center gap-3 text-left text-sm font-semibold text-slate-900"
                         aria-expanded={template.expanded}
                         aria-label={`${template.expanded ? '折叠' : '展开'}外设模板 ${summarizeName(template.name, `外设模板 ${templateIndex + 1}`)}`}
                         onClick={() => actions.togglePeripheralTemplate(template.id)}
                       >
-                        <span>{template.expanded ? '▾' : '▸'}</span>
+                        <span className="text-slate-400">{template.expanded ? '▾' : '▸'}</span>
                         <span>{summarizeName(template.name, `外设模板 ${templateIndex + 1}`)}</span>
                       </button>
-                      <div className="card-actions">
-                        <button
-                          type="button"
-                          className="ghost-button"
-                          onClick={() => actions.removePeripheralTemplate(template.id)}
-                        >
+                    <div>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => actions.removePeripheralTemplate(template.id)}>
                           删除模板
-                        </button>
-                      </div>
+                      </Button>
                     </div>
-                    {template.expanded ? (
-                      <div className="card-body">
-                        <div className="inline-field-row">
-                          <label className="inline-field inline-medium">
-                            <span>外设名称</span>
-                            <input
+                  </div>
+                  {template.expanded ? (
+                    <div className="mt-5 grid gap-5">
+                      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        <FormField label="外设名称">
+                          <Input
                               value={template.name}
                               onChange={(event) =>
                                 actions.changePeripheralTemplate(template.id, 'name', event.target.value)}
                             />
-                          </label>
-                          <label className="inline-field inline-medium">
-                            <span>groupName</span>
-                            <input
+                        </FormField>
+                        <FormField label="groupName">
+                          <Input
                               value={template.groupName}
                               onChange={(event) =>
                                 actions.changePeripheralTemplate(template.id, 'groupName', event.target.value)}
                             />
-                          </label>
-                          <label className="inline-field inline-wide">
-                            <span>外设描述</span>
-                            <input
+                        </FormField>
+                        <FormField label="外设描述" className="xl:col-span-1">
+                          <Input
                               value={template.description}
                               onChange={(event) =>
                                 actions.changePeripheralTemplate(template.id, 'description', event.target.value)}
                             />
-                          </label>
-                        </div>
-                        <RegisterEditorList
+                        </FormField>
+                      </div>
+                      <RegisterEditorList
                           registers={template.registers}
                           namePrefix="模板"
                           onToggleRegister={(registerId) => actions.toggleTemplateRegister(template.id, registerId)}
@@ -112,17 +107,18 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
                           onRemoveField={(registerId, fieldId) =>
                             actions.removeTemplateField(template.id, registerId, fieldId)}
                         />
-                      </div>
-                    ) : null}
-                  </article>
-                ))
-              ) : (
-                <p className="readonly-note">暂无外设模板。先创建模板，再到 SoC 外设配置中实例化。</p>
-              )}
-            </div>
-          </section>
+                    </div>
+                  ) : null}
+                </article>
+              ))
+            ) : (
+              <p className="m-0 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                暂无外设模板。先创建模板，再到 SoC 外设配置中实例化。
+              </p>
+            )}
+          </div>
         </div>
       </section>
-    </div>
+    </section>
   )
 }

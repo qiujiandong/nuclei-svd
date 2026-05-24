@@ -1,4 +1,3 @@
-import './App.css'
 import { EditorApp } from './app/EditorApp'
 
 function App() {

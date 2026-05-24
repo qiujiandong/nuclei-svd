@@ -1,4 +1,7 @@
 import type { EditorDevice } from '../../lib/editorModel'
+import { Button } from '../../components/ui/button'
+import { FormField } from '../../components/ui/form-field'
+import { Input } from '../../components/ui/input'
 import {
   RegisterEditorList,
   type BitField,
@@ -42,13 +45,13 @@ export function PeripheralConfigPage({
   const templateById = new Map(device.peripheralTemplates.map((template) => [template.id, template]))
 
   return (
-    <section className="editor-section peripheral-config-page">
-      <article className="editor-card readonly-card">
-        <div className="card-body">
-          <p className="readonly-note">
+    <section className="grid gap-4">
+      <article className="editor-card rounded-3xl border border-border bg-white p-6">
+        <div className="grid gap-3">
+          <p className="m-0 text-sm leading-6 text-slate-600">
             外设实例在这里配置 baseAddress。关联模板实例会实时继承模板寄存器；非关联实例可自由编辑并另存为模板。
           </p>
-          <div className="readonly-meta">
+          <div className="flex flex-wrap gap-2 text-sm text-slate-600">
             <span>{customGroupCount} 个外设实例</span>
             <span>{registerCount} 个寄存器</span>
             <span>{fieldCount} 个位域</span>
@@ -56,28 +59,24 @@ export function PeripheralConfigPage({
         </div>
       </article>
 
-      <div className="instance-toolbar">
-        <button type="button" className="secondary" onClick={actions.addPeripheral}>
+      <div className="flex flex-wrap gap-3 rounded-3xl border border-border bg-white p-5">
+        <Button type="button" variant="secondary" onClick={actions.addPeripheral}>
           新增独立外设
-        </button>
+        </Button>
         {device.peripheralTemplates.map((template, templateIndex) => (
-          <div className={`template-action-group ${templateColorClass(templateIndex)}`} key={template.id}>
-            <strong>{summarizeName(template.name, `模板 ${templateIndex + 1}`)}</strong>
-            <button type="button" className="secondary" onClick={() => actions.addLinkedPeripheralFromTemplate(template.id)}>
+          <div className={`flex flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 ${templateColorClass(templateIndex)}`} key={template.id}>
+            <strong className="text-sm">{summarizeName(template.name, `模板 ${templateIndex + 1}`)}</strong>
+            <Button type="button" variant="secondary" size="sm" onClick={() => actions.addLinkedPeripheralFromTemplate(template.id)}>
               关联实例
-            </button>
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => actions.addDetachedPeripheralFromTemplate(template.id)}
-            >
+            </Button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => actions.addDetachedPeripheralFromTemplate(template.id)}>
               非关联副本
-            </button>
+            </Button>
           </div>
         ))}
       </div>
 
-      <div className="nested-stack">
+      <div className="grid gap-4">
         {device.peripherals.length > 0 ? (
           device.peripherals.map((peripheral, peripheralIndex) => {
             const template = peripheral.templateId ? templateById.get(peripheral.templateId) : undefined
@@ -86,83 +85,75 @@ export function PeripheralConfigPage({
 
             return (
               <article
-                className={`editor-card group-card ${linked ? 'template-linked-card' : ''} ${linked ? templateColorClass(device.peripheralTemplates.findIndex((item) => item.id === peripheral.templateId)) : ''}`}
+                className={`editor-card rounded-3xl border bg-white p-5 ${linked ? templateColorClass(device.peripheralTemplates.findIndex((item) => item.id === peripheral.templateId)) : 'border-border'}`}
                 key={peripheral.id}
               >
-                <div className="card-header">
+                <div className="flex items-center justify-between gap-3">
                   <button
                     type="button"
-                    className="collapse-toggle"
+                    className="flex flex-1 items-center gap-3 text-left text-sm font-semibold text-slate-900"
                     aria-expanded={peripheral.expanded}
                     aria-label={`${peripheral.expanded ? '折叠' : '展开'}外设实例 ${summarizeName(peripheral.name, `外设实例 ${peripheralIndex + 1}`)}`}
                     onClick={() => actions.togglePeripheral(peripheral.id)}
                   >
-                    <span>{peripheral.expanded ? '▾' : '▸'}</span>
+                    <span className="text-slate-400">{peripheral.expanded ? '▾' : '▸'}</span>
                     <span>{summarizeName(peripheral.name, `外设实例 ${peripheralIndex + 1}`)}</span>
                   </button>
-                  <div className="card-actions">
+                  <div className="flex items-center gap-2">
                     {!linked ? (
-                      <button
-                        type="button"
-                        className="secondary"
-                        onClick={() => actions.savePeripheralAsTemplate(peripheral.id)}
-                      >
+                      <Button type="button" variant="secondary" size="sm" onClick={() => actions.savePeripheralAsTemplate(peripheral.id)}>
                         保存为模板
-                      </button>
+                      </Button>
                     ) : null}
-                    <button type="button" className="ghost-button" onClick={() => actions.removePeripheral(peripheral.id)}>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => actions.removePeripheral(peripheral.id)}>
                       删除实例
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 {peripheral.expanded ? (
-                  <div className="card-body">
-                    <div className="inline-field-row">
-                      <label className="inline-field inline-medium">
-                        <span>外设名称</span>
-                        <input
+                  <div className="mt-5 grid gap-5">
+                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                      <FormField label="外设名称">
+                        <Input
                           value={peripheral.name}
                           onChange={(event) => actions.changePeripheral(peripheral.id, 'name', event.target.value)}
                         />
-                      </label>
-                      <label className="inline-field inline-medium">
-                        <span>baseAddress</span>
-                        <input
+                      </FormField>
+                      <FormField label="baseAddress">
+                        <Input
                           value={peripheral.baseAddress}
                           onChange={(event) =>
                             actions.changePeripheral(peripheral.id, 'baseAddress', event.target.value)}
                         />
-                      </label>
+                      </FormField>
                       {!linked ? (
                         <>
-                          <label className="inline-field inline-medium">
-                            <span>groupName</span>
-                            <input
+                          <FormField label="groupName">
+                            <Input
                               value={peripheral.groupName}
                               onChange={(event) =>
                                 actions.changePeripheral(peripheral.id, 'groupName', event.target.value)}
                             />
-                          </label>
-                          <label className="inline-field inline-wide">
-                            <span>外设描述</span>
-                            <input
+                          </FormField>
+                          <FormField label="外设描述" className="xl:col-span-2">
+                            <Input
                               value={peripheral.description}
                               onChange={(event) =>
                                 actions.changePeripheral(peripheral.id, 'description', event.target.value)}
                             />
-                          </label>
+                          </FormField>
                         </>
                       ) : null}
                     </div>
 
                     {linked && template ? (
-                      <section className="editor-card inherited-summary">
-                        <p className="eyebrow">linked template</p>
-                        <h4>{summarizeName(template.name, '未命名模板')}</h4>
-                        <p className="readonly-note">
+                      <section className="rounded-2xl border border-slate-200 bg-white/80 p-4">
+                        <p className="m-0 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">linked template</p>
+                        <h4 className="mb-2 mt-2 text-base font-semibold text-slate-900">{summarizeName(template.name, '未命名模板')}</h4>
+                        <p className="m-0 text-sm leading-6 text-slate-600">
                           描述、groupName、寄存器和位域均继承自模板。修改模板后，所有关联实例会同步更新。
                         </p>
-                        <div className="readonly-meta">
+                        <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
                           <span>groupName: {summarizeName(template.groupName, template.name)}</span>
                           <span>{inheritedRegisters.length} 个继承寄存器</span>
                         </div>
@@ -190,8 +181,8 @@ export function PeripheralConfigPage({
             )
           })
         ) : (
-          <article className="editor-card readonly-card">
-            <p className="readonly-note">暂无外设实例。可以新增独立外设，或先创建模板后从模板实例化。</p>
+          <article className="editor-card rounded-3xl border border-dashed border-slate-200 bg-white px-5 py-4">
+            <p className="m-0 text-sm text-slate-500">暂无外设实例。可以新增独立外设，或先创建模板后从模板实例化。</p>
           </article>
         )}
       </div>
