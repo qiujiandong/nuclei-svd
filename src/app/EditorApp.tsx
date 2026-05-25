@@ -371,6 +371,7 @@ export function EditorApp() {
     updatePeripheralTemplate(templateId, (template) => ({
       ...template,
       [field]: value,
+      ...(field === 'name' ? { groupName: value } : {}),
     }))
   }
 
@@ -516,7 +517,7 @@ export function EditorApp() {
           name: `REG${template.registers.filter((register) => !register.derivedFrom).length + 1}`,
           addressOffset: formatNextOffset([...template.registerTemplates, ...template.registers]),
           derivedFrom: undefined,
-          expanded: true,
+          expanded: false,
         }),
       ],
     }))
@@ -539,7 +540,7 @@ export function EditorApp() {
           name: `REG${peripheral.registers.filter((register) => !register.derivedFrom).length + 1}`,
           addressOffset: formatNextOffset([...peripheral.registerTemplates, ...peripheral.registers]),
           derivedFrom: undefined,
-          expanded: true,
+          expanded: false,
         }),
       ],
     }))

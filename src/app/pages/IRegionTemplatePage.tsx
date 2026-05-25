@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import type { EditorDevice, EditorIRegionConfig } from '../../lib/editorModel'
 import { Checkbox } from '../../components/ui/checkbox'
-import { FormField } from '../../components/ui/form-field'
 import { Input } from '../../components/ui/input'
 import { cn } from '../../lib/utils'
 
@@ -91,7 +90,6 @@ function clampNumericValue(rawValue: string, min: number, max: number) {
 export function IRegionTemplatePage({
   device,
   onIRegionConfigChange,
-  onIRegionBaseAddressChange,
 }: IRegionTemplatePageProps) {
   const [draftValues, setDraftValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(

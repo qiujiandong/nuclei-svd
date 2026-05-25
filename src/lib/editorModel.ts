@@ -36,6 +36,7 @@ export interface EditorPeripheral {
   name: string
   description: string
   baseAddress: string
+  defaultRegisterSize: string
   derivedFrom?: string
   groupName: string
   expanded: boolean
@@ -234,6 +235,7 @@ export function createEmptyPeripheral(
     name: 'GROUP1',
     description: 'Register group',
     baseAddress: '0x0',
+    defaultRegisterSize: '',
     groupName: 'IREGION',
     expanded: true,
     registerTemplates: [],
@@ -270,6 +272,7 @@ export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
     name: `PERI${index}`,
     description: 'New register group',
     baseAddress: '0x40001000',
+    defaultRegisterSize: '',
     groupName: 'PERIPHERAL',
     expanded: true,
     registerTemplates: [createDefaultRegisterTemplate(0)],
@@ -280,10 +283,11 @@ export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
 export function createDefaultPeripheralTemplate(index = 0): EditorPeripheral {
   return createEmptyPeripheral({
     name: `PERI${index}`,
-    description: 'Description of this peripheral',
+    description: `Description of PERI${index}`,
     baseAddress: '0x0',
-    groupName: 'PERIPHERAL_TEMPLATE',
-    expanded: false,
+    defaultRegisterSize: '32',
+    groupName: `PERI${index}`,
+    expanded: true,
     registerTemplates: [createDefaultRegisterTemplate(0)],
     registers: [],
   })
@@ -298,6 +302,7 @@ export function createPeripheralInstanceFromTemplate(
     name: `${template.name}_INST${index}`,
     description: template.description,
     baseAddress: '0x40001000',
+    defaultRegisterSize: template.defaultRegisterSize,
     groupName: template.groupName,
     expanded: true,
     registers: [],
@@ -312,6 +317,7 @@ export function createPeripheralCopyFromTemplate(
     name: `${template.name}_COPY${index}`,
     description: template.description,
     baseAddress: '0x40001000',
+    defaultRegisterSize: template.defaultRegisterSize,
     groupName: template.groupName,
     expanded: true,
     registerTemplates: template.registerTemplates.map((registerTemplate) => cloneEditorRegister(registerTemplate)),
@@ -327,6 +333,7 @@ export function createPeripheralTemplateFromInstance(
     name: `${peripheral.name || 'PERI'}_TEMPLATE${index}`,
     description: peripheral.description,
     baseAddress: '0x0',
+    defaultRegisterSize: peripheral.defaultRegisterSize || peripheral.registers.find((register) => register.size.trim().length > 0)?.size || '32',
     groupName: peripheral.groupName || peripheral.name || 'PERIPHERAL',
     expanded: true,
     registerTemplates: [],
@@ -400,14 +407,18 @@ function buildField(field: EditorField): SvdFieldInput {
   }
 }
 
-function buildFieldsWithReserved(register: EditorRegister): SvdFieldInput[] {
+function resolveRegisterSize(register: EditorRegister, fallbackSize = '') {
+  return register.size.trim().length > 0 ? register.size : fallbackSize
+}
+
+function buildFieldsWithReserved(register: EditorRegister, fallbackSize = ''): SvdFieldInput[] {
   const userFields = register.fields.map((field) => buildField(field))
   if (userFields.length === 0) {
     return []
   }
 
   // SVD expects explicit field coverage once any field is declared; fill gaps with reserved ranges.
-  const registerWidth = parseIntegerInput(register.size)
+  const registerWidth = parseIntegerInput(resolveRegisterSize(register, fallbackSize))
   const effectiveWidth = Number.isNaN(registerWidth) || registerWidth === 0 ? 32 : registerWidth
   const sortedFields = [...userFields].sort((left, right) => left.bitOffset - right.bitOffset)
   const fields: SvdFieldInput[] = []
@@ -441,7 +452,9 @@ function buildFieldsWithReserved(register: EditorRegister): SvdFieldInput[] {
   return fields
 }
 
-function buildRegister(register: EditorRegister): SvdRegisterInput {
+function buildRegister(register: EditorRegister, fallbackSize = ''): SvdRegisterInput {
+  const resolvedSize = resolveRegisterSize(register, fallbackSize)
+
   return {
     name: register.name.trim(),
     description: register.description.trim(),
@@ -449,11 +462,11 @@ function buildRegister(register: EditorRegister): SvdRegisterInput {
     ...optionalIntegerProperty('dim', register.dim),
     ...optionalIntegerProperty('dimIncrement', register.dimIncrement),
     ...optionalStringProperty('derivedFrom', register.derivedFrom ?? ''),
-    ...optionalIntegerProperty('size', register.size),
+    ...optionalIntegerProperty('size', resolvedSize),
     ...optionalStringProperty('access', register.access),
     ...optionalStringProperty('resetValue', register.resetValue),
     ...optionalStringProperty('resetMask', register.resetMask),
-    fields: buildFieldsWithReserved(register),
+    fields: buildFieldsWithReserved(register, fallbackSize),
   }
 }
 
@@ -467,6 +480,7 @@ function buildPeripheral(peripheral: EditorPeripheral): SvdPeripheralInput {
     instantiatedRegisterTemplateNames.has(template.name.trim()),
   )
   const registers = [...instantiatedRegisterTemplates, ...peripheral.registers]
+  const fallbackSize = peripheral.defaultRegisterSize
 
   return {
     name: peripheral.name.trim(),
@@ -475,7 +489,7 @@ function buildPeripheral(peripheral: EditorPeripheral): SvdPeripheralInput {
     ...optionalStringProperty('derivedFrom', peripheral.derivedFrom ?? ''),
     ...optionalStringProperty('groupName', peripheral.groupName),
     ...(registers.length > 0
-      ? { registers: registers.map((register) => buildRegister(register)) }
+      ? { registers: registers.map((register) => buildRegister(register, fallbackSize)) }
       : {}),
   }
 }
@@ -492,7 +506,7 @@ function buildLinkedPeripheral(
     ...(derivedFrom ? { derivedFrom } : {}),
     ...optionalStringProperty('groupName', template.groupName || template.name),
     ...(!derivedFrom && template.registers.length > 0
-      ? { registers: template.registers.map((register) => buildRegister(register)) }
+      ? { registers: template.registers.map((register) => buildRegister(register, template.defaultRegisterSize)) }
       : {}),
   }
 }

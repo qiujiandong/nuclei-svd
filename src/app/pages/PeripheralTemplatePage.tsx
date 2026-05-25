@@ -50,22 +50,27 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
                   className={`editor-card rounded-3xl border p-5 ${templateColorClass(templateIndex)}`}
                   key={template.id}
                 >
-                  <div className="flex items-center justify-between gap-3">
-                      <button
-                        type="button"
-                        className="flex flex-1 items-center gap-3 text-left text-sm font-semibold text-slate-900"
-                        aria-expanded={template.expanded}
-                        aria-label={`${template.expanded ? '折叠' : '展开'}外设模板 ${summarizeName(template.name, `外设模板 ${templateIndex + 1}`)}`}
-                        onClick={() => actions.togglePeripheralTemplate(template.id)}
-                      >
-                        <span className="text-slate-400">{template.expanded ? '▾' : '▸'}</span>
-                        <span>{summarizeName(template.name, `外设模板 ${templateIndex + 1}`)}</span>
-                      </button>
-                    <div>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => actions.removePeripheralTemplate(template.id)}>
-                          删除模板
-                      </Button>
-                    </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <button
+                      type="button"
+                      className="flex flex-1 items-start gap-3 text-left"
+                      aria-expanded={template.expanded}
+                      aria-label={`${template.expanded ? '折叠' : '展开'}外设模板 ${summarizeName(template.name, `外设模板 ${templateIndex + 1}`)}`}
+                      onClick={() => actions.togglePeripheralTemplate(template.id)}
+                    >
+                      <span className="pt-1 text-slate-400">{template.expanded ? '▾' : '▸'}</span>
+                      <div className="grid gap-1">
+                        <span className="text-sm font-semibold text-slate-900">
+                          {summarizeName(template.name, `外设模板 ${templateIndex + 1}`)}
+                        </span>
+                        <span className="text-sm text-slate-600">
+                          {template.description.trim() || '暂无描述'}
+                        </span>
+                      </div>
+                    </button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => actions.removePeripheralTemplate(template.id)}>
+                      删除模板
+                    </Button>
                   </div>
                   {template.expanded ? (
                     <div className="mt-5 grid gap-5">
@@ -77,18 +82,19 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
                                 actions.changePeripheralTemplate(template.id, 'name', event.target.value)}
                             />
                         </FormField>
-                        <FormField label="groupName">
-                          <Input
-                              value={template.groupName}
-                              onChange={(event) =>
-                                actions.changePeripheralTemplate(template.id, 'groupName', event.target.value)}
-                            />
-                        </FormField>
-                        <FormField label="外设描述" className="xl:col-span-1">
+                        <FormField label="外设描述" className="md:col-span-2 xl:col-span-1">
                           <Input
                               value={template.description}
                               onChange={(event) =>
                                 actions.changePeripheralTemplate(template.id, 'description', event.target.value)}
+                            />
+                        </FormField>
+                        <FormField label="寄存器位宽(size)">
+                          <Input
+                              value={template.defaultRegisterSize}
+                              onChange={(event) =>
+                                actions.changePeripheralTemplate(template.id, 'defaultRegisterSize', event.target.value)}
+                              placeholder="32"
                             />
                         </FormField>
                       </div>
