@@ -153,16 +153,6 @@ export function IRegionTemplatePage({
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <FormField label="IREGION 基地址" className="rounded-2xl border border-border bg-white p-4 shadow-sm md:col-span-2 xl:col-span-1">
-          <Input
-            aria-label="IREGION 基地址"
-            value={device.iregionBaseAddress}
-            onChange={(event) => onIRegionBaseAddressChange(event.target.value)}
-            placeholder="0x18000000"
-          />
-        </FormField>
-      </div>
       <div className="grid gap-2 rounded-3xl border border-border bg-white p-4">
         {moduleFields.map(({ field, label, paramField, paramLabel, paramShortLabel, helperText, inputMode, min, max, placeholder }) => {
           const checked = Boolean(device.iregionConfig[field])

@@ -821,12 +821,6 @@ export function EditorApp() {
               eyebrow={activePageMeta.eyebrow}
               title={activePageMeta.title}
               description={pageDescription[activePage]}
-              stats={[
-                { label: 'IREGION', value: String(stats.iregionGroupCount) },
-                { label: '外设', value: String(stats.customGroupCount) },
-                { label: '寄存器', value: String(stats.registerCount) },
-                { label: '位域', value: String(stats.fieldCount) },
-              ]}
               actions={
                 <>
                   <Button type="button" variant="ghost" onClick={controllerGroups.device.actions.reset}>
