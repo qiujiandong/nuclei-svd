@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import type { EditorDevice, EditorIRegionConfig } from '../../lib/editorModel'
 import { Checkbox } from '../../components/ui/checkbox'
@@ -92,27 +93,44 @@ export function IRegionTemplatePage({
   onIRegionConfigChange,
   onIRegionBaseAddressChange,
 }: IRegionTemplatePageProps) {
-  const handleParamChange = (
-    field: keyof EditorIRegionConfig,
-    rawValue: string,
-    min?: number,
-    max?: number,
-  ) => {
-    if (min == null || max == null) {
-      onIRegionConfigChange(field, rawValue)
+  const [draftValues, setDraftValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(
+      moduleFields
+        .filter((item) => item.paramField)
+        .map((item) => [item.paramField as string, String(device.iregionConfig[item.paramField as keyof EditorIRegionConfig])]),
+    ),
+  )
+
+  useEffect(() => {
+    setDraftValues((current) => {
+      const nextValues = { ...current }
+      let changed = false
+
+      moduleFields.forEach(({ paramField }) => {
+        if (!paramField) {
+          return
+        }
+
+        const nextValue = String(device.iregionConfig[paramField])
+        if (nextValues[paramField] !== nextValue) {
+          nextValues[paramField] = nextValue
+          changed = true
+        }
+      })
+
+      return changed ? nextValues : current
+    })
+  }, [device.iregionConfig])
+
+  const handleParamChange = (field: keyof EditorIRegionConfig, rawValue: string) => {
+    if (rawValue !== '' && !/^\d+$/.test(rawValue)) {
       return
     }
 
-    if (rawValue === '') {
-      onIRegionConfigChange(field, rawValue)
-      return
-    }
-
-    if (!/^\d+$/.test(rawValue)) {
-      return
-    }
-
-    onIRegionConfigChange(field, clampNumericValue(rawValue, min, max))
+    setDraftValues((current) => ({
+      ...current,
+      [field]: rawValue,
+    }))
   }
 
   const handleParamBlur = (
@@ -126,9 +144,11 @@ export function IRegionTemplatePage({
     }
 
     const normalizedValue = rawValue === '' ? String(min) : clampNumericValue(rawValue, min, max)
-    if (normalizedValue !== rawValue) {
-      onIRegionConfigChange(field, normalizedValue)
-    }
+    setDraftValues((current) => ({
+      ...current,
+      [field]: normalizedValue,
+    }))
+    onIRegionConfigChange(field, normalizedValue)
   }
 
   return (
@@ -176,8 +196,8 @@ export function IRegionTemplatePage({
                     </span>
                     <Input
                       aria-label={paramLabel}
-                      value={String(device.iregionConfig[paramField])}
-                      onChange={(event) => handleParamChange(paramField, event.target.value, min, max)}
+                      value={draftValues[paramField] ?? String(device.iregionConfig[paramField])}
+                      onChange={(event) => handleParamChange(paramField, event.target.value)}
                       onBlur={(event) => handleParamBlur(paramField, event.target.value, min, max)}
                       inputMode={inputMode}
                       min={min}

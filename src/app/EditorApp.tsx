@@ -13,6 +13,7 @@ import {
   cloneEditorRegister,
   createDefaultCustomPeripheral,
   createDefaultEditorDevice,
+  createIRegionPeripherals,
   createDefaultPeripheralTemplate,
   createEmptyField,
   createPeripheralCopyFromTemplate,
@@ -23,6 +24,7 @@ import {
   type EditorIRegionConfig,
   type EditorPeripheral,
   type EditorRegister,
+  resolveIRegionPeripherals,
 } from '../lib/editorModel'
 import { transformToSvd } from '../lib/transformToSvd'
 import { validateSvdInput } from '../lib/validate'
@@ -323,10 +325,13 @@ export function EditorApp() {
   }
 
   const handleIRegionConfigChange = (field: keyof EditorIRegionConfig, value: string | boolean) => {
-    const newConfigs = { ...device.iregionConfig, [field]: value }
     updateDevice((current) => ({
       ...current,
-      iregionConfig: newConfigs,
+      iregionConfig: { ...current.iregionConfig, [field]: value },
+      iregionPeripherals: resolveIRegionPeripherals(
+        current.iregionBaseAddress,
+        createIRegionPeripherals({ ...current.iregionConfig, [field]: value }),
+      ),
     }))
   }
 
@@ -334,6 +339,10 @@ export function EditorApp() {
     updateDevice((current) => ({
       ...current,
       iregionBaseAddress: value,
+      iregionPeripherals: resolveIRegionPeripherals(
+        value,
+        createIRegionPeripherals(current.iregionConfig),
+      ),
     }))
   }
 

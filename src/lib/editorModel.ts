@@ -349,7 +349,7 @@ function createPresetRegisters(registers: PresetRegisterDefinition[]) {
   )
 }
 
-function createIRegionPeripherals(config: EditorIRegionConfig = createIRegionConfig()) {
+export function createIRegionPeripherals(config: EditorIRegionConfig = createIRegionConfig()) {
   return createIRegionUnitDefinitions(config).map((unit) =>
     createEmptyPeripheral({
       name: unit.name,
