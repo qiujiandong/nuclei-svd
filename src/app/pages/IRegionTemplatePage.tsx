@@ -1,7 +1,9 @@
+import type { InputHTMLAttributes } from 'react'
 import type { EditorDevice, EditorIRegionConfig } from '../../lib/editorModel'
 import { Checkbox } from '../../components/ui/checkbox'
 import { FormField } from '../../components/ui/form-field'
 import { Input } from '../../components/ui/input'
+import { cn } from '../../lib/utils'
 
 export type IRegionTemplatePageProps = {
   device: EditorDevice
@@ -9,14 +11,66 @@ export type IRegionTemplatePageProps = {
   onIRegionBaseAddressChange: (value: string) => void
 }
 
-const existenceFields: Array<{ field: keyof EditorIRegionConfig; label: string }> = [
+type IRegionModuleConfig = {
+  field: keyof EditorIRegionConfig
+  label: string
+  paramField?: keyof EditorIRegionConfig
+  paramLabel?: string
+  paramShortLabel?: string
+  inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode']
+  min?: number
+  max?: number
+  placeholder?: string
+}
+
+const moduleFields: IRegionModuleConfig[] = [
   { field: 'iinfoExist', label: 'IINFO' },
   { field: 'debugExist', label: 'Debug' },
-  { field: 'eclicExist', label: 'ECLIC' },
-  { field: 'timerExist', label: 'Timer' },
+  {
+    field: 'timerExist',
+    label: 'Timer',
+    paramField: 'cpuCount',
+    paramLabel: 'CPU Count',
+    paramShortLabel: 'CPU',
+    inputMode: 'numeric',
+    min: 1,
+    max: 8,
+    placeholder: '8',
+  },
+  {
+    field: 'eclicExist',
+    label: 'ECLIC',
+    paramField: 'eclicInterruptCount',
+    paramLabel: 'ECLIC Interrupt Count',
+    paramShortLabel: 'IRQ',
+    inputMode: 'numeric',
+    min: 1,
+    max: 1024,
+    placeholder: '64',
+  },
   { field: 'smpExist', label: 'SMP' },
-  { field: 'ciduExist', label: 'CIDU' },
-  { field: 'plicExist', label: 'PLIC' },
+  {
+    field: 'ciduExist',
+    label: 'CIDU',
+    paramField: 'ciduInterruptCount',
+    paramLabel: 'CIDU Interrupt Count',
+    paramShortLabel: 'IRQ',
+    inputMode: 'numeric',
+    min: 1,
+    max: 4096,
+    placeholder: '128',
+  },
+  {
+    field: 'plicExist',
+    label: 'PLIC',
+    paramField: 'plicInterruptCountX32',
+    paramLabel: 'PLIC Interrupt Count',
+    paramShortLabel: 'IRQ',
+    inputMode: 'numeric',
+    min: 1,
+    max: 32,
+    placeholder: '8',
+  },
 ]
 
 export function IRegionTemplatePage({
@@ -26,75 +80,70 @@ export function IRegionTemplatePage({
 }: IRegionTemplatePageProps) {
   return (
     <div className="grid gap-6">
-      <div className="grid gap-5 md:grid-cols-2">
-        <FormField label="IREGION 基地址">
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <FormField label="IREGION 基地址" className="rounded-2xl border border-border bg-white p-4 shadow-sm md:col-span-2 xl:col-span-1">
           <Input
-          aria-label="IREGION 基地址"
-          value={device.iregionBaseAddress}
-          onChange={(event) => onIRegionBaseAddressChange(event.target.value)}
-          placeholder="0x18000000"
-        />
+            aria-label="IREGION 基地址"
+            value={device.iregionBaseAddress}
+            onChange={(event) => onIRegionBaseAddressChange(event.target.value)}
+            placeholder="0x18000000"
+          />
         </FormField>
-      {device.iregionConfig.timerExist ? (
-          <FormField label="CPU Count">
-            <Input
-            value={device.iregionConfig.cpuCount}
-            onChange={(event) => onIRegionConfigChange('cpuCount', event.target.value)}
-            inputMode="numeric"
-            min={1}
-            max={8}
-            placeholder='8'
-          />
-          </FormField>
-      ) : null}
-      {device.iregionConfig.eclicExist ? (
-          <FormField label="ECLIC Interrupt Count">
-            <Input
-            value={device.iregionConfig.eclicInterruptCount}
-            onChange={(event) => onIRegionConfigChange('eclicInterruptCount', event.target.value)}
-            inputMode="numeric"
-            min={1}
-            max={1024}
-            placeholder='64'
-          />
-          </FormField>
-      ) : null}
-      {device.iregionConfig.ciduExist ? (
-          <FormField label="CIDU Interrupt Count">
-            <Input
-            value={device.iregionConfig.ciduInterruptCount}
-            onChange={(event) => onIRegionConfigChange('ciduInterruptCount', event.target.value)}
-            inputMode="numeric"
-            min={1}
-            max={4096}
-            placeholder='128'
-          />
-          </FormField>
-
-      ) : null}
-      {device.iregionConfig.plicExist ? (
-          <FormField label="PLIC Interrupt Count">
-            <Input
-            value={device.iregionConfig.plicInterruptCountX32}
-            onChange={(event) => onIRegionConfigChange('plicInterruptCountX32', event.target.value)}
-            inputMode="numeric"
-            min={1}
-            max={32}
-            placeholder='8'
-          />
-          </FormField>
-      ) : null}
       </div>
-      <div className="grid gap-3 rounded-3xl border border-border bg-white p-5 md:grid-cols-2 xl:grid-cols-3">
-        {existenceFields.map(({ field, label }) => (
-          <label key={field} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <Checkbox
-              checked={Boolean(device.iregionConfig[field])}
-              onCheckedChange={(checked) => onIRegionConfigChange(field, Boolean(checked))}
-            />
-            <span className="text-sm font-medium text-slate-700">{label}</span>
-          </label>
-        ))}
+      <div className="grid gap-2 rounded-3xl border border-border bg-white p-4">
+        {moduleFields.map(({ field, label, paramField, paramLabel, paramShortLabel, inputMode, min, max, placeholder }) => {
+          const checked = Boolean(device.iregionConfig[field])
+
+          return (
+            <section
+              key={field}
+              className={cn(
+                'flex flex-col gap-3 rounded-2xl border px-3 py-2.5 transition-colors sm:flex-row sm:items-center sm:justify-between',
+                checked ? 'border-primary/30 bg-primary/5' : 'border-slate-200 bg-slate-50',
+              )}
+            >
+              <label className="flex min-w-0 items-center gap-3">
+                <Checkbox
+                  checked={checked}
+                  onCheckedChange={(nextChecked) => onIRegionConfigChange(field, Boolean(nextChecked))}
+                  className="shrink-0"
+                />
+                <span className="truncate text-sm font-semibold text-slate-800">{label}</span>
+              </label>
+              {paramField ? (
+                <div className="flex min-w-0 items-center gap-2 sm:w-[240px] sm:justify-end">
+                  <span
+                    className={cn(
+                      'shrink-0 text-xs font-medium uppercase tracking-wide',
+                      checked ? 'text-slate-500' : 'text-slate-400',
+                    )}
+                  >
+                    {paramShortLabel ?? paramLabel}
+                  </span>
+                  <Input
+                    aria-label={paramLabel}
+                    value={String(device.iregionConfig[paramField])}
+                    onChange={(event) => onIRegionConfigChange(paramField, event.target.value)}
+                    inputMode={inputMode}
+                    min={min}
+                    max={max}
+                    placeholder={placeholder}
+                    disabled={!checked}
+                    aria-disabled={!checked}
+                    className={cn(
+                      'h-9 sm:w-[180px]',
+                      !checked && 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 placeholder:text-slate-400',
+                    )}
+                  />
+                </div>
+              ) : (
+                <div className="flex h-9 items-center text-xs text-slate-400 sm:w-[240px] sm:justify-end">
+                  无参数
+                </div>
+              )}
+            </section>
+          )
+        })}
       </div>
     </div>
   )
