@@ -17,6 +17,7 @@ type IRegionModuleConfig = {
   paramField?: keyof EditorIRegionConfig
   paramLabel?: string
   paramShortLabel?: string
+  helperText?: string
   inputMode?: InputHTMLAttributes<HTMLInputElement>['inputMode']
   min?: number
   max?: number
@@ -32,6 +33,7 @@ const moduleFields: IRegionModuleConfig[] = [
     paramField: 'cpuCount',
     paramLabel: 'CPU Count',
     paramShortLabel: 'CPU',
+    helperText: '范围 1~8',
     inputMode: 'numeric',
     min: 1,
     max: 8,
@@ -43,6 +45,7 @@ const moduleFields: IRegionModuleConfig[] = [
     paramField: 'eclicInterruptCount',
     paramLabel: 'ECLIC Interrupt Count',
     paramShortLabel: 'IRQ',
+    helperText: '范围 1~1024',
     inputMode: 'numeric',
     min: 1,
     max: 1024,
@@ -55,6 +58,7 @@ const moduleFields: IRegionModuleConfig[] = [
     paramField: 'ciduInterruptCount',
     paramLabel: 'CIDU Interrupt Count',
     paramShortLabel: 'IRQ',
+    helperText: '范围 1~4096',
     inputMode: 'numeric',
     min: 1,
     max: 4096,
@@ -66,6 +70,7 @@ const moduleFields: IRegionModuleConfig[] = [
     paramField: 'plicInterruptCountX32',
     paramLabel: 'PLIC Interrupt Count',
     paramShortLabel: 'IRQ',
+    helperText: '范围 1~32，实际 IRQ = 输入值 × 32',
     inputMode: 'numeric',
     min: 1,
     max: 32,
@@ -73,11 +78,59 @@ const moduleFields: IRegionModuleConfig[] = [
   },
 ]
 
+function clampNumericValue(rawValue: string, min: number, max: number) {
+  const numericValue = Number(rawValue)
+  if (!Number.isFinite(numericValue)) {
+    return String(min)
+  }
+
+  return String(Math.min(max, Math.max(min, Math.trunc(numericValue))))
+}
+
 export function IRegionTemplatePage({
   device,
   onIRegionConfigChange,
   onIRegionBaseAddressChange,
 }: IRegionTemplatePageProps) {
+  const handleParamChange = (
+    field: keyof EditorIRegionConfig,
+    rawValue: string,
+    min?: number,
+    max?: number,
+  ) => {
+    if (min == null || max == null) {
+      onIRegionConfigChange(field, rawValue)
+      return
+    }
+
+    if (rawValue === '') {
+      onIRegionConfigChange(field, rawValue)
+      return
+    }
+
+    if (!/^\d+$/.test(rawValue)) {
+      return
+    }
+
+    onIRegionConfigChange(field, clampNumericValue(rawValue, min, max))
+  }
+
+  const handleParamBlur = (
+    field: keyof EditorIRegionConfig,
+    rawValue: string,
+    min?: number,
+    max?: number,
+  ) => {
+    if (min == null || max == null) {
+      return
+    }
+
+    const normalizedValue = rawValue === '' ? String(min) : clampNumericValue(rawValue, min, max)
+    if (normalizedValue !== rawValue) {
+      onIRegionConfigChange(field, normalizedValue)
+    }
+  }
+
   return (
     <div className="grid gap-6">
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -91,7 +144,7 @@ export function IRegionTemplatePage({
         </FormField>
       </div>
       <div className="grid gap-2 rounded-3xl border border-border bg-white p-4">
-        {moduleFields.map(({ field, label, paramField, paramLabel, paramShortLabel, inputMode, min, max, placeholder }) => {
+        {moduleFields.map(({ field, label, paramField, paramLabel, paramShortLabel, helperText, inputMode, min, max, placeholder }) => {
           const checked = Boolean(device.iregionConfig[field])
 
           return (
@@ -111,30 +164,36 @@ export function IRegionTemplatePage({
                 <span className="truncate text-sm font-semibold text-slate-800">{label}</span>
               </label>
               {paramField ? (
-                <div className="flex min-w-0 items-center gap-2 sm:w-[240px] sm:justify-end">
-                  <span
-                    className={cn(
-                      'shrink-0 text-xs font-medium uppercase tracking-wide',
-                      checked ? 'text-slate-500' : 'text-slate-400',
-                    )}
-                  >
-                    {paramShortLabel ?? paramLabel}
-                  </span>
-                  <Input
-                    aria-label={paramLabel}
-                    value={String(device.iregionConfig[paramField])}
-                    onChange={(event) => onIRegionConfigChange(paramField, event.target.value)}
-                    inputMode={inputMode}
-                    min={min}
-                    max={max}
-                    placeholder={placeholder}
-                    disabled={!checked}
-                    aria-disabled={!checked}
-                    className={cn(
-                      'h-9 sm:w-[180px]',
-                      !checked && 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 placeholder:text-slate-400',
-                    )}
-                  />
+                <div className="grid min-w-0 gap-1 sm:w-[300px] sm:justify-end">
+                  <div className="flex min-w-0 items-center gap-2 sm:justify-end">
+                    <span
+                      className={cn(
+                        'shrink-0 text-xs font-medium uppercase tracking-wide',
+                        checked ? 'text-slate-500' : 'text-slate-400',
+                      )}
+                    >
+                      {paramShortLabel ?? paramLabel}
+                    </span>
+                    <Input
+                      aria-label={paramLabel}
+                      value={String(device.iregionConfig[paramField])}
+                      onChange={(event) => handleParamChange(paramField, event.target.value, min, max)}
+                      onBlur={(event) => handleParamBlur(paramField, event.target.value, min, max)}
+                      inputMode={inputMode}
+                      min={min}
+                      max={max}
+                      placeholder={placeholder}
+                      disabled={!checked}
+                      aria-disabled={!checked}
+                      className={cn(
+                        'h-9 sm:w-[180px]',
+                        !checked && 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 placeholder:text-slate-400',
+                      )}
+                    />
+                  </div>
+                  <p className={cn('m-0 text-[11px] leading-4 sm:text-right', checked ? 'text-slate-500' : 'text-slate-400')}>
+                    {helperText}
+                  </p>
                 </div>
               ) : (
                 <div className="flex h-9 items-center text-xs text-slate-400 sm:w-[240px] sm:justify-end">
