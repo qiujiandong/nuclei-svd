@@ -12,7 +12,7 @@ type PageHeaderProps = {
 
 export function PageHeader({ eyebrow, title, description, stats = [], actions }: PageHeaderProps) {
   return (
-    <Card className="overflow-hidden border-none bg-transparent shadow-none">
+    <Card className="border-none bg-transparent shadow-none">
       <CardContent className="grid gap-5 px-0 pb-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
         <div className="grid gap-3">
           <div className="grid gap-2">
