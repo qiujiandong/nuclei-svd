@@ -89,7 +89,7 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
                                 actions.changePeripheralTemplate(template.id, 'description', event.target.value)}
                             />
                         </FormField>
-                        <FormField label="寄存器位宽(size)">
+                        <FormField label="寄存器位宽">
                           <Input
                               value={template.defaultRegisterSize}
                               onChange={(event) =>

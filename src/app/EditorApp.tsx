@@ -565,7 +565,7 @@ export function EditorApp() {
         ...register.fields,
         createEmptyField({
           name: `FIELD${fieldCount}`,
-          description: 'New bit field',
+          description: 'Description of this FIELD',
           bitOffset: String(fieldCount),
         }),
       ],

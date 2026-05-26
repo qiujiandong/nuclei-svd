@@ -33,11 +33,11 @@ export function FieldTable({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead scope="col">位域名称</TableHead>
-            <TableHead scope="col" className="w-[120px]">bitOffset</TableHead>
-            <TableHead scope="col" className="w-[120px]">bitWidth</TableHead>
-            <TableHead scope="col">位域描述</TableHead>
-            <TableHead scope="col" className="w-[72px] text-center">删除</TableHead>
+            <TableHead scope="col" className="w-[100px] text-center">位域名称</TableHead>
+            <TableHead scope="col" className="w-[72px] text-center">偏移</TableHead>
+            <TableHead scope="col" className="w-[72px] text-center">位宽</TableHead>
+            <TableHead scope="col">描述</TableHead>
+            <TableHead scope="col" className="w-[64px] text-center">删除</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -70,7 +70,7 @@ export function FieldTable({
               </TableCell>
               <TableCell className="text-center">
                 <Button type="button" variant="ghost" size="sm" onClick={() => onRemoveField(field.id)}>
-                  ×
+                  ❌
                 </Button>
               </TableCell>
             </TableRow>
@@ -125,11 +125,11 @@ export function RegisterEditorList({
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead scope="col" className="w-[64px] text-center">位域</TableHead>
-              <TableHead scope="col">name</TableHead>
-              <TableHead scope="col" className="w-[160px]">addressOffset</TableHead>
-              <TableHead scope="col">description</TableHead>
-              <TableHead scope="col" className="w-[140px]">size</TableHead>
-              <TableHead scope="col" className="w-[72px] text-center">删除</TableHead>
+              <TableHead scope="col" className="w-[100px]">名称</TableHead>
+              <TableHead scope="col" className="w-[100px]">地址偏移</TableHead>
+              <TableHead scope="col">描述</TableHead>
+              <TableHead scope="col" className="w-[100px]">位宽</TableHead>
+              <TableHead scope="col" className="w-[64px] text-center">删除</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -144,7 +144,7 @@ export function RegisterEditorList({
                       aria-label={`${register.expanded ? '折叠' : '展开'}寄存器 ${summarizeName(register.name, `REG${registerIndex}`)} 的位域`}
                       onClick={() => onToggleRegister(register.id)}
                     >
-                      {register.expanded ? '▾' : '▸'}
+                      {register.expanded ? '▼' : '▶'}
                     </button>
                   </TableCell>
                   <TableCell>
@@ -176,7 +176,7 @@ export function RegisterEditorList({
                   </TableCell>
                   <TableCell className="text-center">
                     <Button type="button" variant="ghost" size="sm" onClick={() => onRemoveRegister(register.id)}>
-                      ×
+                      ❌
                     </Button>
                   </TableCell>
                 </TableRow>

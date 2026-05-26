@@ -247,7 +247,7 @@ export function createEmptyPeripheral(
 export function createDefaultRegisterTemplate(index = 0): EditorRegister {
   return createEmptyRegister({
     name: `REG${index}`,
-    description: 'Register template',
+    description: 'Description of this REG',
     addressOffset: '0x0',
   })
 }
