@@ -514,7 +514,7 @@ export function EditorApp() {
       registers: [
         ...template.registers,
         cloneEditorRegister(standaloneRegisterSeed(template.registers, template.registerTemplates), {
-          name: `REG${template.registers.filter((register) => !register.derivedFrom).length + 1}`,
+          name: `REG${template.registers.filter((register) => !register.derivedFrom).length}`,
           addressOffset: formatNextOffset([...template.registerTemplates, ...template.registers]),
           derivedFrom: undefined,
           expanded: false,
@@ -537,7 +537,7 @@ export function EditorApp() {
       registers: [
         ...peripheral.registers,
         cloneEditorRegister(standaloneRegisterSeed(peripheral.registers, peripheral.registerTemplates), {
-          name: `REG${peripheral.registers.filter((register) => !register.derivedFrom).length + 1}`,
+          name: `REG${peripheral.registers.filter((register) => !register.derivedFrom).length}`,
           addressOffset: formatNextOffset([...peripheral.registerTemplates, ...peripheral.registers]),
           derivedFrom: undefined,
           expanded: false,
@@ -584,7 +584,7 @@ export function EditorApp() {
         ...register.fields,
         createEmptyField({
           name: `FIELD${fieldCount}`,
-          description: 'New bit field',
+          description: 'Description of this FIELD',
           bitOffset: String(fieldCount),
         }),
       ],

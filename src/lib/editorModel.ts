@@ -427,7 +427,7 @@ function buildFieldsWithReserved(register: EditorRegister, fallbackSize = ''): S
   sortedFields.forEach((field, fieldIndex) => {
     if (Number.isInteger(field.bitOffset) && field.bitOffset > cursor) {
       fields.push({
-        name: `reserved${fieldIndex}`,
+        name: `RESERVED${fieldIndex}`,
         description: 'Reserved bits',
         bitOffset: cursor,
         bitWidth: field.bitOffset - cursor,
@@ -442,7 +442,7 @@ function buildFieldsWithReserved(register: EditorRegister, fallbackSize = ''): S
 
   if (cursor < effectiveWidth) {
     fields.push({
-      name: `reserved${fields.length}`,
+      name: `RESERVED${fields.length}`,
       description: 'Reserved bits',
       bitOffset: cursor,
       bitWidth: effectiveWidth - cursor,
