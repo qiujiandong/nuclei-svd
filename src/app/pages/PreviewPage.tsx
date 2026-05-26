@@ -24,7 +24,7 @@ export function PreviewPage({
   onDownload,
 }: PreviewPageProps) {
   return (
-    <section className="grid gap-6">
+    <section className="grid min-w-0 gap-6">
       <div className="flex flex-wrap gap-3">
         <Button type="button" onClick={onConvert}>
           校验并转换
