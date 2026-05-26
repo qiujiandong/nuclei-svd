@@ -46,19 +46,6 @@ export function PeripheralConfigPage({
 
   return (
     <section className="grid gap-4">
-      <article className="editor-card rounded-3xl border border-border bg-white p-6">
-        <div className="grid gap-3">
-          <p className="m-0 text-sm leading-6 text-slate-600">
-            外设实例在这里配置 baseAddress。关联模板实例会实时继承模板寄存器；非关联实例可自由编辑并另存为模板。
-          </p>
-          <div className="flex flex-wrap gap-2 text-sm text-slate-600">
-            <span>{customGroupCount} 个外设实例</span>
-            <span>{registerCount} 个寄存器</span>
-            <span>{fieldCount} 个位域</span>
-          </div>
-        </div>
-      </article>
-
       <div className="flex flex-wrap gap-3 rounded-3xl border border-border bg-white p-5">
         <Button type="button" variant="secondary" onClick={actions.addPeripheral}>
           新增独立外设
