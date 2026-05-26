@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react'
 import type { EditorDevice } from '../../lib/editorModel'
 import { Button } from '../../components/ui/button'
 import { FormField } from '../../components/ui/form-field'
 import { Input } from '../../components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import {
   RegisterEditorList,
   type BitField,
@@ -37,31 +39,116 @@ export type PeripheralConfigPageProps = {
 
 export function PeripheralConfigPage({
   device,
-  customGroupCount,
-  registerCount,
-  fieldCount,
   actions,
 }: PeripheralConfigPageProps) {
   const templateById = new Map(device.peripheralTemplates.map((template) => [template.id, template]))
+  const firstTemplateId = device.peripheralTemplates[0]?.id ?? ''
+  const [linkedTemplateId, setLinkedTemplateId] = useState(firstTemplateId)
+  const [detachedTemplateId, setDetachedTemplateId] = useState(firstTemplateId)
+  const hasTemplates = device.peripheralTemplates.length > 0
+
+  useEffect(() => {
+    if (device.peripheralTemplates.some((template) => template.id === linkedTemplateId)) {
+      return
+    }
+
+    setLinkedTemplateId(firstTemplateId)
+  }, [device.peripheralTemplates, firstTemplateId, linkedTemplateId])
+
+  useEffect(() => {
+    if (device.peripheralTemplates.some((template) => template.id === detachedTemplateId)) {
+      return
+    }
+
+    setDetachedTemplateId(firstTemplateId)
+  }, [device.peripheralTemplates, detachedTemplateId, firstTemplateId])
 
   return (
     <section className="grid gap-4">
-      <div className="flex flex-wrap gap-3 rounded-3xl border border-border bg-white p-5">
-        <Button type="button" variant="secondary" onClick={actions.addPeripheral}>
-          新增独立外设
-        </Button>
-        {device.peripheralTemplates.map((template, templateIndex) => (
-          <div className={`flex flex-wrap items-center gap-2 rounded-2xl border px-3 py-2 ${templateColorClass(templateIndex)}`} key={template.id}>
-            <strong className="text-sm">{summarizeName(template.name, `模板 ${templateIndex + 1}`)}</strong>
-            <Button type="button" variant="secondary" size="sm" onClick={() => actions.addLinkedPeripheralFromTemplate(template.id)}>
-              关联实例
-            </Button>
-            <Button type="button" variant="secondary" size="sm" onClick={() => actions.addDetachedPeripheralFromTemplate(template.id)}>
-              非关联副本
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <article className="editor-card rounded-3xl border border-border bg-white p-5">
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">standalone peripheral</p>
+            </div>
+            <Button type="button" variant="secondary" onClick={actions.addPeripheral}>
+              创建独立外设
             </Button>
           </div>
-        ))}
-      </div>
+        </article>
+
+        <article
+          className={`editor-card rounded-3xl border p-5 transition ${hasTemplates ? 'border-border bg-white' : 'border-dashed border-slate-200 bg-slate-50 opacity-60'
+            }`}
+        >
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">linked template instance</p>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!hasTemplates || linkedTemplateId.length === 0}
+              onClick={() => actions.addLinkedPeripheralFromTemplate(linkedTemplateId)}
+            >
+              创建关联实例
+            </Button>
+            <FormField label="外设模板">
+              <Select value={linkedTemplateId} onValueChange={setLinkedTemplateId} disabled={!hasTemplates}>
+                <SelectTrigger aria-label="选择用于创建关联实例的外设模板" disabled={!hasTemplates}>
+                  <SelectValue placeholder="暂无可用模板" />
+                </SelectTrigger>
+                <SelectContent>
+                  {device.peripheralTemplates.map((template, templateIndex) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {summarizeName(template.name, `模板 ${templateIndex + 1}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+            {!hasTemplates ? (
+              <p className="m-0 text-sm text-slate-500">暂无外设模板，请先在模板页面创建模板。</p>
+            ) : null}
+          </div>
+        </article>
+
+        <article
+          className={`editor-card rounded-3xl border p-5 transition ${hasTemplates ? 'border-border bg-white' : 'border-dashed border-slate-200 bg-slate-50 opacity-60'
+            }`}
+        >
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">detached template copy</p>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={!hasTemplates || detachedTemplateId.length === 0}
+              onClick={() => actions.addDetachedPeripheralFromTemplate(detachedTemplateId)}
+            >
+              创建非关联副本
+            </Button>
+            <FormField label="外设模板">
+              <Select value={detachedTemplateId} onValueChange={setDetachedTemplateId} disabled={!hasTemplates}>
+                <SelectTrigger aria-label="选择用于创建非关联副本的外设模板" disabled={!hasTemplates}>
+                  <SelectValue placeholder="暂无可用模板" />
+                </SelectTrigger>
+                <SelectContent>
+                  {device.peripheralTemplates.map((template, templateIndex) => (
+                    <SelectItem key={template.id} value={template.id}>
+                      {summarizeName(template.name, `模板 ${templateIndex + 1}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormField>
+            {!hasTemplates ? (
+              <p className="m-0 text-sm text-slate-500">暂无外设模板，请先在模板页面创建模板。</p>
+            ) : null}
+          </div>
+        </article>
+      </section>
 
       <div className="grid gap-4">
         {device.peripherals.length > 0 ? (
