@@ -5,6 +5,7 @@ import { FormField } from '../../components/ui/form-field'
 import { Input } from '../../components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select'
 import { cn } from '../../lib/utils'
+import { PeripheralBasicFields } from './PeripheralBasicFields'
 import {
   RegisterEditorList,
   type BitField,
@@ -209,33 +210,18 @@ export function PeripheralConfigPage({
                 </div>
                 {peripheral.expanded ? (
                   <div className="mt-5 grid gap-5">
-                    <div className="grid gap-4 xl:grid-cols-[max(150px)_max(100px)_1fr]">
-                      <FormField label="外设名称">
-                        <Input
-                          value={peripheral.name}
-                          onChange={(event) => actions.changePeripheral(peripheral.id, 'name', event.target.value)}
-                        />
-                      </FormField>
-                      {!linked ? (
-                        <>
-                          <FormField label="寄存器位宽">
-                            <Input
-                              value={peripheral.defaultRegisterSize}
-                              onChange={(event) =>
-                                actions.changePeripheral(peripheral.id, 'defaultRegisterSize', event.target.value)}
-                              placeholder={device.size}
-                            />
-                          </FormField>
-                          <FormField label="外设描述">
-                            <Input
-                              value={peripheral.description}
-                              onChange={(event) =>
-                                actions.changePeripheral(peripheral.id, 'description', event.target.value)}
-                            />
-                          </FormField>
-                        </>
-                      ) : null}
-                    </div>
+                    <PeripheralBasicFields
+                      name={peripheral.name}
+                      description={peripheral.description}
+                      defaultRegisterSize={peripheral.defaultRegisterSize}
+                      defaultRegisterSizePlaceholder={device.size}
+                      showDefaultRegisterSize={!linked}
+                      showDescription={!linked}
+                      onNameChange={(value) => actions.changePeripheral(peripheral.id, 'name', value)}
+                      onDescriptionChange={(value) => actions.changePeripheral(peripheral.id, 'description', value)}
+                      onDefaultRegisterSizeChange={(value) =>
+                        actions.changePeripheral(peripheral.id, 'defaultRegisterSize', value)}
+                    />
 
                     {!linked ? (
                       <RegisterEditorList

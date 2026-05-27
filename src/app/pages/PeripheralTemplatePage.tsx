@@ -1,7 +1,6 @@
 import type { EditorDevice } from '../../lib/editorModel'
 import { Button } from '../../components/ui/button'
-import { FormField } from '../../components/ui/form-field'
-import { Input } from '../../components/ui/input'
+import { PeripheralBasicFields } from './PeripheralBasicFields'
 import {
   RegisterEditorList,
   type BitField,
@@ -74,30 +73,16 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
                     </div>
                     {template.expanded ? (
                       <div className="mt-5 grid gap-5">
-                        <div className="grid gap-4 xl:grid-cols-[max(150px)_max(100px)_1fr]">
-                          <FormField label="外设名称">
-                            <Input
-                              value={template.name}
-                              onChange={(event) =>
-                                actions.changePeripheralTemplate(template.id, 'name', event.target.value)}
-                            />
-                          </FormField>
-                          <FormField label="寄存器位宽">
-                            <Input
-                              value={template.defaultRegisterSize}
-                              onChange={(event) =>
-                                actions.changePeripheralTemplate(template.id, 'defaultRegisterSize', event.target.value)}
-                              placeholder={device.size}
-                            />
-                          </FormField>
-                          <FormField label="外设描述" className="md:col-span-2 xl:col-span-1">
-                            <Input
-                              value={template.description}
-                              onChange={(event) =>
-                                actions.changePeripheralTemplate(template.id, 'description', event.target.value)}
-                            />
-                          </FormField>
-                        </div>
+                        <PeripheralBasicFields
+                          name={template.name}
+                          description={template.description}
+                          defaultRegisterSize={template.defaultRegisterSize}
+                          defaultRegisterSizePlaceholder={device.size}
+                          onNameChange={(value) => actions.changePeripheralTemplate(template.id, 'name', value)}
+                          onDescriptionChange={(value) => actions.changePeripheralTemplate(template.id, 'description', value)}
+                          onDefaultRegisterSizeChange={(value) =>
+                            actions.changePeripheralTemplate(template.id, 'defaultRegisterSize', value)}
+                        />
                         <RegisterEditorList
                           registers={template.registers}
                           namePrefix="模板"

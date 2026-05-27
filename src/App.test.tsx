@@ -102,8 +102,9 @@ describe('App', () => {
     openPage('外设基础配置')
     fireEvent.click(screen.getByRole('button', { name: '创建关联实例' }))
 
-    expect(screen.getByDisplayValue('GPIO_TEMPLATE_INST0')).toBeInTheDocument()
-    expect(screen.queryByLabelText('外设描述')).not.toBeInTheDocument()
+    expect(screen.getByText('GPIO_TEMPLATE_INST0')).toBeInTheDocument()
+    expect(screen.getByLabelText('外设描述')).toBeDisabled()
+    expect(screen.getByLabelText('寄存器位宽')).toBeDisabled()
   })
 
   it('converts the current configuration and enables download', async () => {
