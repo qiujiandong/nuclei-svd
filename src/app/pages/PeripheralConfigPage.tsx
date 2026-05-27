@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { EditorDevice } from '../../lib/editorModel'
+import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert'
 import { Button } from '../../components/ui/button'
 import { FormField } from '../../components/ui/form-field'
 import { Input } from '../../components/ui/input'
@@ -36,11 +37,13 @@ export type PeripheralConfigPageProps = {
   customGroupCount: number
   registerCount: number
   fieldCount: number
+  templateSaveError?: string | null
   actions: PeripheralConfigPageActions
 }
 
 export function PeripheralConfigPage({
   device,
+  templateSaveError,
   actions,
 }: PeripheralConfigPageProps) {
   const templateById = new Map(device.peripheralTemplates.map((template) => [template.id, template]))
@@ -67,6 +70,12 @@ export function PeripheralConfigPage({
 
   return (
     <section className="grid gap-4">
+      {templateSaveError ? (
+        <Alert variant="destructive">
+          <AlertTitle>保存模板失败</AlertTitle>
+          <AlertDescription>{templateSaveError}</AlertDescription>
+        </Alert>
+      ) : null}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <article className="editor-card rounded-3xl border border-border bg-white p-5">
           <div className="grid gap-4">

@@ -141,6 +141,38 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: /外设模板 UART0/ })).toBeInTheDocument()
   })
 
+  it('saves standalone peripheral as template without appending an index to the template name', () => {
+    render(<App />)
+
+    openPage('外设基础配置')
+    fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
+    fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'SPI' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存为模板' }))
+
+    openPage('外设模板')
+    expect(screen.getByRole('button', { name: /外设模板 SPI/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /外设模板 SPI\d+/ })).not.toBeInTheDocument()
+  })
+
+  it('fails to save a template when the target template name already exists', () => {
+    render(<App />)
+
+    openPage('外设模板')
+    fireEvent.click(screen.getByRole('button', { name: '新增外设模板' }))
+    fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'SPI' } })
+
+    openPage('外设基础配置')
+    fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
+    fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'SPI' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存为模板' }))
+
+    expect(screen.getByText('保存模板失败')).toBeInTheDocument()
+    expect(screen.getByText('模板名称 "SPI" 已存在。')).toBeInTheDocument()
+
+    openPage('外设模板')
+    expect(screen.getAllByRole('button', { name: /外设模板 SPI/ }).length).toBe(1)
+  })
+
   it('converts the current configuration and enables download', async () => {
     render(<App />)
 

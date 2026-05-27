@@ -131,6 +131,7 @@ function standaloneRegisterSeed(
 export function EditorApp() {
   const [device, setDevice] = useState<EditorDevice>(() => createDefaultEditorDevice())
   const [state, setState] = useState<ConversionState>(initialState)
+  const [templateSaveError, setTemplateSaveError] = useState<string | null>(null)
   const [activePage, setActivePage] = useState<AppPageId>(DEFAULT_APP_PAGE)
   const [deviceInfoCollapsed, setDeviceInfoCollapsed] = useState(true)
   const configInputRef = useRef<HTMLInputElement | null>(null)
@@ -174,6 +175,7 @@ export function EditorApp() {
 
   const updateDevice = (updater: (current: EditorDevice) => EditorDevice) => {
     setDevice((current) => updater(current))
+    setTemplateSaveError(null)
     invalidateResult()
   }
 
@@ -485,18 +487,35 @@ export function EditorApp() {
   }
 
   const handleSavePeripheralAsTemplate = (peripheralId: string) => {
+    let duplicateTemplateName: string | null = null
+
     updateDevice((current) => {
       const sourcePeripheral = current.peripherals.find((peripheral) => peripheral.id === peripheralId)
       if (!sourcePeripheral || sourcePeripheral.templateId) return current
+
+      const nextTemplate = createPeripheralTemplateFromInstance(sourcePeripheral)
+      const hasDuplicateName = current.peripheralTemplates.some((template) => template.name.trim() === nextTemplate.name.trim())
+      if (hasDuplicateName) {
+        duplicateTemplateName = nextTemplate.name.trim()
+        return current
+      }
 
       return {
         ...current,
         peripheralTemplates: [
           ...current.peripheralTemplates,
-          createPeripheralTemplateFromInstance(sourcePeripheral, current.peripheralTemplates.length),
+          nextTemplate,
         ],
       }
     })
+
+    if (duplicateTemplateName) {
+      setTemplateSaveError(`模板名称 "${duplicateTemplateName}" 已存在。`)
+      return
+    }
+
+    setTemplateSaveError(null)
+    invalidateResult('已保存为模板，请重新执行校验与转换。')
   }
 
   const handleRemovePeripheral = (peripheralId: string) => {
@@ -884,6 +903,7 @@ export function EditorApp() {
                   customGroupCount={controllerGroups.peripheral.stats.customGroupCount}
                   registerCount={controllerGroups.peripheral.stats.registerCount}
                   fieldCount={controllerGroups.peripheral.stats.fieldCount}
+                  templateSaveError={templateSaveError}
                   actions={{
                     addPeripheral: handleAddPeripheral,
                     addLinkedPeripheralFromTemplate: handleAddLinkedPeripheralFromTemplate,

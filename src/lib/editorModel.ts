@@ -327,10 +327,9 @@ export function createPeripheralCopyFromTemplate(
 
 export function createPeripheralTemplateFromInstance(
   peripheral: EditorPeripheral,
-  index: number,
 ): EditorPeripheral {
   return createEmptyPeripheral({
-    name: `${peripheral.name || 'PERI'}${index}`,
+    name: `${peripheral.name || 'PERI'}`,
     description: peripheral.description,
     baseAddress: '0x0',
     defaultRegisterSize: peripheral.defaultRegisterSize || peripheral.registers.find((register) => register.size.trim().length > 0)?.size || '32',
