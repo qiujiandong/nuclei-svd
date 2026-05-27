@@ -100,7 +100,7 @@ export function PeripheralConfigPage({
                 <SelectTrigger aria-label="选择用于创建关联实例的外设模板" disabled={!hasTemplates}>
                   <SelectValue placeholder="暂无可用模板" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                   {device.peripheralTemplates.map((template, templateIndex) => (
                     <SelectItem key={template.id} value={template.id}>
                       {summarizeName(template.name, `模板 ${templateIndex + 1}`)}
@@ -136,7 +136,7 @@ export function PeripheralConfigPage({
                 <SelectTrigger aria-label="选择用于创建非关联副本的外设模板" disabled={!hasTemplates}>
                   <SelectValue placeholder="暂无可用模板" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)]">
                   {device.peripheralTemplates.map((template, templateIndex) => (
                     <SelectItem key={template.id} value={template.id}>
                       {summarizeName(template.name, `模板 ${templateIndex + 1}`)}
