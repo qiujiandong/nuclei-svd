@@ -30,7 +30,7 @@ export const APP_NAV_GROUPS: AppNavGroup[] = [
     title: 'SoC配置',
     pages: [
       { id: 'device-info', title: '设备基础信息', eyebrow: 'Device profile' },
-      { id: 'peripheral-config', title: '外设基础配置', eyebrow: 'Peripheral profile' },
+      { id: 'peripheral-config', title: '外设配置', eyebrow: 'Peripheral profile' },
       { id: 'preview', title: '预览', eyebrow: 'SVD preview' },
     ],
   },

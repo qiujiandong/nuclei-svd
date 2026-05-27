@@ -106,7 +106,7 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
               })
             ) : (
               <p className="m-0 rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                暂无外设模板。先创建模板，再到 SoC 外设配置中实例化。
+                暂无外设模板。请先创建模板，外设模板可用于外设实例化。
               </p>
             )}
           </div>

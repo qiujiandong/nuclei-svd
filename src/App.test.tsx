@@ -25,7 +25,7 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'IREGION模板' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('button', { name: '外设模板' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '设备基础信息' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '外设基础配置' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '外设配置' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '预览' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'IREGION模板' })).toBeInTheDocument()
   })
@@ -33,7 +33,7 @@ describe('App', () => {
   it('switches pages from the sidebar', () => {
     render(<App />)
 
-    for (const pageName of ['IREGION模板', '外设模板', '设备基础信息', '外设基础配置', '预览']) {
+    for (const pageName of ['IREGION模板', '外设模板', '设备基础信息', '外设配置', '预览']) {
       openPage(pageName)
       expect(screen.getByRole('button', { name: pageName })).toHaveAttribute('aria-current', 'page')
       expect(screen.getByRole('heading', { level: 2, name: pageName })).toBeInTheDocument()
@@ -75,7 +75,7 @@ describe('App', () => {
     fireEvent.click(screen.getByText('+'))
     expect(screen.getByPlaceholderText('16')).toBeInTheDocument()
 
-    openPage('外设基础配置')
+    openPage('外设配置')
     fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
     expect(screen.getAllByPlaceholderText('32').length).toBeGreaterThan(0)
 
@@ -87,7 +87,7 @@ describe('App', () => {
   it('creates a standalone peripheral instance from the peripheral config page', () => {
     render(<App />)
 
-    openPage('外设基础配置')
+    openPage('外设配置')
     fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'UART0' } })
     fireEvent.change(screen.getByLabelText('外设基地址'), { target: { value: '0x40000000' } })
@@ -107,7 +107,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '新增外设模板' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'GPIO_TEMPLATE' } })
 
-    openPage('外设基础配置')
+    openPage('外设配置')
     fireEvent.click(screen.getByRole('button', { name: '创建关联实例' }))
 
     expect(screen.getByRole('button', { name: /外设实例 GPIO_TEMPLATE0/ })).toBeInTheDocument()
@@ -122,21 +122,21 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '新增外设模板' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'GPIO_TEMPLATE' } })
 
-    openPage('外设基础配置')
+    openPage('外设配置')
     fireEvent.click(screen.getByRole('button', { name: '创建关联实例' }))
     expect(screen.getByRole('button', { name: /外设实例 GPIO_TEMPLATE0/ })).toBeInTheDocument()
 
     openPage('外设模板')
     fireEvent.click(screen.getByRole('button', { name: '删除模板' }))
 
-    openPage('外设基础配置')
+    openPage('外设配置')
     expect(screen.queryByRole('button', { name: /外设实例 GPIO_TEMPLATE0/ })).not.toBeInTheDocument()
   })
 
   it('updates standalone peripheral groupName when renaming the peripheral', () => {
     render(<App />)
 
-    openPage('外设基础配置')
+    openPage('外设配置')
     fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'UART0' } })
     fireEvent.click(screen.getByRole('button', { name: '保存为模板' }))
@@ -148,7 +148,7 @@ describe('App', () => {
   it('saves standalone peripheral as template without appending an index to the template name', () => {
     render(<App />)
 
-    openPage('外设基础配置')
+    openPage('外设配置')
     fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'SPI' } })
     fireEvent.click(screen.getByRole('button', { name: '保存为模板' }))
@@ -165,7 +165,7 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '新增外设模板' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'SPI' } })
 
-    openPage('外设基础配置')
+    openPage('外设配置')
     fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'SPI' } })
     fireEvent.click(screen.getByRole('button', { name: '保存为模板' }))
@@ -190,7 +190,7 @@ describe('App', () => {
   it('does not emit access for user-created peripherals in generated xml', async () => {
     render(<App />)
 
-    openPage('外设基础配置')
+    openPage('外设配置')
     fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'UART0' } })
 

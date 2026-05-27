@@ -119,7 +119,7 @@ export function PeripheralConfigPage({
               </Select>
             </FormField>
             {!hasTemplates ? (
-              <p className="m-0 text-sm text-slate-500">暂无外设模板，请先在模板页面创建模板。</p>
+              <p className="m-0 text-sm text-slate-500">暂无外设模板，请先创建模板。</p>
             ) : null}
           </div>
         </article>
@@ -155,7 +155,7 @@ export function PeripheralConfigPage({
               </Select>
             </FormField>
             {!hasTemplates ? (
-              <p className="m-0 text-sm text-slate-500">暂无外设模板，请先在模板页面创建模板。</p>
+              <p className="m-0 text-sm text-slate-500">暂无外设模板，请先创建模板。</p>
             ) : null}
           </div>
         </article>

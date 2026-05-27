@@ -802,10 +802,10 @@ export function EditorApp() {
 
   const activePageMeta = appPageMeta(activePage)
   const pageDescription = {
-    'iregion-template': '配置 IREGION 生成参数和内置模块开关，作为片上基础寄存器模板来源。',
-    'peripheral-template': '维护可复用的外设模板，供 SoC 外设实例按需关联或复制。',
-    'device-info': '填写设备级默认值、总线宽度和下载输出的基础元数据。',
-    'peripheral-config': '创建最终写入 SVD 的外设实例，并指定 baseAddress 与模板关系。',
+    'iregion-template': '配置 IREGION 中的不同模块是否启用，以及模块相关参数配置。',
+    'peripheral-template': '维护可复用的外设模板，可供外设实例按需关联或复制。',
+    'device-info': '填写 SoC 基础信息，包括设备名称、版本号等。',
+    'peripheral-config': '创建并配置外设实例。',
     preview: '执行校验并查看最终 XML，确认输出后下载 .svd 文件。',
   } satisfies Record<AppPageId, string>
 
