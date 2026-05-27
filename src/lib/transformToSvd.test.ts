@@ -14,7 +14,7 @@ describe('transformToSvd', () => {
     expect(first).toContain('<device schemaVersion=')
     expect(first).toContain('<name>NucleiDemo</name>')
     expect(first).toContain('<name>IINFO</name>')
-    expect(first).not.toContain('<access>')
+    expect(first).toContain('<access>read-write</access>')
     expect(first).not.toContain('<resetValue>')
     expect(first).not.toContain('<resetMask>')
   })

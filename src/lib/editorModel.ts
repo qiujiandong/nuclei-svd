@@ -396,12 +396,13 @@ function optionalStringProperty(name: string, value: string) {
   return value.trim().length > 0 ? { [name]: value.trim() } : {}
 }
 
-function buildField(field: EditorField): SvdFieldInput {
+function buildField(field: EditorField, includeAccess = false): SvdFieldInput {
   return {
     name: field.name.trim(),
     description: field.description.trim(),
     bitOffset: parseIntegerInput(field.bitOffset),
     bitWidth: parseIntegerInput(field.bitWidth),
+    ...(includeAccess ? optionalStringProperty('access', field.access) : {}),
   }
 }
 
@@ -409,8 +410,8 @@ function resolveRegisterSize(register: EditorRegister, fallbackSize = '') {
   return register.size.trim().length > 0 ? register.size : fallbackSize
 }
 
-function buildFieldsWithReserved(register: EditorRegister, fallbackSize = ''): SvdFieldInput[] {
-  const userFields = register.fields.map((field) => buildField(field))
+function buildFieldsWithReserved(register: EditorRegister, fallbackSize = '', includeAccess = false): SvdFieldInput[] {
+  const userFields = register.fields.map((field) => buildField(field, includeAccess))
   if (userFields.length === 0) {
     return []
   }
@@ -452,7 +453,7 @@ function buildFieldsWithReserved(register: EditorRegister, fallbackSize = ''): S
   return fields
 }
 
-function buildRegister(register: EditorRegister, fallbackSize = ''): SvdRegisterInput {
+function buildRegister(register: EditorRegister, fallbackSize = '', includeAccess = false): SvdRegisterInput {
   const resolvedSize = resolveRegisterSize(register, fallbackSize)
 
   return {
@@ -463,11 +464,12 @@ function buildRegister(register: EditorRegister, fallbackSize = ''): SvdRegister
     ...optionalIntegerProperty('dimIncrement', register.dimIncrement),
     ...optionalStringProperty('derivedFrom', register.derivedFrom ?? ''),
     ...optionalIntegerProperty('size', resolvedSize),
-    fields: buildFieldsWithReserved(register, fallbackSize),
+    ...(includeAccess ? optionalStringProperty('access', register.access) : {}),
+    fields: buildFieldsWithReserved(register, fallbackSize, includeAccess),
   }
 }
 
-function buildPeripheral(peripheral: EditorPeripheral): SvdPeripheralInput {
+function buildPeripheral(peripheral: EditorPeripheral, includeAccess = false): SvdPeripheralInput {
   const instantiatedRegisterTemplateNames = new Set(
     peripheral.registers
       .map((register) => register.derivedFrom?.trim())
@@ -486,7 +488,7 @@ function buildPeripheral(peripheral: EditorPeripheral): SvdPeripheralInput {
     ...optionalStringProperty('derivedFrom', peripheral.derivedFrom ?? ''),
     ...optionalStringProperty('groupName', peripheral.groupName),
     ...(registers.length > 0
-      ? { registers: registers.map((register) => buildRegister(register, fallbackSize)) }
+      ? { registers: registers.map((register) => buildRegister(register, fallbackSize, includeAccess)) }
       : {}),
   }
 }
@@ -571,7 +573,7 @@ export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
     width: parseIntegerInput(device.width),
     ...optionalIntegerProperty('size', device.size),
       peripherals: [
-        ...resolvedIRegionPeripherals.map((peripheral) => buildPeripheral(peripheral)),
+        ...resolvedIRegionPeripherals.map((peripheral) => buildPeripheral(peripheral, true)),
         ...resolvedCustomPeripherals,
       ],
     },
