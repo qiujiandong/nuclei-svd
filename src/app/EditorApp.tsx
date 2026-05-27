@@ -449,9 +449,7 @@ export function EditorApp() {
     updateDevice((current) => ({
       ...current,
       peripheralTemplates: current.peripheralTemplates.filter((template) => template.id !== templateId),
-      peripherals: current.peripherals.map((peripheral) =>
-        peripheral.templateId === templateId ? { ...peripheral, templateId: undefined, derivedFrom: undefined } : peripheral,
-      ),
+      peripherals: current.peripherals.filter((peripheral) => peripheral.templateId !== templateId),
     }))
   }
 

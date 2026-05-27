@@ -258,7 +258,7 @@ export function createRegisterInstanceFromTemplate(
   index: number,
 ): EditorRegister {
   return createEmptyRegister({
-    name: `${template.name}_INST${index}`,
+    name: `${template.name}${index}`,
     description: template.description,
     addressOffset,
     derivedFrom: template.name,
@@ -299,7 +299,7 @@ export function createPeripheralInstanceFromTemplate(
 ): EditorPeripheral {
   return createEmptyPeripheral({
     templateId: template.id,
-    name: `${template.name}_INST${index}`,
+    name: `${template.name}${index}`,
     description: template.description,
     baseAddress: '0x40001000',
     defaultRegisterSize: template.defaultRegisterSize,
@@ -314,7 +314,7 @@ export function createPeripheralCopyFromTemplate(
   index: number,
 ): EditorPeripheral {
   return createEmptyPeripheral({
-    name: `${template.name}_COPY${index}`,
+    name: `${template.name}${index}`,
     description: template.description,
     baseAddress: '0x40001000',
     defaultRegisterSize: template.defaultRegisterSize,
@@ -330,7 +330,7 @@ export function createPeripheralTemplateFromInstance(
   index: number,
 ): EditorPeripheral {
   return createEmptyPeripheral({
-    name: `${peripheral.name || 'PERI'}_TMPL${index}`,
+    name: `${peripheral.name || 'PERI'}${index}`,
     description: peripheral.description,
     baseAddress: '0x0',
     defaultRegisterSize: peripheral.defaultRegisterSize || peripheral.registers.find((register) => register.size.trim().length > 0)?.size || '32',

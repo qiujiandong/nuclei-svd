@@ -102,9 +102,27 @@ describe('App', () => {
     openPage('外设基础配置')
     fireEvent.click(screen.getByRole('button', { name: '创建关联实例' }))
 
-    expect(screen.getByText('GPIO_TEMPLATE_INST0')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /外设实例 GPIO_TEMPLATE0/ })).toBeInTheDocument()
     expect(screen.getByLabelText('外设描述')).toBeDisabled()
     expect(screen.getByLabelText('寄存器位宽')).toBeDisabled()
+  })
+
+  it('removes linked instances when deleting a template', () => {
+    render(<App />)
+
+    openPage('外设模板')
+    fireEvent.click(screen.getByRole('button', { name: '新增外设模板' }))
+    fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'GPIO_TEMPLATE' } })
+
+    openPage('外设基础配置')
+    fireEvent.click(screen.getByRole('button', { name: '创建关联实例' }))
+    expect(screen.getByRole('button', { name: /外设实例 GPIO_TEMPLATE0/ })).toBeInTheDocument()
+
+    openPage('外设模板')
+    fireEvent.click(screen.getByRole('button', { name: '删除模板' }))
+
+    openPage('外设基础配置')
+    expect(screen.queryByRole('button', { name: /外设实例 GPIO_TEMPLATE0/ })).not.toBeInTheDocument()
   })
 
   it('converts the current configuration and enables download', async () => {
