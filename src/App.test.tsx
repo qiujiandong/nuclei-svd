@@ -45,7 +45,7 @@ describe('App', () => {
 
     expect(screen.getByLabelText('设备名称')).toHaveValue('CustomDevice')
     expect(screen.getByLabelText('IREGION 基地址')).toHaveValue('0x19000000')
-    expect(screen.getByLabelText('默认 size')).toHaveValue('32')
+    expect(screen.getByLabelText('默认寄存器位宽')).toHaveValue('32')
   })
 
   it('creates and edits a peripheral template', () => {
@@ -53,21 +53,40 @@ describe('App', () => {
 
     openPage('外设模板')
     fireEvent.click(screen.getByRole('button', { name: '新增外设模板' }))
-    fireEvent.click(screen.getByRole('button', { name: '展开外设模板 PERI0' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'GPIO_TEMPLATE' } })
-    fireEvent.click(screen.getByRole('button', { name: '新增寄存器' }))
+    fireEvent.click(screen.getByText('+'))
 
     expect(screen.getByDisplayValue('GPIO_TEMPLATE')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('REG1')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('REG0')).toBeInTheDocument()
+  })
+
+  it('shows resolved register size placeholders for template and standalone peripherals', () => {
+    render(<App />)
+
+    openPage('外设模板')
+    fireEvent.click(screen.getByRole('button', { name: '新增外设模板' }))
+    expect(screen.getByDisplayValue('32')).toBeInTheDocument()
+
+    fireEvent.change(screen.getAllByLabelText('寄存器位宽')[0], { target: { value: '16' } })
+    fireEvent.click(screen.getByText('+'))
+    expect(screen.getByPlaceholderText('16')).toBeInTheDocument()
+
+    openPage('外设基础配置')
+    fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
+    expect(screen.getAllByPlaceholderText('32').length).toBeGreaterThan(0)
+
+    fireEvent.change(screen.getAllByLabelText('寄存器位宽')[0], { target: { value: '64' } })
+    fireEvent.click(screen.getAllByText('+')[0])
+    expect(screen.getByPlaceholderText('64')).toBeInTheDocument()
   })
 
   it('creates a standalone peripheral instance from the peripheral config page', () => {
     render(<App />)
 
     openPage('外设基础配置')
-    fireEvent.click(screen.getByRole('button', { name: '新增独立外设' }))
+    fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'UART0' } })
-    fireEvent.change(screen.getByLabelText('baseAddress'), { target: { value: '0x40000000' } })
+    fireEvent.change(screen.getByLabelText('外设基地址'), { target: { value: '0x40000000' } })
 
     expect(screen.getByDisplayValue('UART0')).toBeInTheDocument()
     expect(screen.getByDisplayValue('0x40000000')).toBeInTheDocument()
@@ -78,14 +97,13 @@ describe('App', () => {
 
     openPage('外设模板')
     fireEvent.click(screen.getByRole('button', { name: '新增外设模板' }))
-    fireEvent.click(screen.getByRole('button', { name: '展开外设模板 PERI0' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'GPIO_TEMPLATE' } })
 
     openPage('外设基础配置')
-    fireEvent.click(screen.getByRole('button', { name: '关联实例' }))
+    fireEvent.click(screen.getByRole('button', { name: '创建关联实例' }))
 
     expect(screen.getByDisplayValue('GPIO_TEMPLATE_INST0')).toBeInTheDocument()
-    expect(screen.getByText('描述、groupName、寄存器和位域均继承自模板。修改模板后，所有关联实例会同步更新。')).toBeInTheDocument()
+    expect(screen.queryByLabelText('外设描述')).not.toBeInTheDocument()
   })
 
   it('converts the current configuration and enables download', async () => {

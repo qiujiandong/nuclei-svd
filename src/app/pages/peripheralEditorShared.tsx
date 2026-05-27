@@ -94,6 +94,7 @@ export function FieldTable({
 type RegisterListProps = {
   registers: EditorRegister[]
   namePrefix: string
+  defaultRegisterSizePlaceholder: string
   onToggleRegister: (registerId: string) => void
   onAddRegister: () => void
   onRegisterChange: (registerId: string, field: RegisterField, value: string) => void
@@ -106,6 +107,7 @@ type RegisterListProps = {
 export function RegisterEditorList({
   registers,
   namePrefix,
+  defaultRegisterSizePlaceholder,
   onToggleRegister,
   onAddRegister,
   onRegisterChange,
@@ -169,7 +171,7 @@ export function RegisterEditorList({
                   <TableCell>
                     <Input
                       value={register.size}
-                      placeholder="继承"
+                      placeholder={defaultRegisterSizePlaceholder}
                       onChange={(event) => onRegisterChange(register.id, 'size', event.target.value)}
                       className={cn(register.size.trim().length === 0 && 'text-slate-400')}
                     />

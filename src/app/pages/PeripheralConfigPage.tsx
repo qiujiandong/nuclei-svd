@@ -155,7 +155,7 @@ export function PeripheralConfigPage({
           device.peripherals.map((peripheral, peripheralIndex) => {
             const template = peripheral.templateId ? templateById.get(peripheral.templateId) : undefined
             const linked = Boolean(template)
-            const inheritedRegisters = template?.registers ?? []
+            const resolvedDefaultRegisterSize = peripheral.defaultRegisterSize.trim() || device.size.trim()
 
             return (
               <article
@@ -209,6 +209,14 @@ export function PeripheralConfigPage({
                                 actions.changePeripheral(peripheral.id, 'description', event.target.value)}
                             />
                           </FormField>
+                          <FormField label="寄存器位宽">
+                            <Input
+                              value={peripheral.defaultRegisterSize}
+                              onChange={(event) =>
+                                actions.changePeripheral(peripheral.id, 'defaultRegisterSize', event.target.value)}
+                              placeholder={device.size}
+                            />
+                          </FormField>
                         </>
                       ) : null}
                     </div>
@@ -217,6 +225,7 @@ export function PeripheralConfigPage({
                       <RegisterEditorList
                         registers={peripheral.registers}
                         namePrefix="实例"
+                        defaultRegisterSizePlaceholder={resolvedDefaultRegisterSize}
                         onToggleRegister={(registerId) => actions.toggleRegister(peripheral.id, registerId)}
                         onAddRegister={() => actions.addRegister(peripheral.id)}
                         onRegisterChange={(registerId, field, value) =>
