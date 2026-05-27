@@ -35,13 +35,13 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
       <section className="editor-card rounded-3xl border border-border bg-white p-6">
         <div className="grid gap-4">
           <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="m-0 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">peripheral templates list</p>
-                <h4 className="m-0 text-lg font-semibold text-slate-900">外设模板列表</h4>
-              </div>
-              <Button type="button" variant="secondary" onClick={actions.addPeripheralTemplate}>
-                新增外设模板
-              </Button>
+            <div>
+              <p className="m-0 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">peripheral templates list</p>
+              <h4 className="m-0 text-lg font-semibold text-slate-900">外设模板列表</h4>
+            </div>
+            <Button type="button" variant="secondary" onClick={actions.addPeripheralTemplate}>
+              新增外设模板
+            </Button>
           </div>
           <div className="grid gap-4">
             {device.peripheralTemplates.length > 0 ? (
@@ -58,7 +58,7 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
                         aria-label={`${template.expanded ? '折叠' : '展开'}外设模板 ${summarizeName(template.name, `外设模板 ${templateIndex + 1}`)}`}
                         onClick={() => actions.togglePeripheralTemplate(template.id)}
                       >
-                        <span className="pt-1 text-slate-400">{template.expanded ? '▾' : '▸'}</span>
+                        <span className="pt-1 text-slate-400">{template.expanded ? '▼' : '▶'}</span>
                         <div className="grid gap-1">
                           <span className="text-sm font-semibold text-slate-900">
                             {summarizeName(template.name, `外设模板 ${templateIndex + 1}`)}
@@ -74,19 +74,12 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
                     </div>
                     {template.expanded ? (
                       <div className="mt-5 grid gap-5">
-                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        <div className="grid gap-4 xl:grid-cols-[max(150px)_max(100px)_1fr]">
                           <FormField label="外设名称">
                             <Input
                               value={template.name}
                               onChange={(event) =>
                                 actions.changePeripheralTemplate(template.id, 'name', event.target.value)}
-                            />
-                          </FormField>
-                          <FormField label="外设描述" className="md:col-span-2 xl:col-span-1">
-                            <Input
-                              value={template.description}
-                              onChange={(event) =>
-                                actions.changePeripheralTemplate(template.id, 'description', event.target.value)}
                             />
                           </FormField>
                           <FormField label="寄存器位宽">
@@ -95,6 +88,13 @@ export function PeripheralTemplatePage({ device, actions }: PeripheralTemplatePa
                               onChange={(event) =>
                                 actions.changePeripheralTemplate(template.id, 'defaultRegisterSize', event.target.value)}
                               placeholder={device.size}
+                            />
+                          </FormField>
+                          <FormField label="外设描述" className="md:col-span-2 xl:col-span-1">
+                            <Input
+                              value={template.description}
+                              onChange={(event) =>
+                                actions.changePeripheralTemplate(template.id, 'description', event.target.value)}
                             />
                           </FormField>
                         </div>
