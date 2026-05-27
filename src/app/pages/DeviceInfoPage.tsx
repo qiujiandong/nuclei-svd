@@ -22,52 +22,33 @@ export function DeviceInfoPage({
       <FormField label="版本">
         <Input value={device.version} onChange={(event) => onDeviceChange('version', event.target.value)} />
       </FormField>
-      <FormField label="IREGION 基地址">
-        <Input
-          aria-label="IREGION 基地址"
-          value={device.iregionBaseAddress}
-          onChange={(event) => onIRegionBaseAddressChange(event.target.value)}
-          placeholder="0x18000000"
-        />
-      </FormField>
-      <FormField label="addressUnitBits">
+      <FormField label="访存单元位宽">
         <Input
           value={device.addressUnitBits}
           onChange={(event) => onDeviceChange('addressUnitBits', event.target.value)}
           inputMode="numeric"
         />
       </FormField>
-      <FormField label="width">
+      <FormField label="地址位宽">
         <Input
           value={device.width}
           onChange={(event) => onDeviceChange('width', event.target.value)}
           inputMode="numeric"
         />
       </FormField>
-      <FormField label="默认 size">
+      <FormField label="默认寄存器位宽">
         <Input
           value={device.size}
           onChange={(event) => onDeviceChange('size', event.target.value)}
           inputMode="numeric"
         />
       </FormField>
-      <AccessSelect
-        value={device.access}
-        onChange={(nextValue) => onDeviceChange('access', nextValue)}
-        label="默认 access"
-      />
-      <FormField label="默认 resetValue">
+      <FormField label="IREGION 基地址">
         <Input
-          value={device.resetValue}
-          onChange={(event) => onDeviceChange('resetValue', event.target.value)}
-          placeholder="0x00000000"
-        />
-      </FormField>
-      <FormField label="默认 resetMask">
-        <Input
-          value={device.resetMask}
-          onChange={(event) => onDeviceChange('resetMask', event.target.value)}
-          placeholder="0xFFFFFFFF"
+          aria-label="IREGION 基地址"
+          value={device.iregionBaseAddress}
+          onChange={(event) => onIRegionBaseAddressChange(event.target.value)}
+          placeholder="0x18000000"
         />
       </FormField>
       <FormField label="设备描述" className="md:col-span-2">

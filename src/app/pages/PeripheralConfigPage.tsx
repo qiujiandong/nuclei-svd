@@ -193,7 +193,7 @@ export function PeripheralConfigPage({
                           onChange={(event) => actions.changePeripheral(peripheral.id, 'name', event.target.value)}
                         />
                       </FormField>
-                      <FormField label="baseAddress">
+                      <FormField label="外设基地址">
                         <Input
                           value={peripheral.baseAddress}
                           onChange={(event) =>
@@ -202,13 +202,6 @@ export function PeripheralConfigPage({
                       </FormField>
                       {!linked ? (
                         <>
-                          <FormField label="groupName">
-                            <Input
-                              value={peripheral.groupName}
-                              onChange={(event) =>
-                                actions.changePeripheral(peripheral.id, 'groupName', event.target.value)}
-                            />
-                          </FormField>
                           <FormField label="外设描述" className="xl:col-span-2">
                             <Input
                               value={peripheral.description}
@@ -219,20 +212,6 @@ export function PeripheralConfigPage({
                         </>
                       ) : null}
                     </div>
-
-                    {linked && template ? (
-                      <section className="rounded-2xl border border-slate-200 bg-white/80 p-4">
-                        <p className="m-0 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">linked template</p>
-                        <h4 className="mb-2 mt-2 text-base font-semibold text-slate-900">{summarizeName(template.name, '未命名模板')}</h4>
-                        <p className="m-0 text-sm leading-6 text-slate-600">
-                          描述、groupName、寄存器和位域均继承自模板。修改模板后，所有关联实例会同步更新。
-                        </p>
-                        <div className="mt-3 flex flex-wrap gap-3 text-sm text-slate-600">
-                          <span>groupName: {summarizeName(template.groupName, template.name)}</span>
-                          <span>{inheritedRegisters.length} 个继承寄存器</span>
-                        </div>
-                      </section>
-                    ) : null}
 
                     {!linked ? (
                       <RegisterEditorList

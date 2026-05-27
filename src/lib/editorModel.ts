@@ -270,7 +270,7 @@ export function createRegisterInstanceFromTemplate(
 export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
   return createEmptyPeripheral({
     name: `PERI${index}`,
-    description: 'New register group',
+    description: `Description of PERI${index}`,
     baseAddress: '0x40001000',
     defaultRegisterSize: '',
     groupName: 'PERIPHERAL',
@@ -330,7 +330,7 @@ export function createPeripheralTemplateFromInstance(
   index: number,
 ): EditorPeripheral {
   return createEmptyPeripheral({
-    name: `${peripheral.name || 'PERI'}_TEMPLATE${index}`,
+    name: `${peripheral.name || 'PERI'}_TMPL${index}`,
     description: peripheral.description,
     baseAddress: '0x0',
     defaultRegisterSize: peripheral.defaultRegisterSize || peripheral.registers.find((register) => register.size.trim().length > 0)?.size || '32',
