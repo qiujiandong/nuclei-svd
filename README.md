@@ -1,35 +1,58 @@
+[![Deploy GitHub Pages](https://github.com/qiujiandong/nuclei-svd/actions/workflows/pages.yml/badge.svg)](https://github.com/qiujiandong/nuclei-svd/actions/workflows/pages.yml)
+![GitHub last commit](https://img.shields.io/github/last-commit/qiujiandong/nuclei-svd)
+
 # Nuclei SVD
 
-> 为基于 Nuclei CPU 的 SoC 平台快速生成 CMSIS-SVD 文件。
+[Nuclei SVD](https://qiujiandong.github.io/nuclei-svd/) is a browser-based editor
+for building CMSIS-SVD files for SoC platforms based on Nuclei CPUs.
+It provides an interactive workflow for configuring device metadata,
+IREGION-generated peripherals, reusable peripheral templates, custom
+peripheral instances, registers, and bit fields, then validating and
+generating the final `.svd` output.
 
-Nuclei SVD 提供交互式寄存器配置界面，用于维护设备基础信息、IREGION 基地址、自定义寄存器组、寄存器模板和位域，并生成可下载的 `.svd` 文件。
+## Key Features
 
-## 如何使用
+- Interactive editor for CMSIS-SVD generation
+- IREGION peripheral generation from configurable CPU and module settings
+- Reusable peripheral template workflow with linked and detached instances
+- Register and bit-field editing with automatic reserved-bit generation
+- XML preview with validation feedback before download
+- Local browser persistence for restoring the latest editor state after reload
 
-| 步骤 | 操作 |
-| --- | --- |
-| 1 | 展开左侧 **设备基础信息**, 设置设备名称、默认寄存器属性和 `IREGION` 基地址。 |
-| 2 | 在 **寄存器组模板** 中创建可复用的寄存器组模板。 |
-| 3 | 在模板或普通寄存器组中创建 **寄存器模板**, 并设置位域。 |
-| 4 | 点击 **生成实例**, 从寄存器组模板或寄存器模板创建 `derivedFrom` 实例。 |
-| 5 | 如不需要模板，可直接点击 **新增寄存器组** 或 **新增寄存器** 创建普通结构。 |
-| 6 | 点击 **校验并转换** 生成 SVD 预览。 |
-| 7 | 转换成功后点击 **下载 .svd** 保存文件。 |
+## Development
 
-## 开发命令
+Install dependencies:
 
 ```bash
-# install dependencies
 npm install
-# start dev server
+```
+
+Start the development server:
+
+```bash
 npm run dev
 ```
 
+Build the project:
+
 ```bash
-# run tests
-npm run test
-# run linter
-npm run lint
-# build
 npm run build
+```
+
+Run tests:
+
+```bash
+npm run test
+```
+
+Run the linter:
+
+```bash
+npm run lint
+```
+
+Preview the production build locally:
+
+```bash
+npm run preview
 ```
