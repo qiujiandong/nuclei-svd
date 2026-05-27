@@ -273,7 +273,7 @@ export function createDefaultCustomPeripheral(index = 0): EditorPeripheral {
     description: `Description of PERI${index}`,
     baseAddress: '0x40001000',
     defaultRegisterSize: '',
-    groupName: 'PERIPHERAL',
+    groupName: `PERI${index}`,
     expanded: true,
     registerTemplates: [createDefaultRegisterTemplate(0)],
     registers: [],

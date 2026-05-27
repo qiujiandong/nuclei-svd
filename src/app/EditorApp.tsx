@@ -357,6 +357,7 @@ export function EditorApp() {
     updatePeripheral(peripheralId, (peripheral) => ({
       ...peripheral,
       [field]: value,
+      ...(field === 'name' ? { groupName: value } : {}),
     }))
   }
 

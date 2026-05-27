@@ -129,6 +129,18 @@ describe('App', () => {
     expect(screen.queryByRole('button', { name: /外设实例 GPIO_TEMPLATE0/ })).not.toBeInTheDocument()
   })
 
+  it('updates standalone peripheral groupName when renaming the peripheral', () => {
+    render(<App />)
+
+    openPage('外设基础配置')
+    fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
+    fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'UART0' } })
+    fireEvent.click(screen.getByRole('button', { name: '保存为模板' }))
+
+    openPage('外设模板')
+    expect(screen.getByRole('button', { name: /外设模板 UART0/ })).toBeInTheDocument()
+  })
+
   it('converts the current configuration and enables download', async () => {
     render(<App />)
 
