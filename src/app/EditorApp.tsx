@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import type { ChangeEvent } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { StatusIssue, StatusTone } from '../components/StatusPanel'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
@@ -153,7 +152,6 @@ export function EditorApp() {
   const [templateSaveError, setTemplateSaveError] = useState<string | null>(null)
   const [activePage, setActivePage] = useState<AppPageId>(DEFAULT_APP_PAGE)
   const [deviceInfoCollapsed, setDeviceInfoCollapsed] = useState(true)
-  const configInputRef = useRef<HTMLInputElement | null>(null)
 
   // const resolvedIRegionPeripherals = useMemo(
   //   () => resolveIRegionPeripherals(device.iregionBaseAddress, device.iregionPeripherals),
@@ -698,54 +696,6 @@ export function EditorApp() {
     }
   }
 
-  const handleExportConfig = () => {
-    const payload = JSON.stringify(
-      {
-        format: editorConfigFormat,
-        version: 1,
-        device,
-      },
-      null,
-      2,
-    )
-    const blob = new Blob([payload], { type: 'application/json;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `${device.name.trim() || 'nuclei-device'}-config.json`
-    anchor.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const handleImportConfig = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-
-    if (!file) return
-
-    try {
-      const parsed = JSON.parse(await file.text()) as unknown
-      if (!isEditorDeviceExport(parsed)) {
-        throw new Error('Unsupported editor config')
-      }
-
-      setDevice(parsed.device)
-      setActivePage(DEFAULT_APP_PAGE)
-      setDeviceInfoCollapsed(true)
-      setTemplateSaveError(null)
-      invalidateResult('已导入配置，请重新执行校验与转换。')
-    } catch {
-      setState({
-        tone: 'error',
-        headline: '导入失败',
-        detail: '请选择由“导出配置”生成的 JSON 文件。',
-        issues: [{ path: 'config', message: '无法读取编辑器配置文件。', rule: 'config.import' }],
-        xml: '',
-        downloadName: 'nuclei-device.svd',
-      })
-    }
-  }
-
   const handleDownload = () => {
     if (!canDownload) return
 
@@ -884,23 +834,8 @@ export function EditorApp() {
                   <Button type="button" variant="ghost" onClick={controllerGroups.device.actions.reset}>
                     重置设置
                   </Button>
-                  <Button type="button" variant="secondary" onClick={() => configInputRef.current?.click()}>
-                    导入配置
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={handleExportConfig}>
-                    导出配置
-                  </Button>
                 </>
               }
-            />
-
-            <input
-              ref={configInputRef}
-              className="visually-hidden"
-              type="file"
-              accept="application/json,.json"
-              aria-label="导入配置文件"
-              onChange={handleImportConfig}
             />
 
             <section className="rounded-[32px] border border-white/70 bg-white/90 p-5 shadow-[0_25px_60px_rgba(15,23,42,0.06)] sm:p-6">
