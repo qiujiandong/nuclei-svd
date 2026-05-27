@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import type { StatusIssue, StatusTone } from '../components/StatusPanel'
 import { Badge } from '../components/ui/badge'
@@ -57,6 +57,7 @@ const initialState: ConversionState = {
 
 // const showIRegionDebugCard = import.meta.env.DEV || import.meta.env.VITE_DEBUG === 'true'
 const editorConfigFormat = 'nuclei-svd-editor-config'
+const editorStorageKey = 'nuclei-svd-editor-state'
 
 function createCollapsedDefaultDevice() {
   const nextDevice = createDefaultEditorDevice()
@@ -95,6 +96,24 @@ function isEditorDeviceExport(value: unknown): value is { device: EditorDevice }
   )
 }
 
+function loadStoredEditorDevice() {
+  if (typeof window === 'undefined') {
+    return createDefaultEditorDevice()
+  }
+
+  try {
+    const raw = window.localStorage.getItem(editorStorageKey)
+    if (!raw) {
+      return createDefaultEditorDevice()
+    }
+
+    const parsed = JSON.parse(raw) as unknown
+    return isEditorDeviceExport(parsed) ? parsed.device : createDefaultEditorDevice()
+  } catch {
+    return createDefaultEditorDevice()
+  }
+}
+
 function parseNonNegativeInteger(value: string) {
   const parsed = Number(value)
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : null
@@ -129,7 +148,7 @@ function standaloneRegisterSeed(
 }
 
 export function EditorApp() {
-  const [device, setDevice] = useState<EditorDevice>(() => createDefaultEditorDevice())
+  const [device, setDevice] = useState<EditorDevice>(() => loadStoredEditorDevice())
   const [state, setState] = useState<ConversionState>(initialState)
   const [templateSaveError, setTemplateSaveError] = useState<string | null>(null)
   const [activePage, setActivePage] = useState<AppPageId>(DEFAULT_APP_PAGE)
@@ -159,6 +178,21 @@ export function EditorApp() {
   }, [device])
 
   useFieldHints()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    window.localStorage.setItem(
+      editorStorageKey,
+      JSON.stringify({
+        format: editorConfigFormat,
+        version: 1,
+        device,
+      }),
+    )
+  }, [device])
 
   const invalidateResult = (detail = '配置已变更，请重新执行校验与转换。') => {
     setState((current) => {
@@ -658,6 +692,10 @@ export function EditorApp() {
     setActivePage(DEFAULT_APP_PAGE)
     setDeviceInfoCollapsed(true)
     setState(initialState)
+    setTemplateSaveError(null)
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(editorStorageKey)
+    }
   }
 
   const handleExportConfig = () => {
@@ -694,6 +732,7 @@ export function EditorApp() {
       setDevice(parsed.device)
       setActivePage(DEFAULT_APP_PAGE)
       setDeviceInfoCollapsed(true)
+      setTemplateSaveError(null)
       invalidateResult('已导入配置，请重新执行校验与转换。')
     } catch {
       setState({

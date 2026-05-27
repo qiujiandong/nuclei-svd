@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 
 function openPage(name: string) {
@@ -12,6 +12,10 @@ function convertFromPreview() {
 }
 
 describe('App', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
   it('renders the new editor shell with sidebar navigation', () => {
     render(<App />)
 
