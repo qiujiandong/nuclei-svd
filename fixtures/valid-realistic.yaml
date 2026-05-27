@@ -6,8 +6,6 @@ device:
   width: 32
   size: 32
   access: read-write
-  resetValue: "0x00000000"
-  resetMask: "0xFFFFFFFF"
   peripherals:
     - name: ECLIC
       description: Enhanced Core-Local Interrupt Controller
@@ -31,7 +29,6 @@ device:
           description: Interrupt status register
           addressOffset: 4
           access: read-only
-          resetValue: "0x00000001"
           fields:
             - name: READY
               description: Interrupt logic ready flag

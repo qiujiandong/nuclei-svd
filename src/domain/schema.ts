@@ -39,8 +39,6 @@ export const svdYamlSchema = {
         width: { type: 'integer', minimum: 0 },
         size: { type: 'integer', minimum: 0 },
         access: accessSchema,
-        resetValue: scalarAddressSchema,
-        resetMask: scalarAddressSchema,
         peripherals: {
           type: 'array',
           minItems: 1,
@@ -70,8 +68,6 @@ export const svdYamlSchema = {
                     derivedFrom: { type: 'string', minLength: 1 },
                     size: { type: 'integer', minimum: 0 },
                     access: accessSchema,
-                    resetValue: scalarAddressSchema,
-                    resetMask: scalarAddressSchema,
                     fields: {
                       type: 'array',
                       items: {

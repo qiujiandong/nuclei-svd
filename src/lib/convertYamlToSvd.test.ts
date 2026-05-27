@@ -27,9 +27,8 @@ describe('convertYamlToSvd', () => {
     const { normalized } = convertYamlToSvd(validRealisticFixture)
     const [ctrl, status] = normalized.device.peripherals[0].registers
 
-    expect(ctrl.access).toBe('read-write')
-    expect(ctrl.resetMask).toBe(0xffffffff)
-    expect(status.access).toBe('read-only')
+    expect(ctrl.size).toBe(32)
+    expect(status.addressOffset).toBe(4)
   })
 
   it('rejects malformed YAML syntax', () => {

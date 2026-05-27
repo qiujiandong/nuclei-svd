@@ -61,8 +61,6 @@ function registerToXml(register: NormalizedSvdRegister, level: number) {
     textNode('addressOffset', formatHexValue(register.addressOffset), inner),
     textNode('size', register.size, inner),
     textNode('access', register.access, inner),
-    textNode('resetValue', register.resetValue !== undefined ? formatHexValue(register.resetValue) : undefined, inner),
-    textNode('resetMask', register.resetMask !== undefined ? formatHexValue(register.resetMask) : undefined, inner),
   ].filter(Boolean)
 
   if (register.fields.length > 0) {
@@ -89,8 +87,6 @@ export function transformToSvd(model: NormalizedSvdModel): string {
     textNode('width', device.width, '  '),
     textNode('size', device.size, '  '),
     textNode('access', device.access, '  '),
-    textNode('resetValue', device.resetValue !== undefined ? formatHexValue(device.resetValue) : undefined, '  '),
-    textNode('resetMask', device.resetMask !== undefined ? formatHexValue(device.resetMask) : undefined, '  '),
     '  <peripherals>',
   ].filter(Boolean)
 

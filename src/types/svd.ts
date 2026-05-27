@@ -26,8 +26,6 @@ export interface SvdRegisterInput {
   derivedFrom?: string
   size?: number
   access?: Access
-  resetValue?: NumericInput
-  resetMask?: NumericInput
   fields?: SvdFieldInput[]
 }
 
@@ -48,8 +46,6 @@ export interface SvdDeviceInput {
   width: number
   size?: number
   access?: Access
-  resetValue?: NumericInput
-  resetMask?: NumericInput
   peripherals: SvdPeripheralInput[]
 }
 
@@ -75,8 +71,6 @@ export interface NormalizedSvdRegister {
   derivedFrom?: string
   size?: number
   access?: Access
-  resetValue?: number
-  resetMask?: number
   fields: NormalizedSvdField[]
 }
 
@@ -97,8 +91,6 @@ export interface NormalizedSvdDevice {
   width: number
   size?: number
   access?: Access
-  resetValue?: number
-  resetMask?: number
   peripherals: NormalizedSvdPeripheral[]
 }
 

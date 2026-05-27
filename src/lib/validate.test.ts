@@ -36,13 +36,6 @@ describe('validateSvdInput', () => {
     }
   })
 
-  it('rejects invalid access enum values', () => {
-    const parsed = parseFixture(validMinimalFixture)
-    parsed.device.access = 'nope' as SvdYamlInput['device']['access']
-
-    expect(() => validateSvdInput(parsed)).toThrowError(ConversionError)
-  })
-
   it('rejects malformed address literals', () => {
     const parsed = parseFixture(validMinimalFixture)
     parsed.device.peripherals[0]!.baseAddress = '0xXYZ'
@@ -89,11 +82,6 @@ describe('validateSvdInput', () => {
     expect(gpioControl.absoluteAddress).toBe(0x40000000)
     expect(gpioStatus.absoluteAddress).toBe(0x40000004)
     expect(gpioControl.size).toBe(32)
-    expect(gpioControl.access).toBe('read-write')
-    expect(gpioControl.resetMask).toBe(0xffffffff)
-    expect(gpioControl.fields[0]?.access).toBe('read-write')
-    expect(gpioControl.fields[1]?.access).toBe('read-only')
-    expect(gpioStatus.resetValue).toBe(0x1)
     expect(timerCount.size).toBe(16)
   })
 

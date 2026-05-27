@@ -464,8 +464,6 @@ function buildRegister(register: EditorRegister, fallbackSize = ''): SvdRegister
     ...optionalStringProperty('derivedFrom', register.derivedFrom ?? ''),
     ...optionalIntegerProperty('size', resolvedSize),
     ...optionalStringProperty('access', register.access),
-    ...optionalStringProperty('resetValue', register.resetValue),
-    ...optionalStringProperty('resetMask', register.resetMask),
     fields: buildFieldsWithReserved(register, fallbackSize),
   }
 }
@@ -568,14 +566,12 @@ export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
   return {
     device: {
       name: device.name.trim(),
-      version: device.version.trim(),
-      description: device.description.trim(),
-      addressUnitBits: parseIntegerInput(device.addressUnitBits),
-      width: parseIntegerInput(device.width),
-      ...optionalIntegerProperty('size', device.size),
-      ...optionalStringProperty('access', device.access),
-      ...optionalStringProperty('resetValue', device.resetValue),
-      ...optionalStringProperty('resetMask', device.resetMask),
+    version: device.version.trim(),
+    description: device.description.trim(),
+    addressUnitBits: parseIntegerInput(device.addressUnitBits),
+    width: parseIntegerInput(device.width),
+    ...optionalIntegerProperty('size', device.size),
+    ...optionalStringProperty('access', device.access),
       peripherals: [
         ...resolvedIRegionPeripherals.map((peripheral) => buildPeripheral(peripheral)),
         ...resolvedCustomPeripherals,

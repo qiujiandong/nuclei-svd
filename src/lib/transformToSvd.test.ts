@@ -25,8 +25,10 @@ describe('convertYamlToSvd', () => {
     )
     expect(first.xml).toContain('<baseAddress>0x40000000</baseAddress>')
     expect(first.xml).toContain('<addressOffset>0x10</addressOffset>')
-    expect(first.xml).toContain('<resetValue>0x1</resetValue>')
     expect(first.xml).toContain('<bitWidth>16</bitWidth>')
+    expect(first.xml).toContain('<access>read-write</access>')
+    expect(first.xml).not.toContain('<resetValue>')
+    expect(first.xml).not.toContain('<resetMask>')
     expect(first.normalized.metadata.downloadFileName).toBe('NucleiDemoRV32.svd')
   })
 
@@ -35,6 +37,7 @@ describe('convertYamlToSvd', () => {
 
     expect(xml).not.toContain('<groupName>')
     expect(xml).not.toContain('<fields>')
+    expect(xml).not.toContain('<resetValue>')
     expect(xml).not.toContain('<resetMask>')
   })
 
