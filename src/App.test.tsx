@@ -151,6 +151,22 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: '下载 .svd' })).toBeEnabled()
   })
 
+  it('does not emit access for user-created peripherals in generated xml', async () => {
+    render(<App />)
+
+    openPage('外设基础配置')
+    fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
+    fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'UART0' } })
+
+    convertFromPreview()
+
+    const xmlPreview = await screen.findByTestId('xml-preview')
+    const xmlText = xmlPreview.textContent ?? ''
+    expect(xmlText).toContain('<name>UART0</name>')
+    const uartBlock = xmlText.split('<name>UART0</name>')[1]?.split('</peripheral>')[0] ?? ''
+    expect(uartBlock).not.toContain('<access>')
+  })
+
   it('invalidates successful output after configuration changes', async () => {
     render(<App />)
 

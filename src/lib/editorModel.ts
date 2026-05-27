@@ -403,7 +403,6 @@ function buildField(field: EditorField): SvdFieldInput {
     description: field.description.trim(),
     bitOffset: parseIntegerInput(field.bitOffset),
     bitWidth: parseIntegerInput(field.bitWidth),
-    ...optionalStringProperty('access', field.access),
   }
 }
 
@@ -463,7 +462,6 @@ function buildRegister(register: EditorRegister, fallbackSize = ''): SvdRegister
     ...optionalIntegerProperty('dimIncrement', register.dimIncrement),
     ...optionalStringProperty('derivedFrom', register.derivedFrom ?? ''),
     ...optionalIntegerProperty('size', resolvedSize),
-    ...optionalStringProperty('access', register.access),
     fields: buildFieldsWithReserved(register, fallbackSize),
   }
 }
@@ -571,7 +569,6 @@ export function buildSvdInputFromEditor(device: EditorDevice): SvdYamlInput {
     addressUnitBits: parseIntegerInput(device.addressUnitBits),
     width: parseIntegerInput(device.width),
     ...optionalIntegerProperty('size', device.size),
-    ...optionalStringProperty('access', device.access),
       peripherals: [
         ...resolvedIRegionPeripherals.map((peripheral) => buildPeripheral(peripheral)),
         ...resolvedCustomPeripherals,
