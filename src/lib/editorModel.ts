@@ -422,15 +422,17 @@ function buildFieldsWithReserved(register: EditorRegister, fallbackSize = ''): S
   const sortedFields = [...userFields].sort((left, right) => left.bitOffset - right.bitOffset)
   const fields: SvdFieldInput[] = []
   let cursor = 0
+  let reservedIndex = 0
 
-  sortedFields.forEach((field, fieldIndex) => {
+  sortedFields.forEach((field) => {
     if (Number.isInteger(field.bitOffset) && field.bitOffset > cursor) {
       fields.push({
-        name: `RESERVED${fieldIndex}`,
+        name: `RESERVED${reservedIndex}`,
         description: 'Reserved bits',
         bitOffset: cursor,
         bitWidth: field.bitOffset - cursor,
       })
+      reservedIndex += 1
     }
 
     fields.push(field)
@@ -441,7 +443,7 @@ function buildFieldsWithReserved(register: EditorRegister, fallbackSize = ''): S
 
   if (cursor < effectiveWidth) {
     fields.push({
-      name: `RESERVED${fields.length}`,
+      name: `RESERVED${reservedIndex}`,
       description: 'Reserved bits',
       bitOffset: cursor,
       bitWidth: effectiveWidth - cursor,

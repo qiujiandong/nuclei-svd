@@ -8,6 +8,9 @@ import { svdYamlTemplate } from '../domain/template'
 
 import { ConversionError } from './errors'
 import { convertYamlToSvd } from './convertYamlToSvd'
+import { buildSvdInputFromEditor, createDefaultEditorDevice } from './editorModel'
+import { normalizeSvdInput } from './normalize'
+import { transformToSvd } from './transformToSvd'
 
 describe('convertYamlToSvd', () => {
   it('converts the canonical fixture into deterministic CMSIS-SVD XML', () => {
@@ -46,6 +49,63 @@ describe('convertYamlToSvd', () => {
 
     expect(xml).toContain('<name>NucleiDemoRV32</name>')
     expect(xml).toContain('<name>ECLIC</name>')
+  })
+
+  it('numbers generated reserved fields by reserved-field count', () => {
+    const device = createDefaultEditorDevice()
+    device.peripherals = [
+      {
+        id: 'peripheral-1',
+        name: 'TEST',
+        description: 'Test peripheral',
+        baseAddress: '0x40000000',
+        defaultRegisterSize: '8',
+        groupName: 'TEST',
+        expanded: true,
+        registerTemplates: [],
+        registers: [
+          {
+            id: 'register-1',
+            name: 'CTRL',
+            description: 'Control register',
+            addressOffset: '0x0',
+            dim: '',
+            dimIncrement: '',
+            derivedFrom: undefined,
+            size: '8',
+            access: '',
+            resetValue: '',
+            resetMask: '',
+            expanded: true,
+            fields: [
+              {
+                id: 'field-1',
+                name: 'F0',
+                description: 'Field 0',
+                bitOffset: '1',
+                bitWidth: '1',
+                access: '',
+                expanded: true,
+              },
+              {
+                id: 'field-2',
+                name: 'F1',
+                description: 'Field 1',
+                bitOffset: '4',
+                bitWidth: '1',
+                access: '',
+                expanded: true,
+              },
+            ],
+          },
+        ],
+      },
+    ]
+    const xml = transformToSvd(normalizeSvdInput(buildSvdInputFromEditor(device)))
+
+    expect(xml).toContain('<name>RESERVED0</name>')
+    expect(xml).toContain('<name>RESERVED1</name>')
+    expect(xml).toContain('<name>RESERVED2</name>')
   })
 
   it('throws typed conversion issues on invalid input', () => {
