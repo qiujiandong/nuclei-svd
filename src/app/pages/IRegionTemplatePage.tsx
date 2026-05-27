@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import type { EditorDevice, EditorIRegionConfig } from '../../lib/editorModel'
 import { Checkbox } from '../../components/ui/checkbox'
@@ -91,44 +91,42 @@ export function IRegionTemplatePage({
   device,
   onIRegionConfigChange,
 }: IRegionTemplatePageProps) {
-  const [draftValues, setDraftValues] = useState<Record<string, string>>(() =>
-    Object.fromEntries(
-      moduleFields
-        .filter((item) => item.paramField)
-        .map((item) => [item.paramField as string, String(device.iregionConfig[item.paramField as keyof EditorIRegionConfig])]),
-    ),
+  const baseDraftValues = useMemo(
+    () =>
+      Object.fromEntries(
+        moduleFields
+          .filter((item) => item.paramField)
+          .map((item) => [item.paramField as string, String(device.iregionConfig[item.paramField as keyof EditorIRegionConfig])]),
+      ),
+    [device.iregionConfig],
   )
+  const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>({})
+  const draftValues = {
+    ...baseDraftValues,
+    ...draftOverrides,
+  }
 
-  useEffect(() => {
-    setDraftValues((current) => {
-      const nextValues = { ...current }
-      let changed = false
+  const setDraftValue = (field: keyof EditorIRegionConfig, value: string) => {
+    setDraftOverrides((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
 
-      moduleFields.forEach(({ paramField }) => {
-        if (!paramField) {
-          return
-        }
-
-        const nextValue = String(device.iregionConfig[paramField])
-        if (nextValues[paramField] !== nextValue) {
-          nextValues[paramField] = nextValue
-          changed = true
-        }
-      })
-
-      return changed ? nextValues : current
+  const clearDraftValue = (field: keyof EditorIRegionConfig) => {
+    setDraftOverrides((current) => {
+      const next = { ...current }
+      delete next[field]
+      return next
     })
-  }, [device.iregionConfig])
+  }
 
   const handleParamChange = (field: keyof EditorIRegionConfig, rawValue: string) => {
     if (rawValue !== '' && !/^\d+$/.test(rawValue)) {
       return
     }
 
-    setDraftValues((current) => ({
-      ...current,
-      [field]: rawValue,
-    }))
+    setDraftValue(field, rawValue)
   }
 
   const handleParamBlur = (
@@ -142,11 +140,12 @@ export function IRegionTemplatePage({
     }
 
     const normalizedValue = rawValue === '' ? String(min) : clampNumericValue(rawValue, min, max)
-    setDraftValues((current) => ({
-      ...current,
-      [field]: normalizedValue,
-    }))
     onIRegionConfigChange(field, normalizedValue)
+    if (normalizedValue === baseDraftValues[field as string]) {
+      clearDraftValue(field)
+      return
+    }
+    setDraftValue(field, normalizedValue)
   }
 
   return (

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { EditorDevice } from '../../lib/editorModel'
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert'
 import { Button } from '../../components/ui/button'
@@ -48,25 +48,23 @@ export function PeripheralConfigPage({
 }: PeripheralConfigPageProps) {
   const templateById = new Map(device.peripheralTemplates.map((template) => [template.id, template]))
   const firstTemplateId = device.peripheralTemplates[0]?.id ?? ''
-  const [linkedTemplateId, setLinkedTemplateId] = useState(firstTemplateId)
-  const [detachedTemplateId, setDetachedTemplateId] = useState(firstTemplateId)
+  const [rawLinkedTemplateId, setRawLinkedTemplateId] = useState(firstTemplateId)
+  const [rawDetachedTemplateId, setRawDetachedTemplateId] = useState(firstTemplateId)
   const hasTemplates = device.peripheralTemplates.length > 0
-
-  useEffect(() => {
-    if (device.peripheralTemplates.some((template) => template.id === linkedTemplateId)) {
-      return
-    }
-
-    setLinkedTemplateId(firstTemplateId)
-  }, [device.peripheralTemplates, firstTemplateId, linkedTemplateId])
-
-  useEffect(() => {
-    if (device.peripheralTemplates.some((template) => template.id === detachedTemplateId)) {
-      return
-    }
-
-    setDetachedTemplateId(firstTemplateId)
-  }, [device.peripheralTemplates, detachedTemplateId, firstTemplateId])
+  const linkedTemplateId = useMemo(
+    () =>
+      device.peripheralTemplates.some((template) => template.id === rawLinkedTemplateId)
+        ? rawLinkedTemplateId
+        : firstTemplateId,
+    [device.peripheralTemplates, firstTemplateId, rawLinkedTemplateId],
+  )
+  const detachedTemplateId = useMemo(
+    () =>
+      device.peripheralTemplates.some((template) => template.id === rawDetachedTemplateId)
+        ? rawDetachedTemplateId
+        : firstTemplateId,
+    [device.peripheralTemplates, firstTemplateId, rawDetachedTemplateId],
+  )
 
   return (
     <section className="grid gap-4">
@@ -105,7 +103,7 @@ export function PeripheralConfigPage({
               创建关联实例
             </Button>
             <FormField label="外设模板">
-              <Select value={linkedTemplateId} onValueChange={setLinkedTemplateId} disabled={!hasTemplates}>
+              <Select value={linkedTemplateId} onValueChange={setRawLinkedTemplateId} disabled={!hasTemplates}>
                 <SelectTrigger aria-label="选择用于创建关联实例的外设模板" disabled={!hasTemplates}>
                   <SelectValue placeholder="暂无可用模板" />
                 </SelectTrigger>
@@ -141,7 +139,7 @@ export function PeripheralConfigPage({
               创建非关联副本
             </Button>
             <FormField label="外设模板">
-              <Select value={detachedTemplateId} onValueChange={setDetachedTemplateId} disabled={!hasTemplates}>
+              <Select value={detachedTemplateId} onValueChange={setRawDetachedTemplateId} disabled={!hasTemplates}>
                 <SelectTrigger aria-label="选择用于创建非关联副本的外设模板" disabled={!hasTemplates}>
                   <SelectValue placeholder="暂无可用模板" />
                 </SelectTrigger>
