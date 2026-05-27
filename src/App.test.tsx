@@ -87,9 +87,13 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
     fireEvent.change(screen.getByLabelText('外设名称'), { target: { value: 'UART0' } })
     fireEvent.change(screen.getByLabelText('外设基地址'), { target: { value: '0x40000000' } })
+    fireEvent.click(screen.getAllByText('+')[0])
+    fireEvent.click(screen.getAllByText('+')[0])
 
     expect(screen.getByDisplayValue('UART0')).toBeInTheDocument()
     expect(screen.getByDisplayValue('0x40000000')).toBeInTheDocument()
+    expect(screen.getAllByDisplayValue('0x0').length).toBeGreaterThan(0)
+    expect(screen.getAllByDisplayValue('0x4').length).toBeGreaterThan(0)
   })
 
   it('creates a template instance from the peripheral config page', () => {

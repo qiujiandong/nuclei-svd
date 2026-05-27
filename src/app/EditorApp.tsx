@@ -513,7 +513,7 @@ export function EditorApp() {
         ...template.registers,
         cloneEditorRegister(standaloneRegisterSeed(template.registers, template.registerTemplates), {
           name: `REG${template.registers.filter((register) => !register.derivedFrom).length}`,
-          addressOffset: formatNextOffset([...template.registerTemplates, ...template.registers]),
+          addressOffset: formatNextOffset(template.registers),
           derivedFrom: undefined,
           expanded: false,
         }),
@@ -536,7 +536,7 @@ export function EditorApp() {
         ...peripheral.registers,
         cloneEditorRegister(standaloneRegisterSeed(peripheral.registers, peripheral.registerTemplates), {
           name: `REG${peripheral.registers.filter((register) => !register.derivedFrom).length}`,
-          addressOffset: formatNextOffset([...peripheral.registerTemplates, ...peripheral.registers]),
+          addressOffset: formatNextOffset(peripheral.registers),
           derivedFrom: undefined,
           expanded: false,
         }),
