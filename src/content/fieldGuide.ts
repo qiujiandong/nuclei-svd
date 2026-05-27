@@ -11,7 +11,7 @@ export const fieldGuide: FieldGuideItem[] = [
     bullets: [
       '设备名称会生成 <device><name>，也会作为默认下载文件名。',
       'addressUnitBits 和 width 用于声明总线访问粒度。',
-      '默认 size / access / resetValue / resetMask 会向下继承给寄存器。',
+      '默认 size 会向下继承给寄存器。',
     ],
   },
   {
@@ -29,7 +29,7 @@ export const fieldGuide: FieldGuideItem[] = [
     bullets: [
       '绝对地址 = group.baseAddress + register.addressOffset。',
       '同一寄存器组内寄存器名称、绝对地址必须唯一。',
-      'size / access / resetValue / resetMask 可覆盖设备默认值。',
+      'size 可覆盖设备默认值。',
     ],
   },
   {
@@ -38,7 +38,7 @@ export const fieldGuide: FieldGuideItem[] = [
     bullets: [
       '字段名称在单个寄存器内必须唯一。',
       'bitOffset + bitWidth 不能越界，也不能与其他字段重叠。',
-      'field.access 可覆盖继承来的访问属性。',
+      '位域描述主要用于 IDE 中展示字段含义。',
     ],
   },
 ]

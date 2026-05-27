@@ -22,5 +22,8 @@ export default defineConfig([
         ...globals.node,
       },
     },
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }],
+    },
   },
 ])

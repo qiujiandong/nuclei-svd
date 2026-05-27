@@ -1,9 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --color-background: #f4f7fb;
+  --color-foreground: #102136;
+  --color-card: rgba(255, 255, 255, 0.96);
+  --color-card-foreground: #102136;
+  --color-muted: #edf2f8;
+  --color-muted-foreground: #5d6c82;
+  --color-border: rgba(16, 33, 54, 0.12);
+  --color-input: rgba(16, 33, 54, 0.14);
+  --color-primary: #1d4ed8;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #e7efff;
+  --color-secondary-foreground: #173b88;
+  --color-accent: #dbeafe;
+  --color-accent-foreground: #173b88;
+  --color-destructive: #b42318;
+  --color-destructive-foreground: #ffffff;
+  --color-ring: rgba(29, 78, 216, 0.35);
+  --color-code: #111827;
+}
+
 :root {
-  font-family: Inter, 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color-scheme: light;
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
-  color: #122033;
-  background: #eef2f8;
+  color: var(--color-foreground);
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.08), transparent 24rem),
+    linear-gradient(180deg, #f8fbff 0%, #f4f7fb 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -14,6 +41,55 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 a {
   color: inherit;
+  text-decoration: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tippy-box[data-theme~='nuclei-field'] {
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 14px;
+  background: #102136;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.18);
+  color: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.tippy-box[data-theme~='nuclei-field'] .tippy-content {
+  padding: 0.6rem 0.75rem;
+}
+
+.tippy-box[data-theme~='nuclei-field'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: #102136;
 }

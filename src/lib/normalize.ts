@@ -162,21 +162,6 @@ function normalizeRegister(
 
   const effectiveSize = register.derivedFrom ? register.size : register.size ?? device.size
   const effectiveAccess = register.derivedFrom ? register.access : register.access ?? device.access
-  const effectiveResetValue =
-    parseNumericInput(
-      register.derivedFrom ? register.resetValue : register.resetValue ?? device.resetValue,
-      `${path}.resetValue`,
-      'resetValue',
-      issues,
-    )
-  const effectiveResetMask =
-    parseNumericInput(
-      register.derivedFrom ? register.resetMask : register.resetMask ?? device.resetMask,
-      `${path}.resetMask`,
-      'resetMask',
-      issues,
-    )
-
   const absoluteAddress =
     baseAddress !== undefined && addressOffset !== undefined
       ? baseAddress + addressOffset
@@ -196,13 +181,7 @@ function normalizeRegister(
       issues,
     )
 
-    const normalizedField = normalizeField(
-      field,
-      fieldIndex,
-      path,
-      effectiveAccess,
-      issues,
-    )
+    const normalizedField = normalizeField(field, fieldIndex, path, effectiveAccess, issues)
 
     if (normalizedField.bitWidth > 0) {
       const start = normalizedField.bitOffset
@@ -241,8 +220,6 @@ function normalizeRegister(
     derivedFrom: register.derivedFrom,
     size: effectiveSize,
     access: effectiveAccess,
-    resetValue: effectiveResetValue,
-    resetMask: effectiveResetMask,
     fields,
   }
 }
@@ -359,18 +336,6 @@ export function normalizeSvdInput(input: SvdYamlInput): NormalizedSvdModel {
     width: device.width,
     size: device.size,
     access: device.access,
-    resetValue: parseNumericInput(
-      device.resetValue,
-      '$.device.resetValue',
-      'resetValue',
-      issues,
-    ),
-    resetMask: parseNumericInput(
-      device.resetMask,
-      '$.device.resetMask',
-      'resetMask',
-      issues,
-    ),
     peripherals: normalizedPeripherals,
   }
 

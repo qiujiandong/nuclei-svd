@@ -797,147 +797,21 @@ const allUnits = [
         ]
       },
       {
-        name: "msip0",
-        description: "M-mode Software Interrupt for Hart 0.",
+        name: "msip[i]",
+        description: "M-mode Software Interrupt for Hart i.",
         permission: "S*RW",
-        offset: "0x1000",
+        offset: "0x1000 + 4*i",
         fields: [
-          { bits: "31:0", name: "MSIP", type: "RW", description: "Write 1 to generate M-mode software interrupt for Hart 0, write 0 to clear." }
+          { bits: "31:0", name: "MSIP", type: "RW", description: "Write 1 to generate M-mode software interrupt for Hart i, write 0 to clear." }
         ]
       },
       {
-        name: "msip1",
-        description: "M-mode Software Interrupt for Hart 1.",
+        name: "mtimecmp[i]",
+        description: "M-mode timer compare register for Hart i.",
         permission: "S*RW",
-        offset: "0x1004",
+        offset: "0x5000 + 8*i",
         fields: [
-          { bits: "31:0", name: "MSIP", type: "RW", description: "Write 1 to generate M-mode software interrupt for Hart 1, write 0 to clear." }
-        ]
-      },
-      {
-        name: "msip2",
-        description: "M-mode Software Interrupt for Hart 2.",
-        permission: "S*RW",
-        offset: "0x1008",
-        fields: [
-          { bits: "31:0", name: "MSIP", type: "RW", description: "Write 1 to generate M-mode software interrupt for Hart 2, write 0 to clear." }
-        ]
-      },
-      {
-        name: "msip3",
-        description: "M-mode Software Interrupt for Hart 3.",
-        permission: "S*RW",
-        offset: "0x100C",
-        fields: [
-          { bits: "31:0", name: "MSIP", type: "RW", description: "Write 1 to generate M-mode software interrupt for Hart 3, write 0 to clear." }
-        ]
-      },
-      {
-        name: "msip4",
-        description: "M-mode Software Interrupt for Hart 4.",
-        permission: "S*RW",
-        offset: "0x1010",
-        fields: [
-          { bits: "31:0", name: "MSIP", type: "RW", description: "Write 1 to generate M-mode software interrupt for Hart 4, write 0 to clear." }
-        ]
-      },
-      {
-        name: "msip5",
-        description: "M-mode Software Interrupt for Hart 5.",
-        permission: "S*RW",
-        offset: "0x1014",
-        fields: [
-          { bits: "31:0", name: "MSIP", type: "RW", description: "Write 1 to generate M-mode software interrupt for Hart 5, write 0 to clear." }
-        ]
-      },
-      {
-        name: "msip6",
-        description: "M-mode Software Interrupt for Hart 6.",
-        permission: "S*RW",
-        offset: "0x1018",
-        fields: [
-          { bits: "31:0", name: "MSIP", type: "RW", description: "Write 1 to generate M-mode software interrupt for Hart 6, write 0 to clear." }
-        ]
-      },
-      {
-        name: "msip7",
-        description: "M-mode Software Interrupt for Hart 7.",
-        permission: "S*RW",
-        offset: "0x101C",
-        fields: [
-          { bits: "31:0", name: "MSIP", type: "RW", description: "Write 1 to generate M-mode software interrupt for Hart 7, write 0 to clear." }
-        ]
-      },
-      {
-        name: "mtimecmp0",
-        description: "M-mode timer compare register for Hart 0.",
-        permission: "S*RW",
-        offset: "0x5000",
-        fields: [
-          { bits: "63:0", name: "mtimecmp", type: "RW", description: "Timer compare value for Hart 0. When mtime >= mtimecmp, timer interrupt is generated." }
-        ]
-      },
-      {
-        name: "mtimecmp1",
-        description: "M-mode timer compare register for Hart 1.",
-        permission: "S*RW",
-        offset: "0x5008",
-        fields: [
-          { bits: "63:0", name: "mtimecmp", type: "RW", description: "Timer compare value for Hart 1. When mtime >= mtimecmp, timer interrupt is generated." }
-        ]
-      },
-      {
-        name: "mtimecmp2",
-        description: "M-mode timer compare register for Hart 2.",
-        permission: "S*RW",
-        offset: "0x5010",
-        fields: [
-          { bits: "63:0", name: "mtimecmp", type: "RW", description: "Timer compare value for Hart 2. When mtime >= mtimecmp, timer interrupt is generated." }
-        ]
-      },
-      {
-        name: "mtimecmp3",
-        description: "M-mode timer compare register for Hart 3.",
-        permission: "S*RW",
-        offset: "0x5018",
-        fields: [
-          { bits: "63:0", name: "mtimecmp", type: "RW", description: "Timer compare value for Hart 3. When mtime >= mtimecmp, timer interrupt is generated." }
-        ]
-      },
-      {
-        name: "mtimecmp4",
-        description: "M-mode timer compare register for Hart 4.",
-        permission: "S*RW",
-        offset: "0x5020",
-        fields: [
-          { bits: "63:0", name: "mtimecmp", type: "RW", description: "Timer compare value for Hart 4. When mtime >= mtimecmp, timer interrupt is generated." }
-        ]
-      },
-      {
-        name: "mtimecmp5",
-        description: "M-mode timer compare register for Hart 5.",
-        permission: "S*RW",
-        offset: "0x5028",
-        fields: [
-          { bits: "63:0", name: "mtimecmp", type: "RW", description: "Timer compare value for Hart 5. When mtime >= mtimecmp, timer interrupt is generated." }
-        ]
-      },
-      {
-        name: "mtimecmp6",
-        description: "M-mode timer compare register for Hart 6.",
-        permission: "S*RW",
-        offset: "0x5030",
-        fields: [
-          { bits: "63:0", name: "mtimecmp", type: "RW", description: "Timer compare value for Hart 6. When mtime >= mtimecmp, timer interrupt is generated." }
-        ]
-      },
-      {
-        name: "mtimecmp7",
-        description: "M-mode timer compare register for Hart 7.",
-        permission: "S*RW",
-        offset: "0x5038",
-        fields: [
-          { bits: "63:0", name: "mtimecmp", type: "RW", description: "Timer compare value for Hart 7. When mtime >= mtimecmp, timer interrupt is generated." }
+          { bits: "63:0", name: "mtimecmp", type: "RW", description: "Timer compare value for Hart i. When mtime >= mtimecmp, timer interrupt is generated." }
         ]
       },
       {
@@ -950,77 +824,14 @@ const allUnits = [
         ]
       },
       {
-        name: "setssip0",
-        description: "Set Supervisor Software Interrupt request for Hart 0.",
+        name: "setssip[i]",
+        description: "Set Supervisor Software Interrupt request for Hart i.",
         permission: "SW1C",
-        offset: "0xD000",
+        offset: "0xD000 + 4*i",
         fields: [
-          { bits: "31:0", name: "SETSSIP", type: "W1C", description: "Write 1 to trigger edge Supervisor Software Interrupt for Hart 0, read returns 0." }
+          { bits: "31:0", name: "SETSSIP", type: "W1C", description: "Write 1 to trigger edge Supervisor Software Interrupt for Hart i, read returns 0." }
         ]
       },
-      {
-        name: "setssip1",
-        description: "Set Supervisor Software Interrupt request for Hart 1.",
-        permission: "SW1C",
-        offset: "0xD004",
-        fields: [
-          { bits: "31:0", name: "SETSSIP", type: "W1C", description: "Write 1 to trigger edge Supervisor Software Interrupt for Hart 1, read returns 0." }
-        ]
-      },
-      {
-        name: "setssip2",
-        description: "Set Supervisor Software Interrupt request for Hart 2.",
-        permission: "SW1C",
-        offset: "0xD008",
-        fields: [
-          { bits: "31:0", name: "SETSSIP", type: "W1C", description: "Write 1 to trigger edge Supervisor Software Interrupt for Hart 2, read returns 0." }
-        ]
-      },
-      {
-        name: "setssip3",
-        description: "Set Supervisor Software Interrupt request for Hart 3.",
-        permission: "SW1C",
-        offset: "0xD00C",
-        fields: [
-          { bits: "31:0", name: "SETSSIP", type: "W1C", description: "Write 1 to trigger edge Supervisor Software Interrupt for Hart 3, read returns 0." }
-        ]
-      },
-      {
-        name: "setssip4",
-        description: "Set Supervisor Software Interrupt request for Hart 4.",
-        permission: "SW1C",
-        offset: "0xD010",
-        fields: [
-          { bits: "31:0", name: "SETSSIP", type: "W1C", description: "Write 1 to trigger edge Supervisor Software Interrupt for Hart 4, read returns 0." }
-        ]
-      },
-      {
-        name: "setssip5",
-        description: "Set Supervisor Software Interrupt request for Hart 5.",
-        permission: "SW1C",
-        offset: "0xD014",
-        fields: [
-          { bits: "31:0", name: "SETSSIP", type: "W1C", description: "Write 1 to trigger edge Supervisor Software Interrupt for Hart 5, read returns 0." }
-        ]
-      },
-      {
-        name: "setssip6",
-        description: "Set Supervisor Software Interrupt request for Hart 6.",
-        permission: "SW1C",
-        offset: "0xD018",
-        fields: [
-          { bits: "31:0", name: "SETSSIP", type: "W1C", description: "Write 1 to trigger edge Supervisor Software Interrupt for Hart 6, read returns 0." }
-        ]
-      },
-      {
-        name: "setssip7",
-        description: "Set Supervisor Software Interrupt request for Hart 7.",
-        permission: "SW1C",
-        offset: "0xD01C",
-        fields: [
-          { bits: "31:0", name: "SETSSIP", type: "W1C", description: "Write 1 to trigger edge Supervisor Software Interrupt for Hart 7, read returns 0." }
-        ]
-      }
     ]
   },
   {

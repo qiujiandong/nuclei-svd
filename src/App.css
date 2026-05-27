@@ -55,13 +55,6 @@ body {
   flex: 0 0 auto;
 }
 
-.hero-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  min-width: 22rem;
-}
-
 button,
 .ghost-button,
 select,
@@ -156,16 +149,108 @@ label span {
   color: #42536a;
 }
 
-.layout-grid {
+.app-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(12rem, 16rem) minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 1rem;
+  display: grid;
+  gap: 1.25rem;
+  border: 1px solid rgba(18, 32, 51, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 36px rgba(18, 32, 51, 0.08);
+  padding: 1rem;
+}
+
+.workspace-main {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.nav-group {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.nav-group h2 {
+  margin: 0;
+  color: #122033;
+  font-size: 0.95rem;
+}
+
+.nav-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.nav-item {
+  width: 100%;
+  border-radius: 10px;
+  background: transparent;
+  color: #42536a;
+  text-align: left;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: #eef4ff;
+  color: #1849a9;
+  border-color: #c7d7ff;
 }
 
 .panel {
   border-radius: 20px;
   padding: 1.25rem;
+}
+
+.toolbar-panel {
+  padding: 0.8rem 1rem;
+}
+
+.toolbar-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  min-height: 2.6rem;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.toolbar-stats {
+  display: flex;
+  gap: 0.75rem;
+  color: #42536a;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  font-size: 0.88rem;
+  font-weight: 700;
+  justify-content: center;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .panel-heading {
@@ -206,6 +291,16 @@ label span {
 
 .preview-panel {
   margin-top: 1rem;
+}
+
+.preview-page {
+  max-width: 78rem;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
 }
 
 .xml-preview {
@@ -497,6 +592,44 @@ label span {
   font-weight: 700;
 }
 
+.instance-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+
+.template-action-group {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  border: 1px solid #dbe5f5;
+  border-left-width: 0.45rem;
+  border-radius: 16px;
+  padding: 0.55rem 0.7rem;
+}
+
+.template-action-group strong {
+  color: #122033;
+  font-size: 0.86rem;
+}
+
+.inherited-summary {
+  background: #ffffff;
+}
+
+.inherited-summary h4 {
+  margin: 0;
+}
+
+.table-heading-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
 .readonly-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -651,7 +784,7 @@ label span {
   padding-left: 1.2rem;
 }
 
-.hero-actions .status-panel {
+.status-panel {
   border-radius: 18px;
   border: 1px solid #c7d7ff;
   background: #eef4ff;
@@ -720,14 +853,13 @@ label span {
 
 @media (max-width: 1080px) {
   .hero-panel,
-  .layout-grid {
+  .app-workspace {
     grid-template-columns: 1fr;
     display: grid;
   }
 
-  .hero-actions {
-    min-width: unset;
-    grid-auto-flow: row;
+  .app-sidebar {
+    position: static;
   }
 
   .editor-workspace,
@@ -763,6 +895,24 @@ label span {
   .hero-panel,
   .panel {
     padding: 1rem;
+  }
+
+  .toolbar-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .toolbar-actions {
+    justify-content: stretch;
+  }
+
+  .toolbar-stats {
+    justify-content: flex-start;
+  }
+
+  .toolbar-actions button,
+  .toolbar-row > button {
+    width: 100%;
   }
 
   .form-grid,
