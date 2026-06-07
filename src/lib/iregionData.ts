@@ -183,21 +183,24 @@ function unitExists(unit: IRegionUnit, config: EditorIRegionConfig) {
 
 function indexedRegisterCount(register: IRegionRegister, config: EditorIRegionConfig) {
   if (register.name === "SOURCE[i]_PRIORITY") {
-    return configuredCount(config.plicInterruptCountX32, 4) * 32
+    return configuredCount(config.plicInterruptCountX32, 127) + 1
   }
   if (register.name === "PENDING[i]") {
-    return configuredCount(config.plicInterruptCountX32, 4)
+    return Math.ceil((configuredCount(config.plicInterruptCountX32, 127) + 1) / 32)
   }
   if (register.name === "M_INT_ENABLE[i]") {
-    return configuredCount(config.plicInterruptCountX32, 4)
+    return Math.ceil((configuredCount(config.plicInterruptCountX32, 127) + 1) / 32)
   }
   if (register.name === "S_INT_ENABLE[i]") {
-    return configuredCount(config.plicInterruptCountX32, 4)
+    return Math.ceil((configuredCount(config.plicInterruptCountX32, 127) + 1) / 32)
   }
   if (register.name.includes('clicint') && register.name.includes('[i]')) {
     return configuredCount(config.eclicInterruptCount, 64)
   }
-  if (register.name === 'CORE[i]_INT_STATUS' || register.name === 'SEMAPHORE[i]') {
+  if (register.name === 'CORE[i]_INT_STATUS') {
+    return configuredCount(config.cpuCount, 32)
+  }
+  if (register.name === 'SEMAPHORE[i]') {
     return 32
   }
   if (register.name === "INT[i]_INDICATOR") {
@@ -287,9 +290,9 @@ function optionalAccess(permission?: string) {
 export function createIRegionConfig(): EditorIRegionConfig {
   return {
     cpuCount: 8,
-    eclicInterruptCount: 128,
-    ciduInterruptCount: 32,
-    plicInterruptCountX32: 4,
+    eclicInterruptCount: 64,
+    ciduInterruptCount: 128,
+    plicInterruptCountX32: 127,
     iinfoExist: true,
     debugExist: false,
     eclicExist: true,
