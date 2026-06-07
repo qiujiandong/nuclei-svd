@@ -2850,6 +2850,7 @@ const allUnits = [
         description: "M-mode interrupt enables for Hart 0, source i*32 to i*32+31.",
         permission: "MRW",
         offset: "0x002000 + 4*i",
+        hart_offset: "0x100",
         fields: [
           { bits: "31:0", name: "ENABLE", type: "RW", description: "M-mode enable bits for sources i*32 to i*32+31." }
         ]
@@ -2859,6 +2860,7 @@ const allUnits = [
         description: "S-mode interrupt enables for Hart 0, source i*32 to i*32+31",
         permission: "SRW",
         offset: "0x002080 + 4*i",
+        hart_offset: "0x100",
         fields: [
           { bits: "31:0", name: "ENABLE", type: "RW", description: "S-mode enable bits for sources i*32 to i*32+31." }
         ]
@@ -2868,6 +2870,7 @@ const allUnits = [
         description: "M-mode priority threshold for Hart 0.",
         permission: "MRW",
         offset: "0x200000",
+        hart_offset: "0x2000",
         fields: [
           { bits: "31:0", name: "THRESHOLD", type: "RW", description: "M-mode priority threshold." }
         ]
@@ -2877,6 +2880,7 @@ const allUnits = [
         description: "M-mode claim/complete register for Hart 0.",
         permission: "MRW",
         offset: "0x200004",
+        hart_offset: "0x2000",
         fields: [
           { bits: "31:0", name: "CLAIM_COMPLETE", type: "RW", description: "Read to claim highest priority pending interrupt, write to complete." }
         ]
@@ -2886,6 +2890,7 @@ const allUnits = [
         description: "S-mode priority threshold for Hart 0.",
         permission: "SRW",
         offset: "0x201000",
+        hart_offset: "0x2000",
         fields: [
           { bits: "31:0", name: "THRESHOLD", type: "RW", description: "S-mode priority threshold." }
         ]
@@ -2895,6 +2900,7 @@ const allUnits = [
         description: "S-mode claim/complete register for Hart 0.",
         permission: "SRW",
         offset: "0x201004",
+        hart_offset: "0x2000",
         fields: [
           { bits: "31:0", name: "CLAIM_COMPLETE", type: "RW", description: "Read to claim highest priority pending interrupt, write to complete." }
         ]

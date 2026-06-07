@@ -40,6 +40,7 @@ type IRegionRegister = {
   description?: string
   permission?: string
   offset: string
+  hart_offset?: string
   fields?: IRegionField[]
 }
 
@@ -161,6 +162,22 @@ function offsetIncrement(offset: string) {
   return `0x${stride.toString(16).toUpperCase()}`
 }
 
+function normalizeOffsetValue(offset: string) {
+  const normalized = normalizeHex(offset.replace(/\s+/g, ''))
+  return normalized.startsWith('0x') ? normalized : `0x${normalized}`
+}
+
+function addHexOffsets(baseOffset: string, extraOffset: string) {
+  const baseValue = Number.parseInt(normalizeOffsetValue(baseOffset), 16)
+  const extraValue = Number.parseInt(normalizeOffsetValue(extraOffset), 16)
+  return `0x${(baseValue + extraValue).toString(16).toUpperCase()}`
+}
+
+function scaleHexOffset(offset: string, factor: number) {
+  const normalized = normalizeOffsetValue(offset)
+  return `0x${(Number.parseInt(normalized, 16) * factor).toString(16).toUpperCase()}`
+}
+
 function configuredCount(value: number, fallback: number) {
   const parsed = Number(value)
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback
@@ -245,9 +262,10 @@ function uniquifyRegisterNames(registers: PresetRegisterDefinition[]) {
 // register of timer msip0-7, mtimecmp0-7, setssip0-7 should support config -> CPU Count
 // cidu -> int[i]_indicator and int[i]_mask should support config -> CIDU Interrupt Count
 // plic -> source[i]_priority only support multiple of 32, the factor only support 0-31 -> PLIC Interrupt Count
-function createRegisterInstances(register: IRegionRegister, config: EditorIRegionConfig): PresetRegisterDefinition {
+function createRegisterInstances(register: IRegionRegister, config: EditorIRegionConfig): PresetRegisterDefinition[] {
   const indexed = register.name.includes('[i]') || register.offset.includes('i')
   const dim = indexed ? indexedRegisterCount(register, config) : undefined
+  const hartCount = register.hart_offset ? configuredCount(config.cpuCount, 1) : 1
 
   const fieldNameCounts = new Map<string, number>()
   const fields = (register.fields ?? []).map((field) => {
@@ -263,23 +281,33 @@ function createRegisterInstances(register: IRegionRegister, config: EditorIRegio
     }
   })
   const maxBit = fields.reduce((currentMax, field) => Math.max(currentMax, field.maxBit), 31)
+  const baseName = indexed
+    ? normalizeName(register.name).replace('{index}', '%s')
+    : normalizeName(register.name)
+  const baseAddressOffset = offsetAtIndex(register.offset, indexed)
+  const normalizedFields = fields.map(({ maxBit: _maxBit, ...field }) => field)
 
-  return {
-    name: indexed
-      ? normalizeName(register.name).replace('{index}', '%s')
-      : normalizeName(register.name),
-    description: register.description ?? '',
-    addressOffset: offsetAtIndex(register.offset, indexed),
-    ...(dim
-      ? {
-        dim: String(dim),
-        dimIncrement: offsetIncrement(register.offset),
-      }
-      : {}),
-    ...(maxBit >= 32 ? { size: '64' } : {}),
-    ...optionalAccess(register.permission),
-    fields: fields.map(({ maxBit: _maxBit, ...field }) => field),
-  }
+  return Array.from({ length: hartCount }, (_, hartIndex) => {
+    const hartSuffix = register.hart_offset ? `_Hart${hartIndex}` : ''
+    const hartAddressOffset = register.hart_offset
+      ? addHexOffsets(baseAddressOffset, scaleHexOffset(register.hart_offset, hartIndex))
+      : baseAddressOffset
+
+    return {
+      name: `${baseName}${hartSuffix}`,
+      description: register.description ?? '',
+      addressOffset: hartAddressOffset,
+      ...(dim
+        ? {
+          dim: String(dim),
+          dimIncrement: offsetIncrement(register.offset),
+        }
+        : {}),
+      ...(maxBit >= 32 ? { size: '64' } : {}),
+      ...optionalAccess(register.permission),
+      fields: normalizedFields,
+    }
+  })
 }
 
 function optionalAccess(permission?: string) {

@@ -295,6 +295,23 @@ describe('App', () => {
     expect(xmlPreview.textContent ?? '').not.toContain('<name>CIDU</name>')
   })
 
+  it('forces cpuCount to 1 when SMP is turned off', () => {
+    render(<App />)
+
+    const cpuCountInput = screen.getByLabelText('CPU Count')
+    expect(cpuCountInput).toHaveValue('8')
+
+    fireEvent.change(cpuCountInput, { target: { value: '4' } })
+    fireEvent.blur(cpuCountInput)
+    expect(screen.getByLabelText('CPU Count')).toHaveValue('4')
+
+    fireEvent.click(screen.getByText('SMP'))
+
+    expect(screen.getByRole('checkbox', { name: 'SMP' })).not.toBeChecked()
+    expect(screen.getByLabelText('CPU Count')).toHaveValue('1')
+    expect(screen.getByLabelText('CPU Count')).toBeDisabled()
+  })
+
   it('downloads generated xml when clicking the button', async () => {
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:demo')
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)

@@ -446,6 +446,9 @@ export function EditorApp() {
   const handleIRegionConfigChange = (field: keyof EditorIRegionConfig, value: string | boolean) => {
     updateDevice((current) => {
       const nextConfig = { ...current.iregionConfig, [field]: value }
+      if (!nextConfig.smpExist && nextConfig.cpuCount !== 1) {
+        nextConfig.cpuCount = 1
+      }
       if ((!nextConfig.eclicExist || !nextConfig.smpExist) && nextConfig.ciduExist) {
         nextConfig.ciduExist = false
       }
