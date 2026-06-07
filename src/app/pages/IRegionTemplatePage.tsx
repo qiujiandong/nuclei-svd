@@ -93,6 +93,7 @@ export function IRegionTemplatePage({
   device,
   onIRegionConfigChange,
 }: IRegionTemplatePageProps) {
+  const canEnableCidu = Boolean(device.iregionConfig.eclicExist && device.iregionConfig.smpExist)
   const baseDraftValues = useMemo(
     () =>
       Object.fromEntries(
@@ -155,6 +156,9 @@ export function IRegionTemplatePage({
       <div className="grid gap-2 rounded-3xl border border-border bg-white p-4">
         {moduleFields.map(({ field, label, paramField, paramLabel, paramShortLabel, helperText, inputMode, min, max, placeholder }) => {
           const checked = Boolean(device.iregionConfig[field])
+          const ciduBlocked = field === 'ciduExist' && !canEnableCidu
+          const moduleDisabled = ciduBlocked && !checked
+          const resolvedHelperText = ciduBlocked ? '需先启用 ECLIC 和 SMP' : helperText
 
           return (
             <section
@@ -162,13 +166,16 @@ export function IRegionTemplatePage({
               className={cn(
                 'flex flex-col gap-3 rounded-2xl border px-3 py-2.5 transition-colors sm:flex-row sm:items-center sm:justify-between',
                 checked ? 'border-primary/30 bg-primary/5' : 'border-slate-200 bg-slate-50',
+                moduleDisabled && 'opacity-70',
               )}
             >
               <label className="flex min-w-0 items-center gap-3">
                 <Checkbox
                   checked={checked}
                   onCheckedChange={(nextChecked) => onIRegionConfigChange(field, Boolean(nextChecked))}
-                  className="shrink-0"
+                  disabled={moduleDisabled}
+                  aria-disabled={moduleDisabled}
+                  className={cn('shrink-0', moduleDisabled && 'cursor-not-allowed border-slate-300 bg-slate-100')}
                 />
                 <span className="truncate text-sm font-semibold text-slate-800">{label}</span>
               </label>
@@ -201,7 +208,7 @@ export function IRegionTemplatePage({
                     />
                   </div>
                   <p className={cn('m-0 text-[11px] leading-4 sm:text-right', checked ? 'text-slate-500' : 'text-slate-400')}>
-                    {helperText}
+                    {resolvedHelperText}
                   </p>
                 </div>
               ) : (

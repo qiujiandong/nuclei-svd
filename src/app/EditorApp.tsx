@@ -359,14 +359,21 @@ export function EditorApp() {
   }
 
   const handleIRegionConfigChange = (field: keyof EditorIRegionConfig, value: string | boolean) => {
-    updateDevice((current) => ({
-      ...current,
-      iregionConfig: { ...current.iregionConfig, [field]: value },
-      iregionPeripherals: resolveIRegionPeripherals(
-        current.iregionBaseAddress,
-        createIRegionPeripherals({ ...current.iregionConfig, [field]: value }),
-      ),
-    }))
+    updateDevice((current) => {
+      const nextConfig = { ...current.iregionConfig, [field]: value }
+      if ((!nextConfig.eclicExist || !nextConfig.smpExist) && nextConfig.ciduExist) {
+        nextConfig.ciduExist = false
+      }
+
+      return {
+        ...current,
+        iregionConfig: nextConfig,
+        iregionPeripherals: resolveIRegionPeripherals(
+          current.iregionBaseAddress,
+          createIRegionPeripherals(nextConfig),
+        ),
+      }
+    })
   }
 
   const handleIRegionBaseAddressChange = (value: string) => {

@@ -218,6 +218,37 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: '下载 .svd' })).toBeDisabled()
   })
 
+  it('only allows enabling CIDU after both ECLIC and SMP are enabled', () => {
+    render(<App />)
+
+    expect(screen.getByRole('checkbox', { name: 'CIDU' })).toBeEnabled()
+
+    fireEvent.click(screen.getByText('ECLIC'))
+    expect(screen.getByRole('checkbox', { name: 'CIDU' })).toBeDisabled()
+    expect(screen.getByText('需先启用 ECLIC 和 SMP')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('ECLIC'))
+    fireEvent.click(screen.getByText('SMP'))
+    expect(screen.getByRole('checkbox', { name: 'CIDU' })).toBeDisabled()
+
+    fireEvent.click(screen.getByText('SMP'))
+    expect(screen.getByRole('checkbox', { name: 'CIDU' })).toBeEnabled()
+  })
+
+  it('automatically clears CIDU when ECLIC or SMP is turned off', async () => {
+    render(<App />)
+
+    expect(screen.getByRole('checkbox', { name: 'CIDU' })).toBeChecked()
+
+    fireEvent.click(screen.getByText('ECLIC'))
+    expect(screen.getByRole('checkbox', { name: 'CIDU' })).not.toBeChecked()
+    expect(screen.getByRole('checkbox', { name: 'CIDU' })).toBeDisabled()
+
+    convertFromPreview()
+    const xmlPreview = await screen.findByTestId('xml-preview')
+    expect(xmlPreview.textContent ?? '').not.toContain('<name>CIDU</name>')
+  })
+
   it('downloads generated xml when clicking the button', async () => {
     const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:demo')
     const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
