@@ -8,6 +8,7 @@ import { Separator } from '../components/ui/separator'
 import { cn } from '../lib/utils'
 import { ConversionError } from '../lib/errors'
 import {
+  autoLayoutRegisterFields,
   buildSvdInputFromEditor,
   cloneEditorRegister,
   createDefaultCustomPeripheral,
@@ -23,6 +24,8 @@ import {
   type EditorIRegionConfig,
   type EditorPeripheral,
   type EditorRegister,
+  findNextAvailableFieldOffset,
+  resolveRegisterBitWidth,
   resolveIRegionPeripherals,
 } from '../lib/editorModel'
 import { transformToSvd } from '../lib/transformToSvd'
@@ -118,6 +121,11 @@ function parseNonNegativeInteger(value: string) {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : null
 }
 
+function parsePositiveInteger(value: string) {
+  const parsed = Number(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null
+}
+
 function formatNextOffset(registers: EditorRegister[]) {
   const nextOffset =
     registers.reduce((maxOffset, register) => {
@@ -143,6 +151,64 @@ function standaloneRegisterSeed(
     resetMask: '',
     expanded: true,
     fields: [],
+  }
+}
+
+function normalizeRegisterFields(
+  register: EditorRegister,
+  defaultRegisterSize = '',
+  deviceSize = '',
+): EditorRegister {
+  if (register.fields.length === 0) {
+    return register
+  }
+
+  const registerWidth = resolveRegisterBitWidth(register, defaultRegisterSize, deviceSize)
+  return {
+    ...register,
+    fields: autoLayoutRegisterFields(register.fields, registerWidth),
+  }
+}
+
+function registerSupportsAutoLayoutField(field: keyof Omit<EditorField, 'id' | 'expanded'>, value: string) {
+  if (field === 'bitOffset') {
+    return parseNonNegativeInteger(value) !== null
+  }
+
+  if (field === 'bitWidth') {
+    return parsePositiveInteger(value) !== null
+  }
+
+  return false
+}
+
+function createAutoPlacedField(
+  register: EditorRegister,
+  fieldCount: number,
+  defaultRegisterSize = '',
+  deviceSize = '',
+) {
+  const normalizedRegister = normalizeRegisterFields(register, defaultRegisterSize, deviceSize)
+  const registerWidth = resolveRegisterBitWidth(normalizedRegister, defaultRegisterSize, deviceSize)
+  const nextOffset = findNextAvailableFieldOffset(normalizedRegister.fields, registerWidth)
+  if (nextOffset < 0) {
+    return normalizedRegister
+  }
+
+  return {
+    ...normalizedRegister,
+    expanded: true,
+    fields: autoLayoutRegisterFields(
+      [
+        ...normalizedRegister.fields,
+        createEmptyField({
+          name: `FIELD${fieldCount}`,
+          description: 'Description of this FIELD',
+          bitOffset: String(nextOffset),
+        }),
+      ],
+      registerWidth,
+    ),
   }
 }
 
@@ -352,10 +418,29 @@ export function EditorApp() {
   }
 
   const handleDeviceChange = (field: keyof EditorDevice, value: string) => {
-    updateDevice((current) => ({
-      ...current,
-      [field]: value,
-    }))
+    updateDevice((current) => {
+      if (field !== 'size') {
+        return {
+          ...current,
+          [field]: value,
+        }
+      }
+
+      return {
+        ...current,
+        [field]: value,
+        peripheralTemplates: current.peripheralTemplates.map((template) => ({
+          ...template,
+          registers: template.registers.map((register) =>
+            normalizeRegisterFields(register, template.defaultRegisterSize, value)),
+        })),
+        peripherals: current.peripherals.map((peripheral) => ({
+          ...peripheral,
+          registers: peripheral.registers.map((register) =>
+            normalizeRegisterFields(register, peripheral.defaultRegisterSize, value)),
+        })),
+      }
+    })
   }
 
   const handleIRegionConfigChange = (field: keyof EditorIRegionConfig, value: string | boolean) => {
@@ -395,10 +480,29 @@ export function EditorApp() {
     >,
     value: string,
   ) => {
-    updatePeripheral(peripheralId, (peripheral) => ({
-      ...peripheral,
-      [field]: value,
-      ...(field === 'name' ? { groupName: value } : {}),
+    updateDevice((current) => ({
+      ...current,
+      peripherals: current.peripherals.map((peripheral) => {
+        if (peripheral.id !== peripheralId) {
+          return peripheral
+        }
+
+        const nextPeripheral = {
+          ...peripheral,
+          [field]: value,
+          ...(field === 'name' ? { groupName: value } : {}),
+        }
+
+        if (field !== 'defaultRegisterSize') {
+          return nextPeripheral
+        }
+
+        return {
+          ...nextPeripheral,
+          registers: nextPeripheral.registers.map((register) =>
+            normalizeRegisterFields(register, value, current.size)),
+        }
+      }),
     }))
   }
 
@@ -410,10 +514,29 @@ export function EditorApp() {
     >,
     value: string,
   ) => {
-    updatePeripheralTemplate(templateId, (template) => ({
-      ...template,
-      [field]: value,
-      ...(field === 'name' ? { groupName: value } : {}),
+    updateDevice((current) => ({
+      ...current,
+      peripheralTemplates: current.peripheralTemplates.map((template) => {
+        if (template.id !== templateId) {
+          return template
+        }
+
+        const nextTemplate = {
+          ...template,
+          [field]: value,
+          ...(field === 'name' ? { groupName: value } : {}),
+        }
+
+        if (field !== 'defaultRegisterSize') {
+          return nextTemplate
+        }
+
+        return {
+          ...nextTemplate,
+          registers: nextTemplate.registers.map((register) =>
+            normalizeRegisterFields(register, value, current.size)),
+        }
+      }),
     }))
   }
 
@@ -423,9 +546,20 @@ export function EditorApp() {
     field: keyof Omit<EditorRegister, 'id' | 'expanded' | 'fields'>,
     value: string,
   ) => {
-    updateTemplateRegister(templateId, registerId, (register) => ({
-      ...register,
-      [field]: value,
+    updateDevice((current) => ({
+      ...current,
+      peripheralTemplates: current.peripheralTemplates.map((template) =>
+        template.id === templateId
+          ? {
+            ...template,
+            registers: template.registers.map((register) =>
+              register.id === registerId
+                ? normalizeRegisterFields({ ...register, [field]: value }, template.defaultRegisterSize, current.size)
+                : register,
+            ),
+          }
+          : template,
+      ),
     }))
   }
 
@@ -435,9 +569,20 @@ export function EditorApp() {
     field: keyof Omit<EditorRegister, 'id' | 'expanded' | 'fields'>,
     value: string,
   ) => {
-    updateRegister(peripheralId, registerId, (register) => ({
-      ...register,
-      [field]: value,
+    updateDevice((current) => ({
+      ...current,
+      peripherals: current.peripherals.map((peripheral) =>
+        peripheral.id === peripheralId
+          ? {
+            ...peripheral,
+            registers: peripheral.registers.map((register) =>
+              register.id === registerId
+                ? normalizeRegisterFields({ ...register, [field]: value }, peripheral.defaultRegisterSize, current.size)
+                : register,
+            ),
+          }
+          : peripheral,
+      ),
     }))
   }
 
@@ -448,9 +593,31 @@ export function EditorApp() {
     field: keyof Omit<EditorField, 'id' | 'expanded'>,
     value: string,
   ) => {
-    updateTemplateField(templateId, registerId, fieldId, (current) => ({
+    updateDevice((current) => ({
       ...current,
-      [field]: value,
+      peripheralTemplates: current.peripheralTemplates.map((template) =>
+        template.id === templateId
+          ? {
+            ...template,
+            registers: template.registers.map((register) => {
+              if (register.id !== registerId) {
+                return register
+              }
+
+              const nextRegister = {
+                ...register,
+                fields: register.fields.map((currentField) =>
+                  currentField.id === fieldId ? { ...currentField, [field]: value } : currentField,
+                ),
+              }
+
+              return registerSupportsAutoLayoutField(field, value)
+                ? normalizeRegisterFields(nextRegister, template.defaultRegisterSize, current.size)
+                : nextRegister
+            }),
+          }
+          : template,
+      ),
     }))
   }
 
@@ -461,9 +628,31 @@ export function EditorApp() {
     field: keyof Omit<EditorField, 'id' | 'expanded'>,
     value: string,
   ) => {
-    updateField(peripheralId, registerId, fieldId, (current) => ({
+    updateDevice((current) => ({
       ...current,
-      [field]: value,
+      peripherals: current.peripherals.map((peripheral) =>
+        peripheral.id === peripheralId
+          ? {
+            ...peripheral,
+            registers: peripheral.registers.map((register) => {
+              if (register.id !== registerId) {
+                return register
+              }
+
+              const nextRegister = {
+                ...register,
+                fields: register.fields.map((currentField) =>
+                  currentField.id === fieldId ? { ...currentField, [field]: value } : currentField,
+                ),
+              }
+
+              return registerSupportsAutoLayoutField(field, value)
+                ? normalizeRegisterFields(nextRegister, peripheral.defaultRegisterSize, current.size)
+                : nextRegister
+            }),
+          }
+          : peripheral,
+      ),
     }))
   }
 
@@ -615,17 +804,20 @@ export function EditorApp() {
     registerId: string,
     fieldCount: number,
   ) => {
-    updateTemplateRegister(templateId, registerId, (register) => ({
-      ...register,
-      expanded: true,
-      fields: [
-        ...register.fields,
-        createEmptyField({
-          name: `FIELD${fieldCount}`,
-          description: 'Description of this FIELD',
-          bitOffset: String(fieldCount),
-        }),
-      ],
+    updateDevice((current) => ({
+      ...current,
+      peripheralTemplates: current.peripheralTemplates.map((template) =>
+        template.id === templateId
+          ? {
+            ...template,
+            registers: template.registers.map((register) =>
+              register.id === registerId
+                ? createAutoPlacedField(register, fieldCount, template.defaultRegisterSize, current.size)
+                : register,
+            ),
+          }
+          : template,
+      ),
     }))
   }
 
@@ -634,17 +826,20 @@ export function EditorApp() {
     registerId: string,
     fieldCount: number,
   ) => {
-    updateRegister(peripheralId, registerId, (register) => ({
-      ...register,
-      expanded: true,
-      fields: [
-        ...register.fields,
-        createEmptyField({
-          name: `FIELD${fieldCount}`,
-          description: 'Description of this FIELD',
-          bitOffset: String(fieldCount),
-        }),
-      ],
+    updateDevice((current) => ({
+      ...current,
+      peripherals: current.peripherals.map((peripheral) =>
+        peripheral.id === peripheralId
+          ? {
+            ...peripheral,
+            registers: peripheral.registers.map((register) =>
+              register.id === registerId
+                ? createAutoPlacedField(register, fieldCount, peripheral.defaultRegisterSize, current.size)
+                : register,
+            ),
+          }
+          : peripheral,
+      ),
     }))
   }
 

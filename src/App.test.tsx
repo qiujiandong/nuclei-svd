@@ -64,6 +64,52 @@ describe('App', () => {
     expect(screen.getByDisplayValue('REG0')).toBeInTheDocument()
   })
 
+  it('auto-places and reflows standalone register fields without overlap', () => {
+    render(<App />)
+
+    openPage('外设配置')
+    fireEvent.click(screen.getByRole('button', { name: '创建独立外设' }))
+    fireEvent.click(screen.getAllByText('+')[0])
+    fireEvent.click(screen.getByRole('button', { name: /展开寄存器 REG0 的位域/ }))
+
+    fireEvent.click(screen.getAllByText('+')[0])
+    expect(screen.getByLabelText('实例位域名称 偏移 1')).toHaveValue('0')
+    expect(screen.getByLabelText('实例位域名称 位宽 1')).toHaveValue('1')
+
+    fireEvent.click(screen.getAllByText('+')[0])
+    expect(screen.getByLabelText('实例位域名称 偏移 2')).toHaveValue('1')
+
+    const firstFieldBitWidth = screen.getByLabelText('实例位域名称 位宽 1')
+    fireEvent.change(firstFieldBitWidth, { target: { value: '4' } })
+    expect(screen.getByLabelText('实例位域名称 偏移 2')).toHaveValue('1')
+    fireEvent.blur(firstFieldBitWidth)
+    expect(screen.getByLabelText('实例位域名称 偏移 2')).toHaveValue('4')
+
+    fireEvent.change(screen.getByLabelText('实例位域名称 偏移 2'), { target: { value: '8' } })
+    expect(screen.getByLabelText('实例位域名称 偏移 2')).toHaveValue('8')
+  })
+
+  it('stops adding template fields once the register width is fully covered', () => {
+    render(<App />)
+
+    openPage('外设模板')
+    fireEvent.click(screen.getByRole('button', { name: '新增外设模板' }))
+    fireEvent.click(screen.getAllByText('+')[0])
+    fireEvent.click(screen.getByRole('button', { name: /展开寄存器 REG0 的位域/ }))
+
+    const registerSizeInput = screen.getAllByLabelText('寄存器位宽')[1]
+    fireEvent.change(registerSizeInput, { target: { value: '2' } })
+    expect(screen.queryByText('位域已覆盖全部寄存器位宽')).not.toBeInTheDocument()
+    fireEvent.blur(registerSizeInput)
+    fireEvent.click(screen.getAllByText('+')[0])
+    fireEvent.click(screen.getAllByText('+')[0])
+
+    expect(screen.getByLabelText('模板位域名称 偏移 1')).toHaveValue('0')
+    expect(screen.getByLabelText('模板位域名称 偏移 2')).toHaveValue('1')
+    expect(screen.getByText('位域已覆盖全部寄存器位宽')).toBeInTheDocument()
+    expect(screen.queryByLabelText('模板位域名称 偏移 3')).not.toBeInTheDocument()
+  })
+
   it('shows resolved register size placeholders for template and standalone peripherals', () => {
     render(<App />)
 

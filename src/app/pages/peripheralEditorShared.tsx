@@ -1,5 +1,11 @@
-import { Fragment } from 'react'
-import type { EditorField, EditorPeripheral, EditorRegister } from '../../lib/editorModel'
+import { Fragment, useState } from 'react'
+import {
+  findNextAvailableFieldOffset,
+  resolveRegisterBitWidth,
+  type EditorField,
+  type EditorPeripheral,
+  type EditorRegister,
+} from '../../lib/editorModel'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table'
@@ -17,6 +23,7 @@ type FieldTableProps = {
   fields: EditorField[]
   fieldNameAriaPrefix: string
   onAddField?: () => void
+  canAddField?: boolean
   onFieldChange: (fieldId: string, field: BitField, value: string) => void
   onRemoveField: (fieldId: string) => void
 }
@@ -25,9 +32,12 @@ export function FieldTable({
   fields,
   fieldNameAriaPrefix,
   onAddField,
+  canAddField = true,
   onFieldChange,
   onRemoveField,
 }: FieldTableProps) {
+  const [bitWidthDrafts, setBitWidthDrafts] = useState<Record<string, string>>({})
+
   return (
     <div className="rounded-2xl border border-slate-200 bg-white">
       <Table>
@@ -52,18 +62,34 @@ export function FieldTable({
               </TableCell>
               <TableCell>
                 <Input
+                  aria-label={`${fieldNameAriaPrefix} 偏移 ${fieldIndex + 1}`}
                   value={field.bitOffset}
                   onChange={(event) => onFieldChange(field.id, 'bitOffset', event.target.value)}
                 />
               </TableCell>
               <TableCell>
                 <Input
-                  value={field.bitWidth}
-                  onChange={(event) => onFieldChange(field.id, 'bitWidth', event.target.value)}
+                  aria-label={`${fieldNameAriaPrefix} 位宽 ${fieldIndex + 1}`}
+                  value={bitWidthDrafts[field.id] ?? field.bitWidth}
+                  onChange={(event) =>
+                    setBitWidthDrafts((current) => ({
+                      ...current,
+                      [field.id]: event.target.value,
+                    }))}
+                  onBlur={(event) => {
+                    const nextValue = event.target.value
+                    onFieldChange(field.id, 'bitWidth', nextValue)
+                    setBitWidthDrafts((current) => {
+                      const nextDrafts = { ...current }
+                      delete nextDrafts[field.id]
+                      return nextDrafts
+                    })
+                  }}
                 />
               </TableCell>
               <TableCell>
                 <Input
+                  aria-label={`${fieldNameAriaPrefix} 描述 ${fieldIndex + 1}`}
                   value={field.description}
                   onChange={(event) => onFieldChange(field.id, 'description', event.target.value)}
                 />
@@ -75,13 +101,20 @@ export function FieldTable({
               </TableCell>
             </TableRow>
           ))}
-          {onAddField ? (
+          {onAddField && canAddField ? (
             <TableRow
               className="cursor-pointer bg-slate-50/70 hover:bg-slate-100"
               onClick={onAddField}
             >
               <TableCell colSpan={5} className="py-2 text-center text-lg font-semibold text-slate-400">
                 +
+              </TableCell>
+            </TableRow>
+          ) : null}
+          {onAddField && !canAddField ? (
+            <TableRow className="bg-slate-50/70 hover:bg-slate-50/70">
+              <TableCell colSpan={5} className="py-2 text-center text-xs text-slate-500">
+                位域已覆盖全部寄存器位宽
               </TableCell>
             </TableRow>
           ) : null}
@@ -116,6 +149,8 @@ export function RegisterEditorList({
   onFieldChange,
   onRemoveField,
 }: RegisterListProps) {
+  const [registerSizeDrafts, setRegisterSizeDrafts] = useState<Record<string, string>>({})
+
   return (
     <section className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
       <div>
@@ -133,9 +168,13 @@ export function RegisterEditorList({
               <TableHead scope="col" className="w-[100px]">位宽</TableHead>
               <TableHead scope="col" className="w-[64px] text-center">删除</TableHead>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {registers.map((register, registerIndex) => (
+        </TableHeader>
+        <TableBody>
+          {registers.map((register, registerIndex) => {
+            const registerWidth = resolveRegisterBitWidth(register, defaultRegisterSizePlaceholder)
+            const canAddField = findNextAvailableFieldOffset(register.fields, registerWidth) !== -1
+
+            return (
               <Fragment key={register.id}>
                 <TableRow>
                   <TableCell className="text-center">
@@ -170,9 +209,22 @@ export function RegisterEditorList({
                   </TableCell>
                   <TableCell>
                     <Input
-                      value={register.size}
+                      aria-label="寄存器位宽"
+                      value={registerSizeDrafts[register.id] ?? register.size}
                       placeholder={defaultRegisterSizePlaceholder}
-                      onChange={(event) => onRegisterChange(register.id, 'size', event.target.value)}
+                      onChange={(event) =>
+                        setRegisterSizeDrafts((current) => ({
+                          ...current,
+                          [register.id]: event.target.value,
+                        }))}
+                      onBlur={(event) => {
+                        onRegisterChange(register.id, 'size', event.target.value)
+                        setRegisterSizeDrafts((current) => {
+                          const nextDrafts = { ...current }
+                          delete nextDrafts[register.id]
+                          return nextDrafts
+                        })
+                      }}
                       className={cn(register.size.trim().length === 0 && 'text-slate-400')}
                     />
                   </TableCell>
@@ -188,6 +240,7 @@ export function RegisterEditorList({
                       <FieldTable
                         fields={register.fields}
                         fieldNameAriaPrefix={`${namePrefix}位域名称`}
+                        canAddField={canAddField}
                         onAddField={() => onAddField(register.id, register.fields.length)}
                         onFieldChange={(fieldId, field, value) => onFieldChange(register.id, fieldId, field, value)}
                         onRemoveField={(fieldId) => onRemoveField(register.id, fieldId)}
@@ -196,7 +249,8 @@ export function RegisterEditorList({
                   </TableRow>
                 ) : null}
               </Fragment>
-            ))}
+            )
+          })}
             <TableRow
               className="cursor-pointer bg-slate-50/70 hover:bg-slate-100"
               onClick={onAddRegister}

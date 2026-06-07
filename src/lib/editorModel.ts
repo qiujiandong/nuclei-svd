@@ -97,6 +97,82 @@ function parseIntegerInput(value: string) {
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : Number.NaN
 }
 
+function parsePositiveIntegerInput(value: string) {
+  const parsed = parseIntegerInput(value)
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : Number.NaN
+}
+
+export function resolveRegisterBitWidth(
+  register: Pick<EditorRegister, 'size'>,
+  defaultRegisterSize = '',
+  deviceSize = '',
+) {
+  const registerWidth = parsePositiveIntegerInput(register.size)
+  if (Number.isInteger(registerWidth)) {
+    return registerWidth
+  }
+
+  const peripheralWidth = parsePositiveIntegerInput(defaultRegisterSize)
+  if (Number.isInteger(peripheralWidth)) {
+    return peripheralWidth
+  }
+
+  const deviceWidth = parsePositiveIntegerInput(deviceSize)
+  if (Number.isInteger(deviceWidth)) {
+    return deviceWidth
+  }
+
+  return 32
+}
+
+export function findNextAvailableFieldOffset(fields: EditorField[], registerWidth: number) {
+  const occupied = new Array<boolean>(registerWidth).fill(false)
+
+  fields.forEach((field) => {
+    const bitOffset = parseIntegerInput(field.bitOffset)
+    const bitWidth = parsePositiveIntegerInput(field.bitWidth)
+    if (!Number.isInteger(bitOffset) || !Number.isInteger(bitWidth) || bitOffset >= registerWidth) {
+      return
+    }
+
+    const end = Math.min(registerWidth, bitOffset + bitWidth)
+    for (let index = bitOffset; index < end; index += 1) {
+      occupied[index] = true
+    }
+  })
+
+  return occupied.findIndex((filled) => !filled)
+}
+
+export function autoLayoutRegisterFields(fields: EditorField[], registerWidth: number): EditorField[] {
+  let cursor = 0
+
+  return fields.reduce<EditorField[]>((nextFields, field) => {
+    if (cursor >= registerWidth) {
+      return nextFields
+    }
+
+    const desiredOffset = parseIntegerInput(field.bitOffset)
+    const desiredWidth = parsePositiveIntegerInput(field.bitWidth)
+    const bitOffset = Number.isInteger(desiredOffset)
+      ? Math.min(registerWidth - 1, Math.max(cursor, desiredOffset))
+      : cursor
+    const remainingWidth = registerWidth - bitOffset
+    const bitWidth = Math.min(
+      remainingWidth,
+      Number.isInteger(desiredWidth) ? desiredWidth : 1,
+    )
+
+    nextFields.push({
+      ...field,
+      bitOffset: String(bitOffset),
+      bitWidth: String(Math.max(1, bitWidth)),
+    })
+    cursor = bitOffset + Math.max(1, bitWidth)
+    return nextFields
+  }, [])
+}
+
 type PresetFieldDefinition = {
   name: string
   description: string
