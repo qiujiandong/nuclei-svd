@@ -30,14 +30,6 @@ const moduleFields: IRegionModuleConfig[] = [
   {
     field: 'timerExist',
     label: 'Timer',
-    paramField: 'cpuCount',
-    paramLabel: 'CPU Count',
-    paramShortLabel: 'CPU',
-    helperText: '范围 1~8',
-    inputMode: 'numeric',
-    min: 1,
-    max: 8,
-    placeholder: '8',
   },
   {
     field: 'eclicExist',
@@ -51,7 +43,17 @@ const moduleFields: IRegionModuleConfig[] = [
     max: 1024,
     placeholder: '64',
   },
-  { field: 'smpExist', label: 'SMP' },
+  {
+    field: 'smpExist', label: 'SMP',
+    paramField: 'cpuCount',
+    paramLabel: 'CPU Count',
+    paramShortLabel: 'CPU',
+    helperText: '范围 1~8',
+    inputMode: 'numeric',
+    min: 1,
+    max: 8,
+    placeholder: '8',
+  },
   {
     field: 'ciduExist',
     label: 'CIDU',
