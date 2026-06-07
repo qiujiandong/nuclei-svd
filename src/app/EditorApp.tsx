@@ -343,30 +343,6 @@ export function EditorApp() {
     }))
   }
 
-  const updateTemplateField = (
-    templateId: string,
-    registerId: string,
-    fieldId: string,
-    updater: (current: EditorField) => EditorField,
-  ) => {
-    updateTemplateRegister(templateId, registerId, (register) => ({
-      ...register,
-      fields: register.fields.map((field) => (field.id === fieldId ? updater(field) : field)),
-    }))
-  }
-
-  const updateField = (
-    peripheralId: string,
-    registerId: string,
-    fieldId: string,
-    updater: (current: EditorField) => EditorField,
-  ) => {
-    updateRegister(peripheralId, registerId, (register) => ({
-      ...register,
-      fields: register.fields.map((field) => (field.id === fieldId ? updater(field) : field)),
-    }))
-  }
-
   const togglePeripheral = (peripheralId: string) => {
     setDevice((current) => ({
       ...current,

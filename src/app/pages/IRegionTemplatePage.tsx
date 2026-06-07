@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import type { EditorDevice, EditorIRegionConfig } from '../../lib/editorModel'
 import { Checkbox } from '../../components/ui/checkbox'
@@ -104,26 +104,11 @@ export function IRegionTemplatePage({
     [device.iregionConfig],
   )
   const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>({})
-  const draftValues = {
+  const draftValues: Record<string, string> = {
     ...baseDraftValues,
     ...draftOverrides,
+    ...(!device.iregionConfig.smpExist ? { cpuCount: String(device.iregionConfig.cpuCount) } : {}),
   }
-
-  useEffect(() => {
-    if (device.iregionConfig.smpExist) {
-      return
-    }
-
-    setDraftOverrides((current) => {
-      if (current.cpuCount === undefined) {
-        return current
-      }
-
-      const next = { ...current }
-      delete next.cpuCount
-      return next
-    })
-  }, [device.iregionConfig.smpExist])
 
   const setDraftValue = (field: keyof EditorIRegionConfig, value: string) => {
     setDraftOverrides((current) => ({
