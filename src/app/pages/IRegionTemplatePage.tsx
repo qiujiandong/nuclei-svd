@@ -37,11 +37,11 @@ const moduleFields: IRegionModuleConfig[] = [
     paramField: 'eclicInterruptCount',
     paramLabel: 'ECLIC Interrupt Count',
     paramShortLabel: 'IRQ',
-    helperText: '外部中断个数 (CFG_IRQ_NUM) 范围 1~1005',
+    helperText: '中断源总数 范围 20~1024',
     inputMode: 'numeric',
-    min: 1,
-    max: 1005,
-    placeholder: '64',
+    min: 20,
+    max: 1024,
+    placeholder: '83',
   },
   {
     field: 'smpExist', label: 'SMP',
@@ -64,19 +64,19 @@ const moduleFields: IRegionModuleConfig[] = [
     inputMode: 'numeric',
     min: 1,
     max: 4096,
-    placeholder: '128',
+    placeholder: '64',
   },
   {
     field: 'plicExist',
     label: 'PLIC',
-    paramField: 'plicInterruptCountX32',
+    paramField: 'plicInterruptCount',
     paramLabel: 'PLIC Interrupt Count',
     paramShortLabel: 'IRQ',
-    helperText: '外部中断个数 (CFG_IRQ_NUM) 范围 1~1023',
+    helperText: '中断源总数 (source 0 does not exist) 范围 2~1024',
     inputMode: 'numeric',
-    min: 1,
-    max: 1023,
-    placeholder: '127',
+    min: 2,
+    max: 1024,
+    placeholder: '65',
   },
 ]
 
@@ -89,25 +89,47 @@ function clampNumericValue(rawValue: string, min: number, max: number) {
   return String(Math.min(max, Math.max(min, Math.trunc(numericValue))))
 }
 
+function clampCount(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, Math.trunc(value)))
+}
+
+function deriveInterruptCounts(extIrqCount: number) {
+  return {
+    eclicInterruptCount: String(clampCount(extIrqCount + 19, 20, 1024)),
+    ciduInterruptCount: String(clampCount(extIrqCount, 1, 4096)),
+    plicInterruptCount: String(clampCount(extIrqCount + 1, 2, 1024)),
+  }
+}
+
 export function IRegionTemplatePage({
   device,
   onIRegionConfigChange,
 }: IRegionTemplatePageProps) {
   const canEnableCidu = Boolean(device.iregionConfig.eclicExist && device.iregionConfig.smpExist)
-  const baseDraftValues = useMemo(
+  const baseDraftValues = useMemo<Record<string, string>>(
     () =>
-      Object.fromEntries(
-        moduleFields
-          .filter((item) => item.paramField)
-          .map((item) => [item.paramField as string, String(device.iregionConfig[item.paramField as keyof EditorIRegionConfig])]),
-      ),
+      ({
+        extIrqCount: String(device.iregionConfig.extIrqCount),
+        ...Object.fromEntries(
+          moduleFields
+            .filter((item) => item.paramField)
+            .map((item) => [item.paramField as string, String(device.iregionConfig[item.paramField as keyof EditorIRegionConfig])]),
+        ),
+      }),
     [device.iregionConfig],
   )
   const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>({})
   const previousBaseDraftValuesRef = useRef(baseDraftValues)
+  const extIrqDraftValue = draftOverrides.extIrqCount ?? baseDraftValues.extIrqCount
+  const extIrqNumericValue = Number(extIrqDraftValue)
+  const resolvedExtIrqCount = Number.isFinite(extIrqNumericValue)
+    ? clampCount(extIrqNumericValue, 1, 4096)
+    : 1
+  const derivedInterruptCounts = deriveInterruptCounts(resolvedExtIrqCount)
   const draftValues: Record<string, string> = {
     ...baseDraftValues,
     ...draftOverrides,
+    ...derivedInterruptCounts,
     ...(!device.iregionConfig.smpExist ? { cpuCount: String(device.iregionConfig.cpuCount) } : {}),
   }
 
@@ -171,6 +193,12 @@ export function IRegionTemplatePage({
 
     const normalizedValue = rawValue === '' ? String(min) : clampNumericValue(rawValue, min, max)
     onIRegionConfigChange(field, normalizedValue)
+    if (field === 'extIrqCount') {
+      const nextDerivedCounts = deriveInterruptCounts(Number(normalizedValue))
+      onIRegionConfigChange('eclicInterruptCount', nextDerivedCounts.eclicInterruptCount)
+      onIRegionConfigChange('ciduInterruptCount', nextDerivedCounts.ciduInterruptCount)
+      onIRegionConfigChange('plicInterruptCount', nextDerivedCounts.plicInterruptCount)
+    }
     if (normalizedValue === baseDraftValues[field as string]) {
       clearDraftValue(field)
       return
@@ -181,9 +209,35 @@ export function IRegionTemplatePage({
   return (
     <div className="grid gap-6">
       <div className="grid gap-2 rounded-3xl border border-border bg-white p-4">
+        <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 transition-colors sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="truncate text-sm font-semibold text-slate-800">外部中断个数 (CFG_IRQ_NUM)</span>
+          </div>
+          <div className="grid min-w-0 gap-1 sm:w-[300px] sm:justify-end">
+            <div className="flex min-w-0 items-center gap-2 sm:justify-end">
+              <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-slate-500">EXT IRQ</span>
+              <Input
+                aria-label="外部中断个数"
+                value={draftValues.extIrqCount ?? String(device.iregionConfig.extIrqCount)}
+                onChange={(event) => handleParamChange('extIrqCount', event.target.value)}
+                onBlur={(event) => handleParamBlur('extIrqCount', event.target.value, 1, 4096)}
+                inputMode="numeric"
+                min={1}
+                max={4096}
+                placeholder="64"
+                className="h-9 sm:w-[180px]"
+              />
+            </div>
+            <p className="m-0 text-[11px] leading-4 text-slate-500 sm:text-right">范围 1~4096</p>
+          </div>
+        </section>
         {moduleFields.map(({ field, label, paramField, paramLabel, paramShortLabel, helperText, inputMode, min, max, placeholder }) => {
           const checked = Boolean(device.iregionConfig[field])
           const ciduBlocked = field === 'ciduExist' && !canEnableCidu
+          const isEclic = field === 'eclicExist'
+          const isCidu = field === 'ciduExist'
+          const isPlic = field === 'plicExist'
+          const disableInput = !checked || isEclic || isCidu || isPlic
           const moduleDisabled = ciduBlocked && !checked
           const resolvedHelperText = ciduBlocked ? '需先启用 ECLIC 和 SMP' : helperText
 
@@ -226,11 +280,11 @@ export function IRegionTemplatePage({
                       min={min}
                       max={max}
                       placeholder={placeholder}
-                      disabled={!checked}
+                      disabled={disableInput}
                       aria-disabled={!checked}
                       className={cn(
                         'h-9 sm:w-[180px]',
-                        !checked && 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 placeholder:text-slate-400',
+                        disableInput && 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400 placeholder:text-slate-400',
                       )}
                     />
                   </div>

@@ -46,9 +46,10 @@ export interface EditorPeripheral {
 
 export interface EditorIRegionConfig {
   cpuCount: number
+  extIrqCount: number
   eclicInterruptCount: number
   ciduInterruptCount: number
-  plicInterruptCountX32: number
+  plicInterruptCount: number
   iinfoExist: boolean
   debugExist: boolean
   eclicExist: boolean

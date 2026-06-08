@@ -200,19 +200,19 @@ function unitExists(unit: IRegionUnit, config: EditorIRegionConfig) {
 
 function indexedRegisterCount(register: IRegionRegister, config: EditorIRegionConfig) {
   if (register.name === "SOURCE[i]_PRIORITY") {
-    return configuredCount(config.plicInterruptCountX32, 127) + 1
+    return configuredCount(config.plicInterruptCount, 65)
   }
   if (register.name === "PENDING[i]") {
-    return Math.ceil((configuredCount(config.plicInterruptCountX32, 127) + 1) / 32)
+    return Math.ceil(configuredCount(config.plicInterruptCount, 65) / 32)
   }
   if (register.name === "M_INT_ENABLE[i]") {
-    return Math.ceil((configuredCount(config.plicInterruptCountX32, 127) + 1) / 32)
+    return Math.ceil(configuredCount(config.plicInterruptCount, 65) / 32)
   }
   if (register.name === "S_INT_ENABLE[i]") {
-    return Math.ceil((configuredCount(config.plicInterruptCountX32, 127) + 1) / 32)
+    return Math.ceil(configuredCount(config.plicInterruptCount, 65) / 32)
   }
   if (register.name.includes('clicint') && register.name.includes('[i]')) {
-    return configuredCount(config.eclicInterruptCount, 64) + 19
+    return configuredCount(config.eclicInterruptCount, 83)
   }
   if (register.name === 'CORE[i]_INT_STATUS') {
     return configuredCount(config.cpuCount, 32)
@@ -221,10 +221,10 @@ function indexedRegisterCount(register: IRegionRegister, config: EditorIRegionCo
     return 32
   }
   if (register.name === "INT[i]_INDICATOR") {
-    return configuredCount(config.ciduInterruptCount, 32)
+    return configuredCount(config.ciduInterruptCount, 64)
   }
   if (register.name === "INT[i]_MASK") {
-    return configuredCount(config.ciduInterruptCount, 32)
+    return configuredCount(config.ciduInterruptCount, 64)
   }
   if (register.name === "msip[i]" || register.name === "mtimecmp[i]" || register.name === "setssip[i]") {
     return configuredCount(config.cpuCount, 8)
@@ -318,9 +318,10 @@ function optionalAccess(permission?: string) {
 export function createIRegionConfig(): EditorIRegionConfig {
   return {
     cpuCount: 8,
-    eclicInterruptCount: 64,
-    ciduInterruptCount: 128,
-    plicInterruptCountX32: 127,
+    extIrqCount: 64,
+    eclicInterruptCount: 83,
+    ciduInterruptCount: 64,
+    plicInterruptCount: 65,
     iinfoExist: true,
     debugExist: false,
     eclicExist: true,
