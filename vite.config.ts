@@ -5,8 +5,38 @@ import path from 'node:path'
 
 const repositoryName = process.env.GITHUB_REPOSITORY?.split('/')[1] ?? 'nuclei-svd'
 
-export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? `/${repositoryName}/` : '/',
+function normalizeBase(value: string): string {
+  if (value === '.' || value === './') {
+    return './'
+  }
+
+  const withLeadingSlash = value.startsWith('/') ? value : `/${value}`
+  return withLeadingSlash.endsWith('/') ? withLeadingSlash : `${withLeadingSlash}/`
+}
+
+function resolveBase(command: 'serve' | 'build'): string {
+  if (command === 'serve') {
+    return '/'
+  }
+
+  const explicitBase = process.env.VITE_BASE_PATH ?? process.env.BASE_PATH
+  if (explicitBase) {
+    return normalizeBase(explicitBase)
+  }
+
+  if (process.env.GITHUB_ACTIONS) {
+    return `/${repositoryName}/`
+  }
+
+  if (process.env.GITLAB_CI && process.env.FTP_REMOTE_DIR) {
+    return normalizeBase(process.env.FTP_REMOTE_DIR)
+  }
+
+  return './'
+}
+
+export default defineConfig(({ command }) => ({
+  base: resolveBase(command),
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
@@ -24,4 +54,4 @@ export default defineConfig({
       exclude: ['src/test/**'],
     },
   },
-})
+}))
