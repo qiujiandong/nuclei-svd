@@ -212,7 +212,7 @@ function indexedRegisterCount(register: IRegionRegister, config: EditorIRegionCo
     return Math.ceil((configuredCount(config.plicInterruptCountX32, 127) + 1) / 32)
   }
   if (register.name.includes('clicint') && register.name.includes('[i]')) {
-    return configuredCount(config.eclicInterruptCount, 64)
+    return configuredCount(config.eclicInterruptCount, 64) + 19
   }
   if (register.name === 'CORE[i]_INT_STATUS') {
     return configuredCount(config.cpuCount, 32)
