@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { InputHTMLAttributes } from 'react'
 import type { EditorDevice, EditorIRegionConfig } from '../../lib/editorModel'
 import { Checkbox } from '../../components/ui/checkbox'
@@ -104,11 +104,37 @@ export function IRegionTemplatePage({
     [device.iregionConfig],
   )
   const [draftOverrides, setDraftOverrides] = useState<Record<string, string>>({})
+  const previousBaseDraftValuesRef = useRef(baseDraftValues)
   const draftValues: Record<string, string> = {
     ...baseDraftValues,
     ...draftOverrides,
     ...(!device.iregionConfig.smpExist ? { cpuCount: String(device.iregionConfig.cpuCount) } : {}),
   }
+
+  useEffect(() => {
+    const previousBaseDraftValues = previousBaseDraftValuesRef.current
+    const changedFields = Object.keys(baseDraftValues).filter(
+      (field) => previousBaseDraftValues[field] !== baseDraftValues[field],
+    )
+
+    if (changedFields.length > 0) {
+      setDraftOverrides((current) => {
+        const next = { ...current }
+        let hasChange = false
+
+        for (const field of changedFields) {
+          if (field in next) {
+            delete next[field]
+            hasChange = true
+          }
+        }
+
+        return hasChange ? next : current
+      })
+    }
+
+    previousBaseDraftValuesRef.current = baseDraftValues
+  }, [baseDraftValues])
 
   const setDraftValue = (field: keyof EditorIRegionConfig, value: string) => {
     setDraftOverrides((current) => ({
