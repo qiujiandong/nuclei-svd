@@ -3,7 +3,12 @@
 
 # Nuclei SVD
 
-[Nuclei SVD](https://qiujiandong.github.io/nuclei-svd/) is a browser-based editor
+> [!IMPORTANT]
+> **Archived:** Development and maintenance have moved to our internal GitLab.
+> This public repository is no longer maintained and is archived for reference.
+> The editor is now available at [the Nuclei SVD website](https://doc.nucleisys.com/tools/nucleisvd/).
+
+[Nuclei SVD](https://doc.nucleisys.com/tools/nucleisvd/) is a browser-based editor
 for building CMSIS-SVD files for SoC platforms based on Nuclei CPUs.
 It provides an interactive workflow for configuring device metadata,
 IREGION-generated peripherals, reusable peripheral templates, custom
